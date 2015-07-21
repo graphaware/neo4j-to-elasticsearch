@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
  */
 public class ESWrapper implements IGenericWrapper
 {
-  private static final Logger LOG = LoggerFactory.getLogger(ESWrapper.class);
+//  private static final Logger LOG = LoggerFactory.getLogger(ESWrapper.class);
 
   private Node node;
   private Client client;
@@ -44,6 +44,8 @@ public class ESWrapper implements IGenericWrapper
     try
     {
       ESLoggerFactory.getRootLogger().setLevel("WARNING");
+
+
       Node node = nodeBuilder().clusterName("neo4j-elasticsearch").client(false).node();
       /*NodeBuilder nodeBuilder = nodeBuilder();
        node = nodeBuilder
@@ -54,7 +56,7 @@ public class ESWrapper implements IGenericWrapper
     }
     catch (Exception e)
     {
-      LOG.error("Error while starting it up", e);
+     // LOG.error("Error while starting it up", e);
     }
 // on shutdown
   }
@@ -66,7 +68,7 @@ public class ESWrapper implements IGenericWrapper
 
   public void add(final String indexName, final String type, final long nodeId, final Map<String, String> propertiesValue)
   {
-    LOG.warn("ADD: " + nodeId + " -> " + propertiesValue.size());
+    //LOG.warn("ADD: " + nodeId + " -> " + propertiesValue.size());
     try
     {
       String node = String.valueOf(nodeId);
@@ -79,7 +81,7 @@ public class ESWrapper implements IGenericWrapper
 //              .upsert(indexRequest);
       //UpdateResponse result = client.update(updateRequest).get();
       ActionFuture<IndexResponse> result = client.index(indexRequest);
-      LOG.warn("result: " + result);
+      //LOG.warn("result: " + result);
 //      GetField field = result.getGetResult().field("nodes");
 //      List<Object> values = field.getValues();
 //      if (values != null && values.size() > 0)
@@ -91,13 +93,13 @@ public class ESWrapper implements IGenericWrapper
     }
     catch (Exception ex)
     {
-      LOG.error("Error while upserting", ex);
+      //LOG.error("Error while upserting", ex);
     }
   }
   @Override
   public long[] lookup(long indexId, String indexName, Object propertyValue)
   {
-    LOG.warn("lookup: " + indexId + " " + indexName + " " + propertyValue);
+    //LOG.warn("lookup: " + indexId + " " + indexName + " " + propertyValue);
     GetResponse response = client.prepareGet(indexName, String.valueOf(indexId), (String) propertyValue)
             .execute()
             .actionGet();
