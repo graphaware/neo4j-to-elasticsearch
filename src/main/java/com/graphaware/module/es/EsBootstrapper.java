@@ -16,8 +16,12 @@
 
 package com.graphaware.module.es;
 
+import com.graphaware.module.es.util.CustomClassLoading;
+import com.graphaware.module.es.util.PassThroughProxyHandler;
+import com.graphaware.module.es.wrapper.IGenericWrapper;
 import com.graphaware.runtime.module.RuntimeModule;
 import com.graphaware.runtime.module.RuntimeModuleBootstrapper;
+import java.lang.reflect.Proxy;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,6 +59,24 @@ public class EsBootstrapper implements RuntimeModuleBootstrapper
       configuration = configuration.withIndexName(ES_INDEXNAME);
       LOG.info("indexName set to {}", configuration.getIndexName());
     }
-    return new EsModule(moduleId, configuration, database);
+    IGenericWrapper indexWrapper = null;
+    try
+    {
+      CustomClassLoading loader = new CustomClassLoading(configuration.getClasspathDirectory());
+      Class<Object> loadedClass = (Class<Object>) loader.loadClass("com.graphaware.module.es.wrapper.ESWrapper");
+      indexWrapper = (IGenericWrapper) Proxy.newProxyInstance(this.getClass().getClassLoader(),
+              new Class[]
+              {
+                IGenericWrapper.class
+              },
+              new PassThroughProxyHandler(loadedClass.newInstance()));
+      indexWrapper.startClient();
+      LOG.warn("Client client = node.client();");
+    }
+    catch (Exception ex)
+    {
+      LOG.error("Error while starting node", ex);
+    }
+    return new EsModule(moduleId, configuration, database, indexWrapper);
   }
 }

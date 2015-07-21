@@ -43,18 +43,20 @@ public class EsModule extends BaseTxDrivenModule<Void>
 
   private final EsConfiguration esConfiguration;
   private final GraphDatabaseService database;
-  private IGenericWrapper indexWrapper;
+  private final IGenericWrapper indexWrapper;
 
   /**
    * Construct a new UUID module.
    *
    * @param moduleId ID of the module.
    */
-  public EsModule(String moduleId, EsConfiguration configuration, GraphDatabaseService database)
+  public EsModule(String moduleId, EsConfiguration configuration, GraphDatabaseService database, IGenericWrapper indexWrapper)
   {
     super(moduleId);
     this.esConfiguration = configuration;
     this.database = database;
+    this.indexWrapper = indexWrapper;
+    logger.warn("EsModule constructor");
   }
 
   /**
@@ -73,30 +75,6 @@ public class EsModule extends BaseTxDrivenModule<Void>
   public void initialize(GraphDatabaseService database)
   {
     logger.warn("initialize es module ...");
-    Executors.newSingleThreadExecutor().execute(new Runnable()
-    {
-      @Override
-      public void run()
-      {
-        try
-        {
-          CustomClassLoading loader = new CustomClassLoading(esConfiguration.getClasspathDirectory());
-          Class<Object> loadedClass = (Class<Object>) loader.loadClass("com.graphaware.module.es.wrapper.ESWrapper");
-          indexWrapper = (IGenericWrapper) Proxy.newProxyInstance(this.getClass().getClassLoader(),
-                  new Class[]
-                  {
-                    IGenericWrapper.class
-                  },
-                  new PassThroughProxyHandler(loadedClass.newInstance()));
-          indexWrapper.startClient();
-          logger.warn("Client client = node.client();");
-        }
-        catch (MalformedURLException | ClassNotFoundException | InstantiationException | IllegalAccessException | IllegalArgumentException ex)
-        {
-          logger.error("Error while starting node", ex);
-        }
-      }
-    });
     //Preload everything
 //        new IterableInputBatchTransactionExecutor<>(
 //                database,
