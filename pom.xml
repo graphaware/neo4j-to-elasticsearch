@@ -43,47 +43,55 @@
     <dependency>
       <groupId>com.graphaware.neo4j</groupId>
       <artifactId>runtime</artifactId>
+      <scope>compile</scope>
     </dependency>
 
     <dependency>
       <groupId>com.graphaware.neo4j</groupId>
       <artifactId>tx-api</artifactId>
+      <scope>compile</scope>
     </dependency>
 
     <dependency>
       <groupId>com.graphaware.neo4j</groupId>
       <artifactId>tx-executor</artifactId>
+      <scope>compile</scope>
     </dependency>
 
     <dependency>
       <groupId>com.graphaware.neo4j</groupId>
       <artifactId>server-community</artifactId>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.elasticsearch</groupId>
       <artifactId>elasticsearch</artifactId>
       <version>${es.version}</version>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.codehaus.groovy</groupId>
       <artifactId>groovy-all</artifactId>
       <version>2.3.2</version>
-      <!--scope>test</scope-->
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.lucene</groupId>
       <artifactId>lucene-expressions</artifactId>
       <version>4.10.4</version>
+      <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-      <version>1.7.7</version>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.11</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-log4j12</artifactId>
-      <version>1.7.7</version>
+      <groupId>org.apache.lucene</groupId>
+      <artifactId>lucene-core</artifactId>
+      <version>3.6.2</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
   <build>
@@ -92,13 +100,71 @@
         <artifactId>maven-dependency-plugin</artifactId>
         <executions>
           <execution>
-            <phase>install</phase>
+            <id>copy-dependencies</id>
+            <phase>compile</phase>
             <goals>
               <goal>copy-dependencies</goal>
             </goals>
             <configuration>
-              <outputDirectory>${project.build.directory}/lib</outputDirectory>
-              <!--includeArtifactIds>elasticsearch</includeArtifactIds-->
+              <outputDirectory>${project.basedir}/extlib</outputDirectory>
+              <excludeArtifactIds>logback-classic logback-core logback-access</excludeArtifactIds>
+              <overWriteReleases>true</overWriteReleases>
+              <overWriteSnapshots>false</overWriteSnapshots>
+              <overWriteIfNewer>true</overWriteIfNewer>
+              <includeScope>compile</includeScope>
+            </configuration>
+          </execution>
+          <execution>
+            <id>copy-model</id>
+            <phase>package</phase>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+            <configuration>
+              <overWriteReleases>true</overWriteReleases>
+              <overWriteSnapshots>false</overWriteSnapshots>
+              <overWriteIfNewer>true</overWriteIfNewer>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>org.apache.lucene</groupId>
+                  <artifactId>lucene-core</artifactId>
+                  <version>4.10.4</version>
+                  <overWrite>true</overWrite>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>com.graphaware.neo4j</groupId>
+                  <artifactId>neo4j-es</artifactId>
+                  <version>2.2.2.32.0-SNAPSHOT</version>
+                  <overWrite>true</overWrite>
+                </artifactItem>
+              </artifactItems>
+              <outputDirectory>${project.basedir}/extlib</outputDirectory>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>2.18.1</version>
+        <configuration>
+          <skip>true</skip>
+          <systemPropertyVariables>
+            <classpath>${project.basedir}/extlib</classpath>
+          </systemPropertyVariables>
+        </configuration>
+        <executions>
+          <execution>
+            <id>unittests</id>
+            <phase>install</phase>
+            <goals>
+              <goal>test</goal>
+            </goals>
+            <configuration>
+              <skip>false</skip>
+              <includes>
+                <include>**/**/**/*Test.java</include>
+              </includes>
             </configuration>
           </execution>
         </executions>
