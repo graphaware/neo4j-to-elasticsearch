@@ -14,7 +14,8 @@ import java.util.Map;
  */
 public interface IGenericWrapper
 {
-  public void startClient();
+  public void startLocalClient();
+  public void startClient(String clustername, boolean client);
   public void stopClient();
   public void add(final String indexName, final String type, final long nodeId, final Map<String, String> propertiesValue);
   public long[] lookup(final long indexId, final String indexName, final Object propertyValue);

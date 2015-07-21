@@ -29,20 +29,23 @@ public class EsConfiguration extends BaseTxDrivenModuleConfiguration<EsConfigura
 
   private static final String DEFAULT_CLASSPATH_DIRECTORY = "esplugin";
   private static final String DEFAULT_INDEX_NAME = "neo4j";
+  private static final String DEFAULT_CLUSTERNAME = "neo4j-elasticsearch";
 
   private String classpathDirectory;
   private String indexName;
+  private String clusterName;
 
   protected EsConfiguration(InclusionPolicies inclusionPolicies)
   {
     super(inclusionPolicies);
   }
 
-  public EsConfiguration(InclusionPolicies inclusionPolicies, String classpathDirectory, String indexName)
+  public EsConfiguration(InclusionPolicies inclusionPolicies, String classpathDirectory, String indexName, String clusterName)
   {
     super(inclusionPolicies);
     this.classpathDirectory = classpathDirectory;
     this.indexName = indexName;
+    this.clusterName = clusterName;
   }
 
   /**
@@ -59,7 +62,7 @@ public class EsConfiguration extends BaseTxDrivenModuleConfiguration<EsConfigura
    */
   public static EsConfiguration defaultConfiguration()
   {
-    return new EsConfiguration(InclusionPoliciesFactory.allBusiness(), DEFAULT_CLASSPATH_DIRECTORY, DEFAULT_INDEX_NAME);
+    return new EsConfiguration(InclusionPoliciesFactory.allBusiness(), DEFAULT_CLASSPATH_DIRECTORY, DEFAULT_INDEX_NAME, DEFAULT_CLUSTERNAME);
   }
 
   /**
@@ -68,7 +71,7 @@ public class EsConfiguration extends BaseTxDrivenModuleConfiguration<EsConfigura
   @Override
   protected EsConfiguration newInstance(InclusionPolicies inclusionPolicies)
   {
-    return new EsConfiguration(inclusionPolicies, getClasspathDirectory(), getIndexName());
+    return new EsConfiguration(inclusionPolicies, getClasspathDirectory(), getIndexName(), getClusterName());
   }
   public String getClasspathDirectory()
   {
@@ -80,7 +83,11 @@ public class EsConfiguration extends BaseTxDrivenModuleConfiguration<EsConfigura
     return indexName;
   }
   
-
+  public String getClusterName()
+  {
+    return clusterName;
+  }
+  
   
   /**
    * Create a new instance of this {@link UuidConfiguration} with different uuid
@@ -92,7 +99,7 @@ public class EsConfiguration extends BaseTxDrivenModuleConfiguration<EsConfigura
   
   public EsConfiguration withClasspathDirectoryProperty(String classpathDirectory)
   {
-    return new EsConfiguration(getInclusionPolicies(), classpathDirectory, getIndexName());
+    return new EsConfiguration(getInclusionPolicies(), classpathDirectory, getIndexName(), getClusterName());
   }
 
   /**
@@ -104,7 +111,12 @@ public class EsConfiguration extends BaseTxDrivenModuleConfiguration<EsConfigura
    */
   public EsConfiguration withIndexName(String indexName)
   {
-    return new EsConfiguration(getInclusionPolicies(), getClasspathDirectory(), indexName);
+    return new EsConfiguration(getInclusionPolicies(), getClasspathDirectory(), indexName, getClusterName());
+  }
+  
+  public EsConfiguration withClusterName(String clusterName)
+  {
+    return new EsConfiguration(getInclusionPolicies(), getClasspathDirectory(), getIndexName(), clusterName);
   }
 
   /**

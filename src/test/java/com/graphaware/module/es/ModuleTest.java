@@ -15,7 +15,6 @@ import org.neo4j.test.TestGraphDatabaseFactory;
 
 import java.lang.reflect.Proxy;
 import java.net.MalformedURLException;
-import java.util.concurrent.Executors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,28 +29,22 @@ public class ModuleTest extends NeoServerIntegrationTest
   {
     final String classpath = System.getProperty("classpath");
     LOG.warn("classpath: " + classpath);
-    Executors.newSingleThreadExecutor().execute(new Runnable()
+    try
     {
-      @Override
-      public void run()
-      {
-        try
-        {
-          CustomClassLoading loader = new CustomClassLoading(classpath);
-          Class<Object> loadedClass = (Class<Object>) loader.loadClass("com.graphaware.module.es.wrapper.ESWrapper");
-          indexWrapper = (IGenericWrapper) Proxy.newProxyInstance(this.getClass().getClassLoader(),
-                  new Class[]
-                  {
-                    IGenericWrapper.class
-                  },
-                  new PassThroughProxyHandler(loadedClass.newInstance()));
-          indexWrapper.startClient();
-        }
-        catch (MalformedURLException | ClassNotFoundException | InstantiationException | IllegalAccessException | IllegalArgumentException ex)
-        {
-        }
-      }
-    });
+      CustomClassLoading loader = new CustomClassLoading(classpath);
+      Class<Object> loadedClass = (Class<Object>) loader.loadClass("com.graphaware.module.es.wrapper.ESWrapper");
+      indexWrapper = (IGenericWrapper) Proxy.newProxyInstance(this.getClass().getClassLoader(),
+              new Class[]
+              {
+                IGenericWrapper.class
+              },
+              new PassThroughProxyHandler(loadedClass.newInstance()));
+      indexWrapper.startLocalClient();
+    }
+    catch (Exception ex)
+    {
+      LOG.warn("Error while creating and starting client", ex);
+    }
 
     database = new TestGraphDatabaseFactory().newImpermanentDatabase();
   }

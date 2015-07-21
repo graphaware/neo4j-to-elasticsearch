@@ -14,9 +14,12 @@ import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.logging.ESLoggerFactory;
+import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.node.Node;
 import static org.elasticsearch.node.NodeBuilder.*;
 import org.elasticsearch.index.get.GetField;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -24,7 +27,7 @@ import org.elasticsearch.index.get.GetField;
  */
 public class ESWrapper implements IGenericWrapper
 {
-//  private static final Logger LOG = LoggerFactory.getLogger(ESWrapper.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ESWrapper.class);
 
   private Node node;
   private Client client;
@@ -34,26 +37,41 @@ public class ESWrapper implements IGenericWrapper
 
   }
 
-  public void startClient()
+  public void startLocalClient()
   {
     try
     {
-      ESLoggerFactory.getRootLogger().setLevel("WARNING");
-
-
-      Node node = nodeBuilder().clusterName("neo4j-elasticsearch").client(false).node();
-      /*NodeBuilder nodeBuilder = nodeBuilder();
-       node = nodeBuilder
-       .local(true)
-       .settings(ImmutableSettings.builder().put("script.engine.groovy.inline.aggs", true))
-       .node();*/
+      node = nodeBuilder().local(true)
+              .settings(ImmutableSettings.builder()
+              .put("script.engine.groovy.inline.aggs", "on")
+              .put("script.inline", "on")
+              .put("script.indexed", "on"))
+              .node();
       client = node.client();
     }
     catch (Exception e)
     {
-     // LOG.error("Error while starting it up", e);
+      LOG.error("Error while starting it up", e);
     }
-// on shutdown
+  }
+
+  public void startClient(String clustername, boolean clientNode)
+  {
+    try
+    {
+      node = nodeBuilder()
+              .clusterName(clustername)
+              .client(clientNode)
+              .settings(ImmutableSettings.builder()
+              .put("script.engine.groovy.inline.aggs", "on")
+              .put("script.inline", "on")
+              .put("script.indexed", "on")).node();
+      client = node.client();
+    }
+    catch (Exception e)
+    {
+      LOG.error("Error while starting it up", e);
+    }
   }
 
   public void stopClient()

@@ -49,7 +49,7 @@ public class EsModuleEndToEndTest extends NeoServerIntegrationTest {
                                             IGenericWrapper.class
                                     },
                             new PassThroughProxyHandler(loadedClass.newInstance()));
-                    indexWrapper.startClient();
+                    indexWrapper.startLocalClient();
                     LOG.warn("Client client = node.client();");
                 }
                 catch (MalformedURLException | ClassNotFoundException | InstantiationException | IllegalAccessException | IllegalArgumentException ex)
