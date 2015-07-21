@@ -72,7 +72,7 @@ public class EsModule extends BaseTxDrivenModule<Void>
   @Override
   public void initialize(GraphDatabaseService database)
   {
-
+    logger.warn("initialize es module ...");
     Executors.newSingleThreadExecutor().execute(new Runnable()
     {
       @Override
@@ -119,7 +119,7 @@ public class EsModule extends BaseTxDrivenModule<Void>
   @Override
   public Void beforeCommit(ImprovedTransactionData transactionData) throws DeliberateTransactionRollbackException
   {
-
+    logger.warn("beforeCommit ...");
     //Set the UUID on all created nodes
     for (Node node : transactionData.getAllCreatedNodes())
     {

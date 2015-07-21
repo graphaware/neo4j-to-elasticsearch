@@ -53,7 +53,7 @@ public class EsBootstrapper implements RuntimeModuleBootstrapper
     if (config.get(ES_INDEXNAME) != null && config.get(ES_INDEXNAME).length() > 0)
     {
       configuration = configuration.withIndexName(ES_INDEXNAME);
-      LOG.info("uuidIndex set to {}", configuration.getIndexName());
+      LOG.info("indexName set to {}", configuration.getIndexName());
     }
     return new EsModule(moduleId, configuration, database);
   }
