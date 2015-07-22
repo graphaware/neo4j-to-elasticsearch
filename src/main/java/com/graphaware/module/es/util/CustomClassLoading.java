@@ -28,7 +28,10 @@ public class CustomClassLoading
     this.libPath = libPath;
 
     List<URL> urls = new ArrayList();
-    for (File f : new File(libPath).listFiles())
+    File directory = new File(libPath);
+    if (!directory.exists())
+      throw new RuntimeException("Path : " + libPath + " doesn't exist");
+    for (File f : directory.listFiles())
     {
       final URL toURL = f.toURI().toURL();
       urls.add(toURL);
@@ -39,7 +42,7 @@ public class CustomClassLoading
             = new URLClassLoader(urls.toArray(new URL[0])
                     ,parent);
 
-    Thread.currentThread().setContextClassLoader(classloader);
+    //Thread.currentThread().setContextClassLoader(classloader);
   }
   
   public CustomClassLoading(String libPath) throws MalformedURLException
