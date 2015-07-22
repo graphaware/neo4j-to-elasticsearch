@@ -34,30 +34,24 @@ public class EsModuleEndToEndTest extends NeoServerIntegrationTest {
 
     @Override
     public void setUp() throws IOException, InterruptedException {
-        Executors.newSingleThreadExecutor().execute(new Runnable()
+        final String classpath = System.getProperty("classpath");
+        LOG.warn("classpath: " + classpath);
+        try
         {
-            @Override
-            public void run()
-            {
-                try
-                {
-                    CustomClassLoading loader = new CustomClassLoading("/Users/MicTech/GraphAware/neo4j-es/target/");
-                    Class<Object> loadedClass = (Class<Object>) loader.loadClass("com.graphaware.module.es.wrapper.ESWrapper");
-                    indexWrapper = (IGenericWrapper) Proxy.newProxyInstance(this.getClass().getClassLoader(),
-                            new Class[]
-                                    {
-                                            IGenericWrapper.class
-                                    },
-                            new PassThroughProxyHandler(loadedClass.newInstance()));
-                    indexWrapper.startLocalClient();
-                    LOG.warn("Client client = node.client();");
-                }
-                catch (MalformedURLException | ClassNotFoundException | InstantiationException | IllegalAccessException | IllegalArgumentException ex)
-                {
-                    LOG.error("Error while starting node", ex);
-                }
-            }
-        });
+            CustomClassLoading loader = new CustomClassLoading(classpath);
+            Class<Object> loadedClass = (Class<Object>) loader.loadClass("com.graphaware.module.es.wrapper.ESWrapper");
+            indexWrapper = (IGenericWrapper) Proxy.newProxyInstance(this.getClass().getClassLoader(),
+                    new Class[]
+                            {
+                                    IGenericWrapper.class
+                            },
+                    new PassThroughProxyHandler(loadedClass.newInstance()));
+            indexWrapper.startLocalClient();
+        }
+        catch (Exception ex)
+        {
+            LOG.warn("Error while creating and starting client", ex);
+        }
 
         super.setUp();
         ELASTICSEARCH_NODE = nodeBuilder().node();
@@ -71,7 +65,6 @@ public class EsModuleEndToEndTest extends NeoServerIntegrationTest {
         ELASTICSEARCH_NODE.close();
     }
 
-    @Ignore
     @Test
     public void testIntegration() {
         httpClient.executeCypher(baseUrl(), "CREATE (c:Car {name:'Tesla Model S'})");

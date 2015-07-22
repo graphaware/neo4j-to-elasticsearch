@@ -55,7 +55,6 @@ public class ModuleTest extends NeoServerIntegrationTest
     database.shutdown();
   }
 
-  //@Ignore
   @Test
   public void moduleShouldInitializeCorrectly()
   {
