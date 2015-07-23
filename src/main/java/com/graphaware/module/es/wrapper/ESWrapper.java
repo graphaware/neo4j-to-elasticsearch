@@ -9,6 +9,7 @@ package com.graphaware.module.es.wrapper;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.Client;
@@ -30,6 +31,7 @@ import org.slf4j.LoggerFactory;
  */
 public class ESWrapper implements IGenericWrapper
 {
+  public static final String DEFAULT_DATA_DIRECTORY = "target/elasticsearch-data";
   private static final Logger LOG = LoggerFactory.getLogger(ESWrapper.class);
 
   private Node node;
@@ -40,15 +42,19 @@ public class ESWrapper implements IGenericWrapper
 
   }
 
+  @Override
   public void startLocalClient()
   {
+    
+    LOG.warn("ClassLoader: " + this.getClass().getClassLoader());
     try
     {
       node = nodeBuilder().local(true)
               .settings(ImmutableSettings.builder()
                       .put("script.engine.groovy.inline.aggs", "on")
                       .put("script.inline", "on")
-                      .put("script.indexed", "on"))
+                      .put("script.indexed", "on")
+                      .put("path.data", DEFAULT_DATA_DIRECTORY))
               .node();
       client = node.client();
     }
@@ -56,6 +62,37 @@ public class ESWrapper implements IGenericWrapper
     {
       LOG.error("Error while starting it up", e);
     }
+  }
+
+  public void startTmpServer()
+  {
+    final ClassLoader currentClassLoader = this.getClass().getClassLoader();
+    
+    Executors.newSingleThreadExecutor().execute(new Runnable()
+    {
+      @Override
+      public void run()
+      {
+        try
+        {
+          Thread.currentThread().setContextClassLoader(currentClassLoader);
+          Node tmpNode = nodeBuilder().local(false)
+                  .settings(ImmutableSettings.builder()
+                          .put("transport.tcp.port", "9300")
+                          .put("script.engine.groovy.inline.aggs", "on")
+                          .put("script.inline", "on")
+                          .put("script.indexed", "on")
+                          .put("cluster.name", "neo4j-elasticsearch"))
+                  .node();
+          tmpNode.start();
+        }
+        catch (Exception e)
+        {
+          LOG.error("Error while starting it up", e);
+        }
+      }
+    });
+
   }
 
   public void startClient(String clustername, boolean clientNode)
@@ -69,12 +106,12 @@ public class ESWrapper implements IGenericWrapper
 //                      .put("script.engine.groovy.inline.aggs", "on")
 //                      .put("script.inline", "on")
 //                      .put("script.indexed", "on")).node();
-      
+//      client = node.client();
+
       Settings settings = ImmutableSettings.settingsBuilder()
-        .put("cluster.name", clustername).build();
+              .put("cluster.name", clustername).build();
       client = new TransportClient(settings)
-        .addTransportAddress(new InetSocketTransportAddress("localhost", 9300));
-      //client = node.client();
+              .addTransportAddress(new InetSocketTransportAddress("localhost", 9300));
     }
     catch (Exception e)
     {
@@ -88,24 +125,23 @@ public class ESWrapper implements IGenericWrapper
       client.close();
     if (node != null)
       node.close();
-    
+
   }
 
   public void add(final String indexName, final String type, final long nodeId, final Map<String, String> propertiesValue)
   {
-    //LOG.warn("ADD: " + nodeId + " -> " + propertiesValue.size());
     try
     {
       String nodeValue = String.valueOf(nodeId);
       XContentBuilder builder = jsonBuilder().startObject();
       builder.field("nodeId", nodeValue);
-      
-//      for (String propertyKey : propertiesValue.keySet())
-//        builder.field(propertyKey, propertiesValue.get(propertyKey));
+
+      for (String propertyKey : propertiesValue.keySet())
+        builder.field(propertyKey, propertiesValue.get(propertyKey));
       builder.endObject();
 
       IndexResponse response = client.prepareIndex(indexName, type, nodeValue)
-              .setSource(builder.toString())
+              .setSource(builder)
               .execute()
               .actionGet();
       // Index name

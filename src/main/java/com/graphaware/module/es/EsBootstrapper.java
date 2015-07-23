@@ -70,6 +70,7 @@ public class EsBootstrapper implements RuntimeModuleBootstrapper
                 IGenericWrapper.class
               },
               new PassThroughProxyHandler(loadedClass.newInstance()));
+      //indexWrapper.startLocalClient();
       indexWrapper.startClient(configuration.getClusterName(), false);
       LOG.warn("Client client = node.client();");
     }

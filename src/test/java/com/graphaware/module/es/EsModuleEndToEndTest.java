@@ -3,8 +3,10 @@ package com.graphaware.module.es;
 
 import com.graphaware.module.es.util.CustomClassLoading;
 import com.graphaware.module.es.util.PassThroughProxyHandler;
+import com.graphaware.module.es.wrapper.ESWrapper;
 import com.graphaware.module.es.wrapper.IGenericWrapper;
 import com.graphaware.test.integration.NeoServerIntegrationTest;
+import java.io.File;
 import org.eclipse.jetty.http.HttpStatus;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -12,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Proxy;
+import org.apache.commons.io.FileUtils;
 import static org.junit.Assert.assertEquals;
 
 public class EsModuleEndToEndTest extends NeoServerIntegrationTest
@@ -35,30 +38,27 @@ public class EsModuleEndToEndTest extends NeoServerIntegrationTest
   @Override
   public void setUp() throws IOException, InterruptedException
   {
-    
-//    final String classpath = System.getProperty("classpath");
-//    LOG.warn("classpath: " + classpath);
-//    try
-//    {
-//      CustomClassLoading loader = new CustomClassLoading(classpath);
-//      Class<Object> loadedClass = (Class<Object>) loader.loadClass("com.graphaware.module.es.wrapper.ESWrapper");
-//      indexWrapper = (IGenericWrapper) Proxy.newProxyInstance(this.getClass().getClassLoader(),
-//              new Class[]
-//              {
-//                IGenericWrapper.class
-//              },
-//              new PassThroughProxyHandler(loadedClass.newInstance()));
-//      indexWrapper.startClient("neo4j-elasticsearch", false);
-//    }
-//    catch (Exception ex)
-//    {
-//      LOG.warn("Error while creating and starting client", ex);
-//    }
+    deleteDataDirectory();
+    final String classpath = System.getProperty("classpath");
+    LOG.warn("classpath: " + classpath);
+    try
+    {
+      CustomClassLoading loader = new CustomClassLoading(classpath);
+      Class<Object> loadedClass = (Class<Object>) loader.loadClass("com.graphaware.module.es.wrapper.ESWrapper");
+      indexWrapper = (IGenericWrapper) Proxy.newProxyInstance(this.getClass().getClassLoader(),
+              new Class[]
+              {
+                IGenericWrapper.class
+              },
+              new PassThroughProxyHandler(loadedClass.newInstance()));
+      indexWrapper.startTmpServer();
+    }
+    catch (Exception ex)
+    {
+      LOG.warn("Error while creating and starting client", ex);
+    }
 
     super.setUp();
-    
-//    ELASTICSEARCH_NODE = nodeBuilder().node();
-//    ELASTICSEARCH_NODE.start();
   }
 
   @Override
@@ -73,13 +73,24 @@ public class EsModuleEndToEndTest extends NeoServerIntegrationTest
   public void testIntegration()
   {
     /*
-    * check nodes status
-    * http://localhost:9200/_cat/indices?v
-    */
-    httpClient.executeCypher(baseUrl(), "CREATE (c:Car {name:'Tesla Model S'})");
+     * check nodes status
+     * http://localhost:9200/_cat/indices?v
+     */
+    String executeCypher = httpClient.executeCypher(baseUrl(), "CREATE (c:Car {name:'Tesla Model S'})");
 
-    String response = httpClient.get(ELASTICSEARCH_URL + "/_cluster/health?pretty=true", HttpStatus.OK_200);
-
-    assertEquals("", response);
+    //String response = httpClient.get(ELASTICSEARCH_URL + "/_cluster/health?pretty=true", HttpStatus.OK_200);
+    String response = httpClient.get(ELASTICSEARCH_URL + "/neo4jes/node/0", HttpStatus.OK_200);
+    boolean res = response.contains("\"found\":true");
+    assertEquals(res, true);
   }
+  
+      private void deleteDataDirectory() {
+        try {
+            FileUtils.deleteDirectory(new File(ESWrapper.DEFAULT_DATA_DIRECTORY));
+            FileUtils.deleteDirectory(new File("data"));
+        } catch (IOException e) {
+            throw new RuntimeException("Could not delete data directory of embedded elasticsearch server", e);
+        }
+    }
+
 }

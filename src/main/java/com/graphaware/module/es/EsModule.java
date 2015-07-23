@@ -16,17 +16,12 @@
 
 package com.graphaware.module.es;
 
-import com.graphaware.module.es.util.CustomClassLoading;
 import com.graphaware.module.es.wrapper.IGenericWrapper;
 import com.graphaware.runtime.module.BaseTxDrivenModule;
 import com.graphaware.runtime.module.DeliberateTransactionRollbackException;
 import com.graphaware.tx.event.improved.api.ImprovedTransactionData;
-import com.graphaware.module.es.util.PassThroughProxyHandler;
-import java.lang.reflect.Proxy;
-import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Executors;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.slf4j.Logger;

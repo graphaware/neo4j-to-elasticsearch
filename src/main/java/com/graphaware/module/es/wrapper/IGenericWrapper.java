@@ -19,4 +19,5 @@ public interface IGenericWrapper
   public void stopClient();
   public void add(final String indexName, final String type, final long nodeId, final Map<String, String> propertiesValue);
   public long[] lookup(final long indexId, final String indexName, final Object propertyValue);
+  public void startTmpServer();
 }
