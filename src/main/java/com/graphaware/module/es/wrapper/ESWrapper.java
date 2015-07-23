@@ -6,15 +6,18 @@
 
 package com.graphaware.module.es.wrapper;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import org.elasticsearch.action.ActionFuture;
 import org.elasticsearch.action.get.GetResponse;
-import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.logging.ESLoggerFactory;
+import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.ImmutableSettings;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import org.elasticsearch.node.Node;
 import static org.elasticsearch.node.NodeBuilder.*;
 import org.elasticsearch.index.get.GetField;
@@ -43,9 +46,9 @@ public class ESWrapper implements IGenericWrapper
     {
       node = nodeBuilder().local(true)
               .settings(ImmutableSettings.builder()
-              .put("script.engine.groovy.inline.aggs", "on")
-              .put("script.inline", "on")
-              .put("script.indexed", "on"))
+                      .put("script.engine.groovy.inline.aggs", "on")
+                      .put("script.inline", "on")
+                      .put("script.indexed", "on"))
               .node();
       client = node.client();
     }
@@ -59,14 +62,19 @@ public class ESWrapper implements IGenericWrapper
   {
     try
     {
-      node = nodeBuilder()
-              .clusterName(clustername)
-              .client(clientNode)
-              .settings(ImmutableSettings.builder()
-              .put("script.engine.groovy.inline.aggs", "on")
-              .put("script.inline", "on")
-              .put("script.indexed", "on")).node();
-      client = node.client();
+//      node = nodeBuilder()
+//              .clusterName(clustername)
+//              .client(clientNode)
+//              .settings(ImmutableSettings.builder()
+//                      .put("script.engine.groovy.inline.aggs", "on")
+//                      .put("script.inline", "on")
+//                      .put("script.indexed", "on")).node();
+      
+      Settings settings = ImmutableSettings.settingsBuilder()
+        .put("cluster.name", clustername).build();
+      client = new TransportClient(settings)
+        .addTransportAddress(new InetSocketTransportAddress("localhost", 9300));
+      //client = node.client();
     }
     catch (Exception e)
     {
@@ -76,7 +84,11 @@ public class ESWrapper implements IGenericWrapper
 
   public void stopClient()
   {
-    node.close();
+    if (client != null)
+      client.close();
+    if (node != null)
+      node.close();
+    
   }
 
   public void add(final String indexName, final String type, final long nodeId, final Map<String, String> propertiesValue)
@@ -84,16 +96,35 @@ public class ESWrapper implements IGenericWrapper
     //LOG.warn("ADD: " + nodeId + " -> " + propertiesValue.size());
     try
     {
-      String node = String.valueOf(nodeId);
+      String nodeValue = String.valueOf(nodeId);
+      XContentBuilder builder = jsonBuilder().startObject();
+      builder.field("nodeId", nodeValue);
+      
+//      for (String propertyKey : propertiesValue.keySet())
+//        builder.field(propertyKey, propertiesValue.get(propertyKey));
+      builder.endObject();
 
-      IndexRequest indexRequest = new IndexRequest(indexName, type, node)
-              .source(propertiesValue);
+      IndexResponse response = client.prepareIndex(indexName, type, nodeValue)
+              .setSource(builder.toString())
+              .execute()
+              .actionGet();
+      // Index name
+      String _index = response.getIndex();
+// Type name
+      String _type = response.getType();
+// Document ID (generated or not)
+      String _id = response.getId();
+// Version (if it's the first time you index this document, you will get: 1)
+      long _version = response.getVersion();
+// isCreated() is true if the document is a new one, false if it has been updated
+      boolean created = response.isCreated();
+      LOG.warn("index " + _index + " type: " + _type + " id: " + _id + " version: " + _version + " created: " + created);
 //      UpdateRequest updateRequest = new UpdateRequest(indexName, node, propertyValue.toString())
 //              .addScriptParam("newNodeId", nodeId)
 //              .script("ctx._source.nodes += newNodeId")
 //              .upsert(indexRequest);
       //UpdateResponse result = client.update(updateRequest).get();
-      ActionFuture<IndexResponse> result = client.index(indexRequest);
+      //ActionFuture<IndexResponse> result = client.index(indexRequest);
       //LOG.warn("result: " + result);
 //      GetField field = result.getGetResult().field("nodes");
 //      List<Object> values = field.getValues();
@@ -106,7 +137,7 @@ public class ESWrapper implements IGenericWrapper
     }
     catch (Exception ex)
     {
-      //LOG.error("Error while upserting", ex);
+      LOG.error("Error while upserting", ex);
     }
   }
   @Override

@@ -56,7 +56,7 @@ public class EsBootstrapper implements RuntimeModuleBootstrapper
 
     if (config.get(ES_INDEXNAME) != null && config.get(ES_INDEXNAME).length() > 0)
     {
-      configuration = configuration.withIndexName(ES_INDEXNAME);
+      configuration = configuration.withIndexName(config.get(ES_INDEXNAME));
       LOG.info("indexName set to {}", configuration.getIndexName());
     }
     IGenericWrapper indexWrapper = null;

@@ -105,7 +105,8 @@ public class EsModule extends BaseTxDrivenModule<Void>
       Iterable<String> propertyKeys = node.getPropertyKeys();
       for (String key : propertyKeys)
         properties.put(key, (String) node.getProperty(key));
-      indexWrapper.add(esConfiguration.getIndexName(), "nodes", node.getId(), properties);
+      logger.warn("Adding node: " + node.getId());
+      indexWrapper.add(esConfiguration.getIndexName(), "node", node.getId(), properties);
     }
 //
 //        for (Node node : transactionData.getAllDeletedNodes()) {

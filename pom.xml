@@ -148,7 +148,7 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>2.18.1</version>
         <configuration>
-          <skip>true</skip>
+          <skip>false</skip>
           <systemPropertyVariables>
             <classpath>${project.basedir}/extlib</classpath>
           </systemPropertyVariables>
@@ -161,7 +161,7 @@
               <goal>test</goal>
             </goals>
             <configuration>
-              <skip>false</skip>
+              <skip>true</skip>
               <includes>
                 <include>**/**/**/*Test.java</include>
               </includes>
