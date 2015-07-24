@@ -6,7 +6,6 @@
 
 package com.graphaware.module.es.wrapper;
 
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -29,15 +28,15 @@ import org.slf4j.LoggerFactory;
  *
  * @author ale
  */
-public class ESWrapper implements IGenericWrapper
+public class ESClientWrapper implements IGenericClientWrapper
 {
   public static final String DEFAULT_DATA_DIRECTORY = "target/elasticsearch-data";
-  private static final Logger LOG = LoggerFactory.getLogger(ESWrapper.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ESClientWrapper.class);
 
   private Node node;
   private Client client;
 
-  public ESWrapper()
+  public ESClientWrapper()
   {
 
   }
@@ -64,50 +63,11 @@ public class ESWrapper implements IGenericWrapper
     }
   }
 
-  public void startTmpServer()
-  {
-    final ClassLoader currentClassLoader = this.getClass().getClassLoader();
-    
-    Executors.newSingleThreadExecutor().execute(new Runnable()
-    {
-      @Override
-      public void run()
-      {
-        try
-        {
-          Thread.currentThread().setContextClassLoader(currentClassLoader);
-          Node tmpNode = nodeBuilder().local(false)
-                  .settings(ImmutableSettings.builder()
-                          .put("transport.tcp.port", "9300")
-                          .put("script.engine.groovy.inline.aggs", "on")
-                          .put("script.inline", "on")
-                          .put("script.indexed", "on")
-                          .put("cluster.name", "neo4j-elasticsearch"))
-                  .node();
-          tmpNode.start();
-        }
-        catch (Exception e)
-        {
-          LOG.error("Error while starting it up", e);
-        }
-      }
-    });
-
-  }
-
+  @Override
   public void startClient(String clustername, boolean clientNode)
   {
     try
     {
-//      node = nodeBuilder()
-//              .clusterName(clustername)
-//              .client(clientNode)
-//              .settings(ImmutableSettings.builder()
-//                      .put("script.engine.groovy.inline.aggs", "on")
-//                      .put("script.inline", "on")
-//                      .put("script.indexed", "on")).node();
-//      client = node.client();
-
       Settings settings = ImmutableSettings.settingsBuilder()
               .put("cluster.name", clustername).build();
       client = new TransportClient(settings)
@@ -125,7 +85,6 @@ public class ESWrapper implements IGenericWrapper
       client.close();
     if (node != null)
       node.close();
-
   }
 
   public void add(final String indexName, final String type, final long nodeId, final Map<String, String> propertiesValue)

@@ -18,7 +18,8 @@ package com.graphaware.module.es;
 
 import com.graphaware.module.es.util.CustomClassLoading;
 import com.graphaware.module.es.util.PassThroughProxyHandler;
-import com.graphaware.module.es.wrapper.IGenericWrapper;
+import com.graphaware.module.es.wrapper.IGenericClientWrapper;
+import com.graphaware.module.es.wrapper.IGenericServerWrapper;
 import com.graphaware.runtime.module.RuntimeModule;
 import com.graphaware.runtime.module.RuntimeModuleBootstrapper;
 import java.lang.reflect.Proxy;
@@ -59,24 +60,19 @@ public class EsBootstrapper implements RuntimeModuleBootstrapper
       configuration = configuration.withIndexName(config.get(ES_INDEXNAME));
       LOG.info("indexName set to {}", configuration.getIndexName());
     }
-    IGenericWrapper indexWrapper = null;
+    IGenericClientWrapper indexWrapper = null;
     try
     {
       CustomClassLoading loader = new CustomClassLoading(configuration.getClasspathDirectory());
-      Class<Object> loadedClass = (Class<Object>) loader.loadClass("com.graphaware.module.es.wrapper.ESWrapper");
-      indexWrapper = (IGenericWrapper) Proxy.newProxyInstance(this.getClass().getClassLoader(),
-              new Class[]
-              {
-                IGenericWrapper.class
-              },
+      Class<Object> loadedClass = (Class<Object>) loader.loadClass("com.graphaware.module.es.wrapper.ESClientWrapper");
+      indexWrapper = (IGenericClientWrapper) Proxy.newProxyInstance(this.getClass().getClassLoader(),
+              new Class[] { IGenericClientWrapper.class },
               new PassThroughProxyHandler(loadedClass.newInstance()));
-      //indexWrapper.startLocalClient();
       indexWrapper.startClient(configuration.getClusterName(), false);
-      LOG.warn("Client client = node.client();");
     }
     catch (Exception ex)
     {
-      LOG.error("Error while starting node", ex);
+      LOG.error("Error while starting el client node", ex);
     }
     return new EsModule(moduleId, configuration, database, indexWrapper);
   }

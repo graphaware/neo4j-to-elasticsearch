@@ -3,7 +3,8 @@ package com.graphaware.module.es;
 
 import com.graphaware.module.es.util.CustomClassLoading;
 import com.graphaware.module.es.util.PassThroughProxyHandler;
-import com.graphaware.module.es.wrapper.IGenericWrapper;
+import com.graphaware.module.es.wrapper.IGenericClientWrapper;
+import com.graphaware.module.es.wrapper.IGenericServerWrapper;
 import com.graphaware.runtime.GraphAwareRuntime;
 import com.graphaware.runtime.GraphAwareRuntimeFactory;
 import com.graphaware.test.integration.NeoServerIntegrationTest;
@@ -14,7 +15,6 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.test.TestGraphDatabaseFactory;
 
 import java.lang.reflect.Proxy;
-import java.net.MalformedURLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,7 +22,7 @@ public class ModuleTest extends NeoServerIntegrationTest
 {
   private static Logger LOG = LoggerFactory.getLogger(ModuleTest.class);
   private GraphDatabaseService database;
-  private IGenericWrapper indexWrapper;
+  private IGenericClientWrapper indexWrapper;
 
   @Before
   public void setUp()
@@ -32,11 +32,11 @@ public class ModuleTest extends NeoServerIntegrationTest
     try
     {
       CustomClassLoading loader = new CustomClassLoading(classpath);
-      Class<Object> loadedClass = (Class<Object>) loader.loadClass("com.graphaware.module.es.wrapper.ESWrapper");
-      indexWrapper = (IGenericWrapper) Proxy.newProxyInstance(this.getClass().getClassLoader(),
+      Class<Object> loadedClass = (Class<Object>) loader.loadClass("com.graphaware.module.es.wrapper.ESClientWrapper");
+      indexWrapper = (IGenericClientWrapper) Proxy.newProxyInstance(this.getClass().getClassLoader(),
               new Class[]
               {
-                IGenericWrapper.class
+                IGenericClientWrapper.class
               },
               new PassThroughProxyHandler(loadedClass.newInstance()));
       indexWrapper.startLocalClient();

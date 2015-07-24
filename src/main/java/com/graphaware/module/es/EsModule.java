@@ -16,7 +16,8 @@
 
 package com.graphaware.module.es;
 
-import com.graphaware.module.es.wrapper.IGenericWrapper;
+import com.graphaware.module.es.wrapper.IGenericClientWrapper;
+import com.graphaware.module.es.wrapper.IGenericServerWrapper;
 import com.graphaware.runtime.module.BaseTxDrivenModule;
 import com.graphaware.runtime.module.DeliberateTransactionRollbackException;
 import com.graphaware.tx.event.improved.api.ImprovedTransactionData;
@@ -38,14 +39,14 @@ public class EsModule extends BaseTxDrivenModule<Void>
 
   private final EsConfiguration esConfiguration;
   private final GraphDatabaseService database;
-  private final IGenericWrapper indexWrapper;
+  private final IGenericClientWrapper indexWrapper;
 
   /**
    * Construct a new UUID module.
    *
    * @param moduleId ID of the module.
    */
-  public EsModule(String moduleId, EsConfiguration configuration, GraphDatabaseService database, IGenericWrapper indexWrapper)
+  public EsModule(String moduleId, EsConfiguration configuration, GraphDatabaseService database, IGenericClientWrapper indexWrapper)
   {
     super(moduleId);
     this.esConfiguration = configuration;
@@ -70,20 +71,7 @@ public class EsModule extends BaseTxDrivenModule<Void>
   public void initialize(GraphDatabaseService database)
   {
     logger.warn("initialize es module ...");
-    //Preload everything
-//        new IterableInputBatchTransactionExecutor<>(
-//                database,
-//                BATCH_SIZE,
-//                new AllNodes(database, BATCH_SIZE),
-//                new UnitOfWork<Node>() {
-//                    @Override
-//                    public void execute(GraphDatabaseService database, Node node, int batchNumber, int stepNumber) {
-//                        if (getConfiguration().getInclusionPolicies().getNodeInclusionPolicy().include(node)) {
-//                            assignUuid(node);
-//                        }
-//                    }
-//                }
-//        ).execute();
+    //Preload already existing node
   }
 
   /**

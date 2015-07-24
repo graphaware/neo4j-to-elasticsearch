@@ -3,8 +3,8 @@ package com.graphaware.module.es;
 
 import com.graphaware.module.es.util.CustomClassLoading;
 import com.graphaware.module.es.util.PassThroughProxyHandler;
-import com.graphaware.module.es.wrapper.ESWrapper;
-import com.graphaware.module.es.wrapper.IGenericWrapper;
+import com.graphaware.module.es.wrapper.ESServerWrapper;
+import com.graphaware.module.es.wrapper.IGenericServerWrapper;
 import com.graphaware.test.integration.NeoServerIntegrationTest;
 import java.io.File;
 import org.eclipse.jetty.http.HttpStatus;
@@ -23,17 +23,18 @@ public class EsModuleEndToEndTest extends NeoServerIntegrationTest
   private static final Logger LOG = LoggerFactory.getLogger(EsModuleEndToEndTest.class);
 
   private static String ELASTICSEARCH_URL = "http://localhost:9200";
-  private IGenericWrapper indexWrapper;
+  private IGenericServerWrapper embeddedServer;
 
   @Override
   protected String neo4jConfigFile()
   {
     return "neo4j-es.properties";
   }
-  
-  protected String baseUrl() {
-        return "http://localhost:7474";
-    }
+
+  protected String baseUrl()
+  {
+    return "http://localhost:7474";
+  }
 
   @Override
   public void setUp() throws IOException, InterruptedException
@@ -44,14 +45,14 @@ public class EsModuleEndToEndTest extends NeoServerIntegrationTest
     try
     {
       CustomClassLoading loader = new CustomClassLoading(classpath);
-      Class<Object> loadedClass = (Class<Object>) loader.loadClass("com.graphaware.module.es.wrapper.ESWrapper");
-      indexWrapper = (IGenericWrapper) Proxy.newProxyInstance(this.getClass().getClassLoader(),
+      Class<Object> loadedClass = (Class<Object>) loader.loadClass("com.graphaware.module.es.wrapper.ESServerWrapper");
+      embeddedServer = (IGenericServerWrapper) Proxy.newProxyInstance(this.getClass().getClassLoader(),
               new Class[]
               {
-                IGenericWrapper.class
+                IGenericServerWrapper.class
               },
               new PassThroughProxyHandler(loadedClass.newInstance()));
-      indexWrapper.startTmpServer();
+      embeddedServer.startEmbdeddedServer();
     }
     catch (Exception ex)
     {
@@ -66,7 +67,7 @@ public class EsModuleEndToEndTest extends NeoServerIntegrationTest
   {
     super.tearDown();
 
-    indexWrapper.stopClient();
+    embeddedServer.stopEmbdeddedServer();
   }
 
   @Test
@@ -83,14 +84,18 @@ public class EsModuleEndToEndTest extends NeoServerIntegrationTest
     boolean res = response.contains("\"found\":true");
     assertEquals(res, true);
   }
-  
-      private void deleteDataDirectory() {
-        try {
-            FileUtils.deleteDirectory(new File(ESWrapper.DEFAULT_DATA_DIRECTORY));
-            FileUtils.deleteDirectory(new File("data"));
-        } catch (IOException e) {
-            throw new RuntimeException("Could not delete data directory of embedded elasticsearch server", e);
-        }
+
+  private void deleteDataDirectory()
+  {
+    try
+    {
+      FileUtils.deleteDirectory(new File(ESServerWrapper.DEFAULT_DATA_DIRECTORY));
+      FileUtils.deleteDirectory(new File("data"));
     }
+    catch (IOException e)
+    {
+      throw new RuntimeException("Could not delete data directory of embedded elasticsearch server", e);
+    }
+  }
 
 }
