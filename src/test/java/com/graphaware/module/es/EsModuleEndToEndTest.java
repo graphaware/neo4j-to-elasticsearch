@@ -39,7 +39,7 @@ public class EsModuleEndToEndTest extends NeoServerIntegrationTest
   @Override
   public void setUp() throws IOException, InterruptedException
   {
-    deleteDataDirectory();
+    TestUtil.deleteDataDirectory();
     final String classpath = System.getProperty("classpath");
     LOG.warn("classpath: " + classpath);
     try
@@ -66,8 +66,8 @@ public class EsModuleEndToEndTest extends NeoServerIntegrationTest
   public void tearDown() throws IOException, InterruptedException
   {
     super.tearDown();
-
     embeddedServer.stopEmbdeddedServer();
+    TestUtil.deleteDataDirectory();
   }
 
   @Test
@@ -83,19 +83,6 @@ public class EsModuleEndToEndTest extends NeoServerIntegrationTest
     String response = httpClient.get(ELASTICSEARCH_URL + "/neo4jes/node/0", HttpStatus.OK_200);
     boolean res = response.contains("\"found\":true");
     assertEquals(res, true);
-  }
-
-  private void deleteDataDirectory()
-  {
-    try
-    {
-      FileUtils.deleteDirectory(new File(ESServerWrapper.DEFAULT_DATA_DIRECTORY));
-      FileUtils.deleteDirectory(new File("data"));
-    }
-    catch (IOException e)
-    {
-      throw new RuntimeException("Could not delete data directory of embedded elasticsearch server", e);
-    }
   }
 
 }

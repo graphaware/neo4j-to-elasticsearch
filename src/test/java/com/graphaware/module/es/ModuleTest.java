@@ -29,6 +29,7 @@ public class ModuleTest extends NeoServerIntegrationTest
   {
     final String classpath = System.getProperty("classpath");
     LOG.warn("classpath: " + classpath);
+    TestUtil.deleteDataDirectory();
     try
     {
       CustomClassLoading loader = new CustomClassLoading(classpath);
@@ -53,6 +54,7 @@ public class ModuleTest extends NeoServerIntegrationTest
   public void tearDown()
   {
     database.shutdown();
+    TestUtil.deleteDataDirectory();
   }
 
   @Test
