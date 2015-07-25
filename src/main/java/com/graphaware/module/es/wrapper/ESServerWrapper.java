@@ -6,7 +6,12 @@
 
 package com.graphaware.module.es.wrapper;
 
+import com.esotericsoftware.minlog.Log;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.node.Node;
 import static org.elasticsearch.node.NodeBuilder.*;
@@ -31,8 +36,10 @@ public class ESServerWrapper implements IGenericServerWrapper
   public void startEmbdeddedServer()
   {
     final ClassLoader currentClassLoader = this.getClass().getClassLoader();
-    
-    Executors.newSingleThreadExecutor().execute(new Runnable()
+    final CountDownLatch done = new CountDownLatch(1);
+    final ExecutorService executor = Executors.newSingleThreadExecutor();
+
+    executor.execute(new Runnable()
     {
       @Override
       public void run()
@@ -49,6 +56,8 @@ public class ESServerWrapper implements IGenericServerWrapper
                           .put("cluster.name", "neo4j-elasticsearch"))
                   .node();
           embeddedNode.start();
+          Log.warn("Embedded ElasticSearch started ...");
+          done.countDown();
         }
         catch (Exception e)
         {
@@ -56,6 +65,16 @@ public class ESServerWrapper implements IGenericServerWrapper
         }
       }
     });
+    try
+    {
+      Log.warn("Waiting for embedded startup completion ...");
+      done.await(20, TimeUnit.SECONDS);
+      Log.warn("... time is up!");
+    }
+    catch (InterruptedException ex)
+    {
+      Log.error("Error while waiting");
+    }
 
   }
   @Override

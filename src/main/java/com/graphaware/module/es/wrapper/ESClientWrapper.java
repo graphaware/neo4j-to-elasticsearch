@@ -6,11 +6,16 @@
 
 package com.graphaware.module.es.wrapper;
 
+import com.esotericsoftware.minlog.Log;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Executors;
+import java.util.logging.Level;
+import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.action.update.UpdateRequest;
+import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.ImmutableSettings;
@@ -44,7 +49,7 @@ public class ESClientWrapper implements IGenericClientWrapper
   @Override
   public void startLocalClient()
   {
-    
+
     LOG.warn("ClassLoader: " + this.getClass().getClassLoader());
     try
     {
@@ -103,36 +108,16 @@ public class ESClientWrapper implements IGenericClientWrapper
               .setSource(builder)
               .execute()
               .actionGet();
-      // Index name
       String _index = response.getIndex();
-// Type name
       String _type = response.getType();
-// Document ID (generated or not)
       String _id = response.getId();
-// Version (if it's the first time you index this document, you will get: 1)
       long _version = response.getVersion();
-// isCreated() is true if the document is a new one, false if it has been updated
       boolean created = response.isCreated();
       LOG.warn("index " + _index + " type: " + _type + " id: " + _id + " version: " + _version + " created: " + created);
-//      UpdateRequest updateRequest = new UpdateRequest(indexName, node, propertyValue.toString())
-//              .addScriptParam("newNodeId", nodeId)
-//              .script("ctx._source.nodes += newNodeId")
-//              .upsert(indexRequest);
-      //UpdateResponse result = client.update(updateRequest).get();
-      //ActionFuture<IndexResponse> result = client.index(indexRequest);
-      //LOG.warn("result: " + result);
-//      GetField field = result.getGetResult().field("nodes");
-//      List<Object> values = field.getValues();
-//      if (values != null && values.size() > 0)
-//      {
-//        logger.warning("Lookup result : " + values.size());
-//        for (Object value : values)
-//          logger.warning(">>>>>>>>: " + value);
-//      }
     }
     catch (Exception ex)
     {
-      LOG.error("Error while upserting", ex);
+      LOG.error("Error while inserting", ex);
     }
   }
   @Override
@@ -151,9 +136,44 @@ public class ESClientWrapper implements IGenericClientWrapper
       result = new long[values.size()];
       for (Object value : values)
       {
-        result[i++] = ((Long) value).longValue();
+        result[i++] = ((Long) value);
       }
     }
     return result == null ? null : result;
+  }
+  @Override
+  public void delete(String indexName, String type, long nodeId)
+  {
+    String nodeidValue = String.valueOf(nodeId);
+    DeleteResponse response = client.prepareDelete(indexName, type, nodeidValue)
+            .execute()
+            .actionGet();
+    LOG.warn("Delete result: " + response.isFound());
+  }
+  @Override
+  public void update(String indexName, String type, long nodeId, Map<String, String> propertiesValue)
+  {
+    try
+    {
+      String nodeValue = String.valueOf(nodeId);
+      XContentBuilder builder = jsonBuilder().startObject();
+      builder.field("nodeId", nodeValue);
+      
+      for (String propertyKey : propertiesValue.keySet())
+        builder.field(propertyKey, propertiesValue.get(propertyKey));
+      builder.endObject();
+      
+      UpdateRequest updateRequest = new UpdateRequest();
+      updateRequest.index(indexName);
+      updateRequest.type(type);
+      updateRequest.id(nodeValue);
+      updateRequest.doc(builder);
+      UpdateResponse updateResponse = client.update(updateRequest).get();
+      Log.warn("Update Result: " + updateResponse);
+    }
+    catch (Exception ex)
+    {
+      LOG.warn("Error while updating: " + nodeId, ex);
+    }
   }
 }

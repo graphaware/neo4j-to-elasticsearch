@@ -18,5 +18,7 @@ public interface IGenericClientWrapper
   public void startClient(String clustername, boolean client);
   public void stopClient();
   public void add(final String indexName, final String type, final long nodeId, final Map<String, String> propertiesValue);
+  public void delete(final String indexName, final String type, final long nodeId);
+  public void update(final String indexName, final String type, final long nodeId, final Map<String, String> propertiesValue);  
   public long[] lookup(final long indexId, final String indexName, final Object propertyValue);
 }

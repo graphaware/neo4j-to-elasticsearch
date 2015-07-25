@@ -20,6 +20,7 @@ import com.graphaware.module.es.wrapper.IGenericClientWrapper;
 import com.graphaware.module.es.wrapper.IGenericServerWrapper;
 import com.graphaware.runtime.module.BaseTxDrivenModule;
 import com.graphaware.runtime.module.DeliberateTransactionRollbackException;
+import com.graphaware.tx.event.improved.api.Change;
 import com.graphaware.tx.event.improved.api.ImprovedTransactionData;
 import java.util.HashMap;
 import java.util.Map;
@@ -91,21 +92,21 @@ public class EsModule extends BaseTxDrivenModule<Void>
       logger.warn("Adding node: " + node.getId());
       indexWrapper.add(esConfiguration.getIndexName(), "node", node.getId(), properties);
     }
-//
-//        for (Node node : transactionData.getAllDeletedNodes()) {
-//            uuidIndexer.deleteNodeFromIndex(node);
-//        }
-//
-//        //Check if the UUID has been modified or removed from the node and throw an error
-//        for (Change<Node> change : transactionData.getAllChangedNodes()) {
-//            if (!change.getCurrent().hasProperty(esConfiguration.getUuidProperty())) {
-//                throw new DeliberateTransactionRollbackException("You are not allowed to remove the " + esConfiguration.getUuidProperty() + " property");
-//            }
-//
-//            if (!change.getPrevious().getProperty(esConfiguration.getUuidProperty()).equals(change.getCurrent().getProperty(esConfiguration.getUuidProperty()))) {
-//                throw new DeliberateTransactionRollbackException("You are not allowed to modify the " + esConfiguration.getUuidProperty() + " property");
-//            }
-//        }
+
+    for (Node node : transactionData.getAllDeletedNodes())
+      indexWrapper.delete(esConfiguration.getIndexName(), "node", node.getId());
+
+    //Check if the UUID has been modified or removed from the node and throw an error
+    for (Change<Node> change : transactionData.getAllChangedNodes())
+    {
+      Map<String, String> properties = new HashMap<>();
+      Node node = change.getCurrent();
+      Iterable<String> propertyKeys = node.getPropertyKeys();
+      for (String key : propertyKeys)
+        properties.put(key, (String) node.getProperty(key));
+      logger.warn("Updating node: " + node.getId());
+      indexWrapper.update(esConfiguration.getIndexName(), "node", node.getId(), properties);
+    }
     return null;
   }
 }
