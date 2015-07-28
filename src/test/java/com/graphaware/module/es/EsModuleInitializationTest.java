@@ -5,6 +5,7 @@ import com.graphaware.module.es.util.CustomClassLoading;
 import com.graphaware.module.es.util.PassThroughProxyHandler;
 import com.graphaware.module.es.wrapper.IGenericServerWrapper;
 import com.graphaware.test.integration.NeoServerIntegrationTest;
+import com.graphaware.test.util.TestHttpClient;
 import org.eclipse.jetty.http.HttpStatus;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -16,23 +17,28 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.assertEquals;
 import org.neo4j.shell.util.json.JSONObject;
 
-public class EsModuleEndToEndTest extends NeoServerIntegrationTest
+public class EsModuleInitializationTest extends NeoServerIntegrationTest
 {
 
-  private static final Logger LOG = LoggerFactory.getLogger(EsModuleEndToEndTest.class);
+  private static final Logger LOG = LoggerFactory.getLogger(EsModuleInitializationTest.class);
 
   private static String ELASTICSEARCH_URL = "http://localhost:9200";
   private IGenericServerWrapper embeddedServer;
+  
+  private String neo4jConfigFile;
+  private String neo4jConfigServerFile;
+  
+  
 
   @Override
   protected String neo4jConfigFile()
   {
-    return "neo4j-es.properties";
+    return neo4jConfigFile ;
   }
   
   @Override
    protected String neo4jServerConfigFile() {
-        return "neo4j-server-es.properties";
+        return neo4jConfigServerFile;
     }
 
   protected String baseUrl()
@@ -44,6 +50,29 @@ public class EsModuleEndToEndTest extends NeoServerIntegrationTest
   public void setUp() throws IOException, InterruptedException
   {
     TestUtil.deleteDataDirectory();
+
+  }
+
+  @Override
+  public void tearDown() throws IOException, InterruptedException
+  {
+
+    TestUtil.deleteDataDirectory();
+  }
+
+  @Test
+  public void testNewNode() throws InterruptedException, IOException
+  {
+    neo4jConfigFile = "neo4j.properties";
+    neo4jConfigServerFile = "neo4j-server.properties";
+    super.setUp();
+    
+    httpClient.executeCypher(baseUrl(), "CREATE (c:Car {name:'Tesla Model S'})");
+    httpClient.executeCypher(baseUrl(), "CREATE (c:Car {name:'Ferrari 458'})");
+    httpClient.executeCypher(baseUrl(), "CREATE (c:Car {name:'Maserati Ghibli'})");
+
+    super.tearDown();
+    
     final String classpath = System.getProperty("classpath");
     LOG.warn("classpath: " + classpath);
     try
@@ -62,55 +91,43 @@ public class EsModuleEndToEndTest extends NeoServerIntegrationTest
     {
       LOG.warn("Error while creating and starting client", ex);
     }
-
-    super.setUp();
-  }
-
-  @Override
-  public void tearDown() throws IOException, InterruptedException
-  {
-    super.tearDown();
-    embeddedServer.stopEmbdeddedServer();
-    TestUtil.deleteDataDirectory();
-  }
-
-  @Test
-  public void testNewNode() throws InterruptedException
-  {
-    /*
-     * check nodes status
-     * http://localhost:9200/_cat/indices?v
-     * http://localhost:9200/_cluster/health?pretty=true
-     *    
-     */
-    String executeCypher = httpClient.executeCypher(baseUrl(), "CREATE (c:Car {name:'Tesla Model S'})");
-    String response = httpClient.get(ELASTICSEARCH_URL + "/neo4jes/node/0", HttpStatus.OK_200);
-    boolean res = response.contains("\"found\":true");
+    
+    neo4jConfigFile = "neo4j-es.properties";
+    neo4jConfigServerFile = "neo4j-server-es.properties";
+    
+    TestHttpClient tmpHttpClient = createHttpClient();
+    String response = tmpHttpClient.get(ELASTICSEARCH_URL + "/neo4jes/node/0", HttpStatus.NOT_FOUND_404);
+    boolean res = response.contains("IndexMissingException");
     assertEquals(res, true);
     
-    executeCypher = httpClient.executeCypher(baseUrl(), "CREATE (c:Car {name:'Ferrari 458'})");
+    super.setUp();
+    
+    response = httpClient.get(ELASTICSEARCH_URL + "/neo4jes/node/0", HttpStatus.OK_200);
+     res = response.contains("\"found\":true");
+    assertEquals(res, true);
+    
     response = httpClient.get(ELASTICSEARCH_URL + "/neo4jes/node/1", HttpStatus.OK_200);
     res = response.contains("\"found\":true");
     assertEquals(res, true);
     
-    executeCypher = httpClient.executeCypher(baseUrl(), "CREATE (c:Car {name:'Maserati Ghibli'})");
     response = httpClient.get(ELASTICSEARCH_URL + "/neo4jes/node/2", HttpStatus.OK_200);
     res = response.contains("\"found\":true");
     assertEquals(res, true);
     
-    executeCypher = httpClient.executeCypher(baseUrl(), "MATCH (c:Car {name:'Tesla Model S'}) DELETE c");
+    httpClient.executeCypher(baseUrl(), "MATCH (c:Car {name:'Tesla Model S'}) DELETE c");
     response = httpClient.get(ELASTICSEARCH_URL + "/neo4jes/node/0", HttpStatus.NOT_FOUND_404);
     res = response.contains("\"found\":false");
     assertEquals(res, true);
 
-    executeCypher = httpClient.executeCypher(baseUrl(), "MATCH (c:Car {name:'Maserati Ghibli'}) set c.name = 'Tesla Model S' ");
+    httpClient.executeCypher(baseUrl(), "MATCH (c:Car {name:'Maserati Ghibli'}) set c.name = 'Tesla Model S' ");
     //Wait for complete index propagation
     TimeUnit.SECONDS.sleep(3);
     response = httpClient.get(ELASTICSEARCH_URL + "/neo4jes/node/_search?q=nodeId:2", HttpStatus.OK_200);
     res = response.contains("Tesla");
     assertEquals(res, true);
 
-    
+    super.tearDown();
+    embeddedServer.stopEmbdeddedServer();
   }
   
 //  @Test

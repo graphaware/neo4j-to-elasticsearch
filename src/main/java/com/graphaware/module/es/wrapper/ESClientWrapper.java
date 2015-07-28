@@ -10,9 +10,12 @@ import com.esotericsoftware.minlog.Log;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.action.update.UpdateResponse;
@@ -92,7 +95,7 @@ public class ESClientWrapper implements IGenericClientWrapper
       node.close();
   }
 
-  public void add(final String indexName, final String type, final long nodeId, final Map<String, String> propertiesValue)
+  public void add(final String indexName, final String type, final long nodeId, final Map<String, String> propertiesValue, boolean upsert)
   {
     try
     {
@@ -104,21 +107,44 @@ public class ESClientWrapper implements IGenericClientWrapper
         builder.field(propertyKey, propertiesValue.get(propertyKey));
       builder.endObject();
 
-      IndexResponse response = client.prepareIndex(indexName, type, nodeValue)
-              .setSource(builder)
-              .execute()
-              .actionGet();
-      String _index = response.getIndex();
-      String _type = response.getType();
-      String _id = response.getId();
-      long _version = response.getVersion();
-      boolean created = response.isCreated();
-      LOG.warn("index " + _index + " type: " + _type + " id: " + _id + " version: " + _version + " created: " + created);
+      if (!upsert)
+        insert(indexName, type, nodeValue, builder);
+      else
+        upsert(indexName, type, nodeValue, builder);
     }
     catch (Exception ex)
     {
       LOG.error("Error while inserting", ex);
+      //here we should do something rise error (but this will cause issue in the transaction)
     }
+  }
+  private void upsert(final String indexName, final String type, String nodeValue, XContentBuilder builder) throws InterruptedException, ExecutionException
+  {
+    IndexRequest indexRequest = new IndexRequest(indexName, type, nodeValue)
+            .source(builder);
+    UpdateRequest updateRequest = new UpdateRequest(indexName, type, nodeValue)
+            .doc(builder)
+            .upsert(indexRequest);
+    UpdateResponse response = client.update(updateRequest).get();
+    String _index = response.getIndex();
+    String _type = response.getType();
+    String _id = response.getId();
+    long _version = response.getVersion();
+    boolean created = response.isCreated();
+    LOG.warn("index " + _index + " type: " + _type + " id: " + _id + " version: " + _version + " created: " + created);
+  }
+  private void insert(final String indexName, final String type, String nodeValue, XContentBuilder builder) throws ElasticsearchException
+  {
+    IndexResponse response = client.prepareIndex(indexName, type, nodeValue)
+            .setSource(builder)
+            .execute()
+            .actionGet();
+    String _index = response.getIndex();
+    String _type = response.getType();
+    String _id = response.getId();
+    long _version = response.getVersion();
+    boolean created = response.isCreated();
+    LOG.warn("index " + _index + " type: " + _type + " id: " + _id + " version: " + _version + " created: " + created);
   }
   @Override
   public long[] lookup(long indexId, String indexName, Object propertyValue)
@@ -158,11 +184,11 @@ public class ESClientWrapper implements IGenericClientWrapper
       String nodeValue = String.valueOf(nodeId);
       XContentBuilder builder = jsonBuilder().startObject();
       builder.field("nodeId", nodeValue);
-      
+
       for (String propertyKey : propertiesValue.keySet())
         builder.field(propertyKey, propertiesValue.get(propertyKey));
       builder.endObject();
-      
+
       UpdateRequest updateRequest = new UpdateRequest();
       updateRequest.index(indexName);
       updateRequest.type(type);

@@ -24,6 +24,18 @@ public class ModuleTest extends NeoServerIntegrationTest
   private GraphDatabaseService database;
   private IGenericClientWrapper indexWrapper;
 
+  @Override
+  protected String neo4jConfigFile()
+  {
+    return "neo4j-es.properties";
+  }
+
+  @Override
+  protected String neo4jServerConfigFile()
+  {
+    return "neo4j-server-es.properties";
+  }
+
   @Before
   public void setUp()
   {

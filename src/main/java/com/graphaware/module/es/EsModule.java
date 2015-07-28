@@ -22,6 +22,9 @@ import com.graphaware.runtime.module.BaseTxDrivenModule;
 import com.graphaware.runtime.module.DeliberateTransactionRollbackException;
 import com.graphaware.tx.event.improved.api.Change;
 import com.graphaware.tx.event.improved.api.ImprovedTransactionData;
+import com.graphaware.tx.executor.batch.IterableInputBatchTransactionExecutor;
+import com.graphaware.tx.executor.batch.UnitOfWork;
+import com.graphaware.tx.executor.input.AllNodes;
 import java.util.HashMap;
 import java.util.Map;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -36,6 +39,7 @@ import org.slf4j.LoggerFactory;
 public class EsModule extends BaseTxDrivenModule<Void>
 {
 
+  private static final int BATCH_SIZE = 1000;
   private static final Logger logger = LoggerFactory.getLogger(EsModule.class);
 
   private final EsConfiguration esConfiguration;
@@ -72,6 +76,22 @@ public class EsModule extends BaseTxDrivenModule<Void>
   public void initialize(GraphDatabaseService database)
   {
     logger.warn("initialize es module ...");
+    new IterableInputBatchTransactionExecutor<>(
+                database,
+                BATCH_SIZE,
+                new AllNodes(database, BATCH_SIZE),
+                new UnitOfWork<Node>() {
+                    @Override
+                    public void execute(GraphDatabaseService database, Node node, int batchNumber, int stepNumber) {
+                     Map<String, String> properties = new HashMap<>();
+                    Iterable<String> propertyKeys = node.getPropertyKeys();
+                    for (String key : propertyKeys)
+                      properties.put(key, (String) node.getProperty(key));
+                    logger.warn("Adding node: " + node.getId());
+                    indexWrapper.add(esConfiguration.getIndexName(), "node", node.getId(), properties, true);
+                  }
+                }
+        ).execute();
     //Preload already existing node
   }
 
@@ -90,7 +110,7 @@ public class EsModule extends BaseTxDrivenModule<Void>
       for (String key : propertyKeys)
         properties.put(key, (String) node.getProperty(key));
       logger.warn("Adding node: " + node.getId());
-      indexWrapper.add(esConfiguration.getIndexName(), "node", node.getId(), properties);
+      indexWrapper.add(esConfiguration.getIndexName(), "node", node.getId(), properties, false);
     }
 
     for (Node node : transactionData.getAllDeletedNodes())
