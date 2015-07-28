@@ -19,6 +19,9 @@ package com.graphaware.module.es;
 import com.graphaware.common.policy.InclusionPolicies;
 import com.graphaware.runtime.config.BaseTxDrivenModuleConfiguration;
 import com.graphaware.runtime.policy.InclusionPoliciesFactory;
+import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * {@link BaseTxDrivenModuleConfiguration} for
@@ -30,22 +33,26 @@ public class EsConfiguration extends BaseTxDrivenModuleConfiguration<EsConfigura
   private static final String DEFAULT_CLASSPATH_DIRECTORY = "esplugin";
   private static final String DEFAULT_INDEX_NAME = "neo4j";
   private static final String DEFAULT_CLUSTERNAME = "neo4j-elasticsearch";
+  private static final String DEFAULT_CLUSTERADDRES_HOST = "localhost";
+  private static final int DEFAULT_CLUSTERADDRES_PORT = 9300;
 
   private String classpathDirectory;
   private String indexName;
   private String clusterName;
+  private List<InetSocketAddress> addresses;
 
   protected EsConfiguration(InclusionPolicies inclusionPolicies)
   {
     super(inclusionPolicies);
   }
 
-  public EsConfiguration(InclusionPolicies inclusionPolicies, String classpathDirectory, String indexName, String clusterName)
+  public EsConfiguration(InclusionPolicies inclusionPolicies, String classpathDirectory, String indexName, String clusterName, List<InetSocketAddress> addresses)
   {
     super(inclusionPolicies);
     this.classpathDirectory = classpathDirectory;
     this.indexName = indexName;
     this.clusterName = clusterName;
+    this.addresses = addresses;
   }
 
   /**
@@ -62,7 +69,9 @@ public class EsConfiguration extends BaseTxDrivenModuleConfiguration<EsConfigura
    */
   public static EsConfiguration defaultConfiguration()
   {
-    return new EsConfiguration(InclusionPoliciesFactory.allBusiness(), DEFAULT_CLASSPATH_DIRECTORY, DEFAULT_INDEX_NAME, DEFAULT_CLUSTERNAME);
+    List<InetSocketAddress> addresses = new ArrayList<>();
+      addresses.add(new InetSocketAddress(DEFAULT_CLUSTERADDRES_HOST, DEFAULT_CLUSTERADDRES_PORT));
+    return new EsConfiguration(InclusionPoliciesFactory.allBusiness(), DEFAULT_CLASSPATH_DIRECTORY, DEFAULT_INDEX_NAME, DEFAULT_CLUSTERNAME, addresses);
   }
 
   /**
@@ -71,7 +80,7 @@ public class EsConfiguration extends BaseTxDrivenModuleConfiguration<EsConfigura
   @Override
   protected EsConfiguration newInstance(InclusionPolicies inclusionPolicies)
   {
-    return new EsConfiguration(inclusionPolicies, getClasspathDirectory(), getIndexName(), getClusterName());
+    return new EsConfiguration(inclusionPolicies, getClasspathDirectory(), getIndexName(), getClusterName(), getClusterAddresses());
   }
   public String getClasspathDirectory()
   {
@@ -87,6 +96,10 @@ public class EsConfiguration extends BaseTxDrivenModuleConfiguration<EsConfigura
   {
     return clusterName;
   }
+  public List<InetSocketAddress> getClusterAddresses()
+  {
+    return addresses;
+  }  
   
   
   /**
@@ -99,7 +112,7 @@ public class EsConfiguration extends BaseTxDrivenModuleConfiguration<EsConfigura
   
   public EsConfiguration withClasspathDirectoryProperty(String classpathDirectory)
   {
-    return new EsConfiguration(getInclusionPolicies(), classpathDirectory, getIndexName(), getClusterName());
+    return new EsConfiguration(getInclusionPolicies(), classpathDirectory, getIndexName(), getClusterName(), getClusterAddresses());
   }
 
   /**
@@ -111,12 +124,17 @@ public class EsConfiguration extends BaseTxDrivenModuleConfiguration<EsConfigura
    */
   public EsConfiguration withIndexName(String indexName)
   {
-    return new EsConfiguration(getInclusionPolicies(), getClasspathDirectory(), indexName, getClusterName());
+    return new EsConfiguration(getInclusionPolicies(), getClasspathDirectory(), indexName, getClusterName(), getClusterAddresses());
   }
   
   public EsConfiguration withClusterName(String clusterName)
   {
-    return new EsConfiguration(getInclusionPolicies(), getClasspathDirectory(), getIndexName(), clusterName);
+    return new EsConfiguration(getInclusionPolicies(), getClasspathDirectory(), getIndexName(), clusterName, getClusterAddresses());
+  }
+  
+  public EsConfiguration withClusterAddresses(List<InetSocketAddress> addresses)
+  {
+    return new EsConfiguration(getInclusionPolicies(), getClasspathDirectory(), getIndexName(), getClusterName(), addresses);
   }
 
   /**

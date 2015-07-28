@@ -1,6 +1,8 @@
 
 package com.graphaware.module.es.wrapper;
 
+import java.net.InetSocketAddress;
+import java.util.List;
 import java.util.Map;
 
 /*
@@ -15,7 +17,7 @@ import java.util.Map;
 public interface IGenericClientWrapper
 {
   public void startLocalClient();
-  public void startClient(String clustername, boolean client);
+  public void startClient(String clustername, List<InetSocketAddress> clusterURLs);
   public void stopClient();
   public void add(final String indexName, final String type, final long nodeId, final Map<String, String> propertiesValue, boolean upsert);
   public void delete(final String indexName, final String type, final long nodeId);

@@ -7,11 +7,10 @@
 package com.graphaware.module.es.wrapper;
 
 import com.esotericsoftware.minlog.Log;
-import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.logging.Level;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetResponse;
@@ -72,14 +71,16 @@ public class ESClientWrapper implements IGenericClientWrapper
   }
 
   @Override
-  public void startClient(String clustername, boolean clientNode)
+  public void startClient(String clustername, List<InetSocketAddress> clusterURLs)
   {
     try
     {
       Settings settings = ImmutableSettings.settingsBuilder()
               .put("cluster.name", clustername).build();
-      client = new TransportClient(settings)
-              .addTransportAddress(new InetSocketTransportAddress("localhost", 9300));
+      client = new TransportClient(settings);
+      for (InetSocketAddress address : clusterURLs)
+          ((TransportClient)client).addTransportAddress(new InetSocketTransportAddress(address));
+      //new InetSocketTransportAddress("localhost", 9300)
     }
     catch (Exception e)
     {
