@@ -6,6 +6,7 @@
 
 package com.graphaware.module.es;
 
+import com.graphaware.module.es.wrapper.ESClientWrapper;
 import com.graphaware.module.es.wrapper.ESServerWrapper;
 import java.io.File;
 import java.io.IOException;
@@ -22,6 +23,7 @@ public class TestUtil
     try
     {
       FileUtils.deleteDirectory(new File(ESServerWrapper.DEFAULT_DATA_DIRECTORY));
+      FileUtils.deleteDirectory(new File(ESClientWrapper.DEFAULT_DATA_DIRECTORY));
       FileUtils.deleteDirectory(new File("data"));
     }
     catch (IOException e)

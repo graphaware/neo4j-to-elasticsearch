@@ -7,6 +7,7 @@
 package com.graphaware.module.es.wrapper;
 
 import com.esotericsoftware.minlog.Log;
+import static com.graphaware.module.es.wrapper.ESClientWrapper.DEFAULT_DATA_DIRECTORY;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -24,7 +25,7 @@ import org.slf4j.LoggerFactory;
  */
 public class ESServerWrapper implements IGenericServerWrapper
 {
-  public static final String DEFAULT_DATA_DIRECTORY = "target/elasticsearch-data";
+  public static final String DEFAULT_DATA_DIRECTORY = "target/elasticsearch-data-server";
   private static final Logger LOG = LoggerFactory.getLogger(ESServerWrapper.class);
   private Node embeddedNode;
 
@@ -53,7 +54,8 @@ public class ESServerWrapper implements IGenericServerWrapper
                           .put("script.engine.groovy.inline.aggs", "on")
                           .put("script.inline", "on")
                           .put("script.indexed", "on")
-                          .put("cluster.name", "neo4j-elasticsearch"))
+                          .put("cluster.name", "neo4j-elasticsearch")
+                          .put("path.data", DEFAULT_DATA_DIRECTORY))
                   .node();
           embeddedNode.start();
           Log.warn("Embedded ElasticSearch started ...");
