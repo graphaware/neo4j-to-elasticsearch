@@ -18,6 +18,7 @@ package com.graphaware.module.es;
 
 import com.graphaware.module.es.util.CustomClassLoading;
 import com.graphaware.module.es.util.PassThroughProxyHandler;
+import com.graphaware.module.es.wrapper.ESClientWrapper;
 import com.graphaware.module.es.wrapper.IGenericClientWrapper;
 import com.graphaware.runtime.module.RuntimeModule;
 import com.graphaware.runtime.module.RuntimeModuleBootstrapper;
@@ -81,6 +82,12 @@ public class EsBootstrapper implements RuntimeModuleBootstrapper
       configuration = configuration.withClusterAddresses(addresses);
       
     }
+    IGenericClientWrapper indexWrapper = createWrapperCustomClassLoader(configuration);
+    return new EsModule(moduleId, configuration, database, indexWrapper);
+  }
+  
+  private IGenericClientWrapper createWrapperCustomClassLoader(EsConfiguration configuration) throws RuntimeException
+  {
     IGenericClientWrapper indexWrapper = null;
     try
     {
@@ -96,6 +103,6 @@ public class EsBootstrapper implements RuntimeModuleBootstrapper
       LOG.error("Error while starting el client node", ex);
       throw new RuntimeException("Error while starting ElasticSearch client wrapper", ex);
     }
-    return new EsModule(moduleId, configuration, database, indexWrapper);
+    return indexWrapper;
   }
 }
