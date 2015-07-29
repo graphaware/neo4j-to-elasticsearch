@@ -18,7 +18,6 @@ package com.graphaware.module.es;
 
 import com.graphaware.module.es.util.CustomClassLoading;
 import com.graphaware.module.es.util.PassThroughProxyHandler;
-import com.graphaware.module.es.wrapper.ESClientWrapper;
 import com.graphaware.module.es.wrapper.IGenericClientWrapper;
 import com.graphaware.runtime.module.RuntimeModule;
 import com.graphaware.runtime.module.RuntimeModuleBootstrapper;
@@ -31,7 +30,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
-import org.elasticsearch.common.transport.InetSocketTransportAddress;
 
 /**
  * Bootstraps the {@link EsModule} in server mode.
