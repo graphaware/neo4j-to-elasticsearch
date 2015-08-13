@@ -1,5 +1,9 @@
+
 package com.graphaware.module.elasticsearch;
 
+import com.graphaware.integration.elasticsearch.wrapper.IGenericServerWrapper;
+import com.graphaware.integration.elasticsearch.util.CustomClassLoading;
+import com.graphaware.integration.elasticsearch.util.PassThroughProxyHandler;
 import io.searchbox.client.JestClient;
 import io.searchbox.client.JestClientFactory;
 import io.searchbox.client.JestResult;
@@ -12,54 +16,99 @@ import org.neo4j.test.TestGraphDatabaseFactory;
 import java.io.IOException;
 
 import static com.graphaware.runtime.RuntimeRegistry.getRuntime;
+import java.lang.reflect.Proxy;
 import static org.apache.commons.lang.Validate.isTrue;
 import static org.apache.commons.lang3.Validate.notNull;
+import org.junit.After;
+import org.junit.Before;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class ElasticSearchModuleIntegrationTest {
+public class ElasticSearchModuleIntegrationTest
+{
 
-    private static final String ES_HOST = "localhost";
-    private static final String ES_PORT = "9200";
-    private static final String ES_CONN = String.format("http://%s:%s", ES_HOST, ES_PORT);
-    private static final String ES_INDEX = "cars";
+  private static final String ES_HOST = "localhost";
+  private static final String ES_PORT = "9201";
+  private static final String ES_CONN = String.format("http://%s:%s", ES_HOST, ES_PORT);
+  private static final String ES_INDEX = "cars";
 
-    @Test
-    public void test() {
-        GraphDatabaseService database = new TestGraphDatabaseFactory().newImpermanentDatabaseBuilder()
-                .loadPropertiesFromFile(this.getClass().getClassLoader().getResource("neo4j-elasticsearch.properties").getPath())
-                .newGraphDatabase();
+  private IGenericServerWrapper embeddedServer;
+  
+  private static final Logger LOG = LoggerFactory.getLogger(ElasticSearchModuleIntegrationTest.class);
 
-        getRuntime(database).waitUntilStarted();
 
-        String nodeId;
-
-        final Label car = DynamicLabel.label("CAR");
-
-        try (Transaction tx = database.beginTx()) {
-            Node node = database.createNode(car);
-            node.setProperty("name", "Model S");
-            node.setProperty("manufacturer", "Tesla");
-            nodeId = String.valueOf(node.getId());
-            tx.success();
-        }
-
-        JestClientFactory factory = new JestClientFactory();
-
-        factory.setHttpClientConfig(new HttpClientConfig
-                .Builder(ES_CONN)
-                .multiThreaded(true)
-                .build());
-        JestClient client = factory.getObject();
-
-        Get get = new Get.Builder(ES_INDEX, nodeId).type(car.name()).build();
-        JestResult result = null;
-
-        try {
-            result = client.execute(get);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        notNull(result);
-        isTrue(result.isSucceeded());
+  @Before
+  public void setUp()
+  {
+    final String classpath = System.getProperty("classpath");
+    LOG.warn("classpath: " + classpath);
+    try
+    {
+      CustomClassLoading loader = new CustomClassLoading(classpath);
+      Class<Object> loadedClass = (Class<Object>) loader.loadClass("com.graphaware.integration.elasticsearch.wrapper.ESServerWrapper");
+      embeddedServer = (IGenericServerWrapper) Proxy.newProxyInstance(this.getClass().getClassLoader(),
+              new Class[]
+              {
+                IGenericServerWrapper.class
+              },
+              new PassThroughProxyHandler(loadedClass.newInstance()));
+      embeddedServer.startEmbdeddedServer();
     }
+    catch (Exception ex)
+    {
+      LOG.warn("Error while creating and starting client", ex);
+    }
+
+  }
+
+  @After
+  public void tearDown()
+  {
+    embeddedServer.stopEmbdeddedServer();
+  }
+
+  @Test
+  public void test()
+  {
+    GraphDatabaseService database = new TestGraphDatabaseFactory().newImpermanentDatabaseBuilder()
+            .loadPropertiesFromFile(this.getClass().getClassLoader().getResource("neo4j-elasticsearch.properties").getPath())
+            .newGraphDatabase();
+
+    getRuntime(database).waitUntilStarted();
+
+    String nodeId;
+
+    final Label car = DynamicLabel.label("CAR");
+
+    try (Transaction tx = database.beginTx())
+    {
+      Node node = database.createNode(car);
+      node.setProperty("name", "Model S");
+      node.setProperty("manufacturer", "Tesla");
+      nodeId = String.valueOf(node.getId());
+      tx.success();
+    }
+
+    JestClientFactory factory = new JestClientFactory();
+
+    factory.setHttpClientConfig(new HttpClientConfig.Builder(ES_CONN)
+            .multiThreaded(true)
+            .build());
+    JestClient client = factory.getObject();
+
+    Get get = new Get.Builder(ES_INDEX, nodeId).type(car.name()).build();
+    JestResult result = null;
+
+    try
+    {
+      result = client.execute(get);
+    }
+    catch (IOException e)
+    {
+      e.printStackTrace();
+    }
+
+    notNull(result);
+    isTrue(result.isSucceeded());
+  }
 }

@@ -18,34 +18,135 @@
         <dependency>
             <groupId>com.graphaware.neo4j</groupId>
             <artifactId>runtime</artifactId>
+            <scope>compile</scope>
         </dependency>
 
         <dependency>
             <groupId>com.graphaware.neo4j</groupId>
             <artifactId>tx-api</artifactId>
+            <scope>compile</scope>
         </dependency>
 
         <dependency>
             <groupId>com.graphaware.neo4j</groupId>
             <artifactId>tx-executor</artifactId>
+            <scope>compile</scope>
         </dependency>
 
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-webmvc</artifactId>
+            <scope>compile</scope>
         </dependency>
 
         <dependency>
             <groupId>com.graphaware.neo4j</groupId>
             <artifactId>server-community</artifactId>
+            <scope>compile</scope>
         </dependency>
 
         <dependency>
             <groupId>io.searchbox</groupId>
             <artifactId>jest</artifactId>
             <version>0.1.6</version>
+            <scope>compile</scope>
         </dependency>
-
+        <dependency>
+            <groupId>org.codelibs</groupId>
+            <artifactId>elasticsearch-cluster-runner</artifactId>
+            <version>1.7.0.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-core</artifactId>
+            <version>3.6.2</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
-
+    <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-dependencies</id>
+            <phase>compile</phase>
+            <goals>
+              <goal>copy-dependencies</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.basedir}/extlib</outputDirectory>
+              <excludeArtifactIds>logback-classic logback-core logback-access</excludeArtifactIds>
+              <overWriteReleases>true</overWriteReleases>
+              <overWriteSnapshots>true</overWriteSnapshots>
+              <overWriteIfNewer>true</overWriteIfNewer>
+              <includeScope>compile</includeScope>
+            </configuration>
+          </execution>
+          <execution>
+            <id>copy-model</id>
+            <phase>package</phase>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+            <configuration>
+              <overWriteReleases>true</overWriteReleases>
+              <overWriteSnapshots>false</overWriteSnapshots>
+              <overWriteIfNewer>true</overWriteIfNewer>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>org.apache.lucene</groupId>
+                  <artifactId>lucene-core</artifactId>
+                  <version>4.10.4</version>
+                  <overWrite>false</overWrite>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>com.graphaware.integration.elasticsearch</groupId>
+                  <artifactId>integration-elasticsearch</artifactId>
+                  <version>1.0-SNAPSHOT</version>
+                  <overWrite>true</overWrite>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>log4j</groupId>
+                  <artifactId>log4j</artifactId>
+                  <version>1.2.17</version>
+                  <overWrite>true</overWrite>
+                </artifactItem>
+              </artifactItems>
+              <outputDirectory>${project.basedir}/extlib</outputDirectory>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>2.18.1</version>
+        <configuration>
+          <skip>true</skip>
+          <argLine>-Xmx1024m -XX:MaxPermSize=256m</argLine>
+          <systemPropertyVariables>
+            <classpath>${project.basedir}/extlib</classpath>
+          </systemPropertyVariables>
+        </configuration>
+        <executions>
+          <execution>
+            <id>unittests</id>
+            <phase>install</phase>
+            <goals>
+              <goal>test</goal>
+            </goals>
+            <configuration>
+              <skip>false</skip>
+              <argLine>-Xmx1024m -XX:MaxPermSize=256m</argLine>
+              <includes>
+                <include>**/**/**/*Test.java</include>
+              </includes>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 </project>
