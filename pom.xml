@@ -67,6 +67,19 @@
     <build>
     <plugins>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>2.6</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <artifactId>maven-dependency-plugin</artifactId>
         <executions>
           <execution>
@@ -105,6 +118,13 @@
                   <groupId>com.graphaware.integration.elasticsearch</groupId>
                   <artifactId>integration-elasticsearch</artifactId>
                   <version>1.0-SNAPSHOT</version>
+                  <overWrite>true</overWrite>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>com.graphaware.integration.elasticsearch</groupId>
+                  <artifactId>integration-elasticsearch</artifactId>
+                  <version>1.0-SNAPSHOT</version>
+                  <type>test-jar</type>
                   <overWrite>true</overWrite>
                 </artifactItem>
                 <artifactItem>
