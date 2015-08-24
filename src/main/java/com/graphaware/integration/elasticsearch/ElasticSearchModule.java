@@ -47,7 +47,7 @@ public class ElasticSearchModule extends BaseTxDrivenModule<Void> {
         }
 
         for (Node node : transactionData.getAllCreatedNodes()) {
-            String label = node.getLabels().iterator().next().name().toString();
+            String label = node.getLabels().iterator().next().name();
             String id = String.valueOf(node.getId());
 
             Map<String, String> source = new LinkedHashMap<>();

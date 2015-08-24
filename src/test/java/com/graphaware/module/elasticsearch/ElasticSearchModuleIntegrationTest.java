@@ -30,7 +30,7 @@ public class ElasticSearchModuleIntegrationTest
   private static final String ES_HOST = "localhost";
   private static final String ES_PORT = "9201";
   private static final String ES_CONN = String.format("http://%s:%s", ES_HOST, ES_PORT);
-  private static final String ES_INDEX = "cars";
+  private static final String ES_INDEX = "neo4jes";
 
   private IGenericServerWrapper embeddedServer;
   
