@@ -15,6 +15,7 @@ import java.io.IOException;
 
 import com.graphaware.test.data.DatabasePopulator;
 import com.graphaware.test.data.GraphgenPopulator;
+import com.graphaware.test.integration.GraphAwareApiTest;
 import com.graphaware.test.integration.NeoServerIntegrationTest;
 import java.lang.reflect.Proxy;
 import org.eclipse.jetty.http.HttpStatus;
@@ -26,7 +27,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
 
 public class CompleteElasticSearchModuleIntegrationEndToEndTest
-        extends NeoServerIntegrationTest
+         extends GraphAwareApiTest
 {
 
   private static final String ES_HOST = "localhost";
@@ -38,25 +39,30 @@ public class CompleteElasticSearchModuleIntegrationEndToEndTest
 
   private static final Logger LOG = LoggerFactory.getLogger(CompleteElasticSearchModuleIntegrationEndToEndTest.class);
 
-  @Override
+  //@Override
   protected String neo4jConfigFile()
   {
     return "neo4j-elasticsearch-reco.properties";
   }
+  
+  protected String propertiesFile() {
+        return "src/test/resources/" + neo4jConfigFile();
+    }
 
-  @Override
+  //@Override
   protected String neo4jServerConfigFile()
   {
     return "neo4j-server-es.properties";
   }
 
-  protected String baseUrl()
+  @Override
+  public String baseUrl()
   {
-    return "http://localhost:7474";
+    return "http://localhost:7575";
   }
 
   @Before
-  public void setUp() throws IOException, InterruptedException
+  public void setUp() throws IOException, InterruptedException, Exception
   {
     TestUtil.deleteDataDirectory();
 
@@ -82,7 +88,7 @@ public class CompleteElasticSearchModuleIntegrationEndToEndTest
   }
 
   @After
-  public void tearDown() throws IOException, InterruptedException
+  public void tearDown() throws IOException, InterruptedException, Exception
   {
     embeddedServer.stopEmbdeddedServer();
     super.tearDown();
@@ -99,19 +105,19 @@ public class CompleteElasticSearchModuleIntegrationEndToEndTest
         return new ClassPathResource("demo-data-reduced.cyp").getFile().getAbsolutePath();
       }
       
-      @Override
-      public void populate(GraphDatabaseService database)
-      {
-        String separator = separator();
-
-        String[] statementGroups = statementGroups();
-        if (statementGroups == null)
-          return;
-        
-        for (String statementGroup : statementGroups)
-            for (String statement : statementGroup.split(separator))
-              httpClient.executeCypher(baseUrl(), statement);
-      }
+//      @Override
+//      public void populate(GraphDatabaseService database)
+//      {
+//        String separator = separator();
+//
+//        String[] statementGroups = statementGroups();
+//        if (statementGroups == null)
+//          return;
+//        
+//        for (String statementGroup : statementGroups)
+//            for (String statement : statementGroup.split(separator))
+//              httpClient.executeCypher(baseUrl(), statement);
+//      }
     };
   }
 
@@ -133,7 +139,7 @@ public class CompleteElasticSearchModuleIntegrationEndToEndTest
 //
 //    getRuntime(database).waitUntilStarted();
 
-    populateDatabase(null);
+    //populateDatabase(null);
 
     //String executeCypher = httpClient.executeCypher(baseUrl(), "MATCH (c:Car {name:'Tesla Model S'}) return c");
 
