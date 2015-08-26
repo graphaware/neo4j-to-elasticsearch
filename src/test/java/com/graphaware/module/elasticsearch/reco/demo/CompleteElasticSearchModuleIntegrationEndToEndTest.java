@@ -16,11 +16,11 @@ import java.io.IOException;
 import com.graphaware.test.data.DatabasePopulator;
 import com.graphaware.test.data.GraphgenPopulator;
 import com.graphaware.test.integration.GraphAwareApiTest;
-import com.graphaware.test.integration.NeoServerIntegrationTest;
+import io.searchbox.core.Search;
+import io.searchbox.core.SearchResult;
 import java.lang.reflect.Proxy;
 import org.eclipse.jetty.http.HttpStatus;
 import org.junit.After;
-import static org.junit.Assert.assertEquals;
 import org.junit.Before;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -126,12 +126,12 @@ public class CompleteElasticSearchModuleIntegrationEndToEndTest
     DatabasePopulator populator = databasePopulator();
     if (populator != null)
     {
-      populator.populate(database);
+      //populator.populate(database);
     }
   }
 
   @Test
-  public void test()
+  public void test() throws IOException
   {
 //    GraphDatabaseService database = new TestGraphDatabaseFactory().newImpermanentDatabaseBuilder()
 //            .loadPropertiesFromFile(this.getClass().getClassLoader().getResource("neo4j-elasticsearch.properties").getPath())
@@ -156,16 +156,47 @@ public class CompleteElasticSearchModuleIntegrationEndToEndTest
 //      tx.success();
 //    }
 
+    
+    
+    
+    String executeCypher = httpClient.executeCypher(baseUrl(), "MATCH (p:Person {firstname:'Kelly', lastname:'Krajcik'}) return p");
+    String response = httpClient.get(ES_CONN + "/" + ES_INDEX + "/Person/_search?q=firstname:Kelly", HttpStatus.OK_200);
+    
 //    JestClientFactory factory = new JestClientFactory();
 //
 //    factory.setHttpClientConfig(new HttpClientConfig.Builder(ES_CONN)
 //            .multiThreaded(true)
 //            .build());
 //    JestClient client = factory.getObject();
+//    
+//    String query = "{\n" +
+//"  \"bool\" : {\n" +
+//"    \"must\" : {\n" +
+//"      \"match_all\" : { }\n" +
+//"    },\n" +
+//"    \"should\" : {\n" +
+//"      \"match\" : {\n" +
+//"        \"__forUser\" : {\n" +
+//"          \"query\" : \"1000\",\n" +
+//"          \"type\" : \"boolean\"\n" +
+//"        }\n" +
+//"      }\n" +
+//"    }\n" +
+//"  }\n" +
+//"}";
+//    
+//    Search search = new Search.Builder(query)
+//                // multiple index or types can be added.
+//                .addIndex(ES_INDEX)
+//                .addType("Person")
+//                .build();
+//
+//
+//    SearchResult result = client.execute(search);
     
-    
-    String executeCypher = httpClient.executeCypher(baseUrl(), "MATCH (p:Person {firstname:'Kelly', lastname:'Krajcik'}) return p");
-    String response = httpClient.get(ES_CONN + "/" + ES_INDEX + "/Person/_search?q=firstname:Kelly", HttpStatus.OK_200);
+    //String response = httpClient.get(ES_CONN + "/" + ES_INDEX + "/Company/_search?q=firstname:Kelly", HttpStatus.OK_200);
+    //String result1 = httpClient.get(baseUrl() + "/recommendation/Durgan%20LLC?limit=2", HttpStatus.OK_200);
+        
     boolean res = response.contains("total\": 1");
     //assertEquals(res, true);
 
