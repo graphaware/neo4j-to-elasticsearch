@@ -1,6 +1,7 @@
 
 package com.graphaware.module.elasticsearch;
 
+import com.google.gson.JsonObject;
 import com.graphaware.integration.elasticsearch.wrapper.IGenericServerWrapper;
 import com.graphaware.integration.elasticsearch.util.CustomClassLoading;
 import com.graphaware.integration.elasticsearch.util.PassThroughProxyHandler;
@@ -76,29 +77,30 @@ public class ElasticSearchModuleIntegrationTest
 
     getRuntime(database).waitUntilStarted();
 
+    final Label label = DynamicLabel.label("CAR");
+    String nodeId = testNewNode(database, label);
+    testUpdateNode(database, label, nodeId);
+    testDeleteNode(database, label, nodeId);
+  }
+  
+  private String testNewNode(GraphDatabaseService database, final Label label)
+  {
     String nodeId;
-
-    final Label car = DynamicLabel.label("CAR");
-
     try (Transaction tx = database.beginTx())
     {
-      Node node = database.createNode(car);
+      Node node = database.createNode(label);
       node.setProperty("name", "Model S");
       node.setProperty("manufacturer", "Tesla");
       nodeId = String.valueOf(node.getId());
       tx.success();
     }
-
     JestClientFactory factory = new JestClientFactory();
-
     factory.setHttpClientConfig(new HttpClientConfig.Builder(ES_CONN)
             .multiThreaded(true)
             .build());
     JestClient client = factory.getObject();
-
-    Get get = new Get.Builder(ES_INDEX, nodeId).type(car.name()).build();
+    Get get = new Get.Builder(ES_INDEX, nodeId).type(label.name()).build();
     JestResult result = null;
-
     try
     {
       result = client.execute(get);
@@ -107,8 +109,59 @@ public class ElasticSearchModuleIntegrationTest
     {
       e.printStackTrace();
     }
-
     notNull(result);
     isTrue(result.isSucceeded());
+    return nodeId;
+  }
+  private void testUpdateNode(GraphDatabaseService database, Label label, String nodeId)
+  {
+    try (Transaction tx = database.beginTx())
+    {
+      database.getNodeById(0).setProperty("newProp", "newPropValue");
+      tx.success();
+    }
+    JestClientFactory factory = new JestClientFactory();
+    factory.setHttpClientConfig(new HttpClientConfig.Builder(ES_CONN)
+            .multiThreaded(true)
+            .build());
+    JestClient client = factory.getObject();
+    Get get = new Get.Builder(ES_INDEX, nodeId).type(label.name()).build();
+    JestResult result = null;
+    try
+    {
+      result = client.execute(get);
+    }
+    catch (IOException e)
+    {
+      e.printStackTrace();
+    }
+    notNull(result);
+    isTrue(result.isSucceeded());
+    isTrue(((JsonObject)(result.getJsonObject().get("_source"))).get("newProp") != null);
+  }
+  private void testDeleteNode(GraphDatabaseService database, Label label, String nodeId)
+  {
+    try (Transaction tx = database.beginTx())
+    {
+      database.getNodeById(0).delete();
+      tx.success();
+    }
+    JestClientFactory factory = new JestClientFactory();
+    factory.setHttpClientConfig(new HttpClientConfig.Builder(ES_CONN)
+            .multiThreaded(true)
+            .build());
+    JestClient client = factory.getObject();
+    Get get = new Get.Builder(ES_INDEX, nodeId).type(label.name()).build();
+    JestResult result = null;
+    try
+    {
+      result = client.execute(get);
+    }
+    catch (IOException e)
+    {
+      e.printStackTrace();
+    }
+    notNull(result);
+    isTrue(!result.getJsonObject().get("found").getAsBoolean());
   }
 }

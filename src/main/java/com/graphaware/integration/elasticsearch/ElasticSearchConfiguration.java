@@ -5,9 +5,10 @@ import com.graphaware.runtime.config.BaseTxDrivenModuleConfiguration;
 
 public class ElasticSearchConfiguration extends BaseTxDrivenModuleConfiguration<ElasticSearchConfiguration> {
 
-    private String elasticSearchUri;
-    private String elasticSearchPort;
-    private String elasticSearchIndex;
+    private final String elasticSearchUri;
+    private final String elasticSearchPort;
+    private final String elasticSearchIndex;
+    private boolean mandatory = true;
 
     public ElasticSearchConfiguration(InclusionPolicies inclusionPolicies, String elasticSearchUri, String elasticSearchPort, String elasticSearchIndex) {
         super(inclusionPolicies);
@@ -31,4 +32,10 @@ public class ElasticSearchConfiguration extends BaseTxDrivenModuleConfiguration<
     public String getElasticSearchIndex() {
         return this.elasticSearchIndex;
     }
+    
+    public boolean isMandatory()  {
+        return mandatory;
+    }
+    
+    
 }
