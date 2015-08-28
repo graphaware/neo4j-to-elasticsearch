@@ -32,6 +32,12 @@ import java.util.List;
 
 import static com.graphaware.common.util.IterableUtils.getSingle;
 import com.graphaware.module.elasticsearch.reco.demo.engine.RecruitingRecoEngine;
+import com.graphaware.reco.generic.config.MapBasedConfig;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.HashMap;
+import org.apache.commons.lang3.ArrayUtils;
 
 @Controller
 public class RecommendationController {
@@ -50,6 +56,18 @@ public class RecommendationController {
     public List<RecommendationVO> recommend(@PathVariable String name, @RequestParam(defaultValue = "10") int limit, @RequestParam(defaultValue = "") String config) {
         try (Transaction tx = database.beginTx()) {
             return convert(engine.recommend(findCompanyByName(name), parser.produceConfig(limit, config)));
+        }
+    }
+    
+    @RequestMapping("/recommendation/filter/{companyName}")
+    @ResponseBody
+    public List<RecommendationVO> filter(@PathVariable String companyName, @RequestParam("ids") long[] ids, @RequestParam(defaultValue = "10") int limit, @RequestParam(defaultValue = "") String config) {
+        try (Transaction tx = database.beginTx()) {            
+            Map<String, Object> extraParam = new HashMap<>();
+            Long[] longObjects = ArrayUtils.toObject(ids);
+            extraParam.put("ids", Arrays.asList(longObjects));
+            MapBasedConfig configuration = new MapBasedConfig(limit, extraParam);
+            return convert(engine.recommend(findCompanyByName(companyName), configuration));
         }
     }
 

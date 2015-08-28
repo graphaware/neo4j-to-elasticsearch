@@ -102,7 +102,7 @@ public class CompleteElasticSearchModuleIntegrationEndToEndTest
       @Override
       protected String file() throws IOException
       {
-        return new ClassPathResource("demo-data-reduced.cyp").getFile().getAbsolutePath();
+        return new ClassPathResource("demo-data.cyp").getFile().getAbsolutePath();
       }
       
 //      @Override
@@ -126,39 +126,13 @@ public class CompleteElasticSearchModuleIntegrationEndToEndTest
     DatabasePopulator populator = databasePopulator();
     if (populator != null)
     {
-      //populator.populate(database);
+      populator.populate(database);
     }
   }
 
   @Test
   public void test() throws IOException
   {
-//    GraphDatabaseService database = new TestGraphDatabaseFactory().newImpermanentDatabaseBuilder()
-//            .loadPropertiesFromFile(this.getClass().getClassLoader().getResource("neo4j-elasticsearch.properties").getPath())
-//            .newGraphDatabase();
-//
-//    getRuntime(database).waitUntilStarted();
-
-    //populateDatabase(null);
-
-    //String executeCypher = httpClient.executeCypher(baseUrl(), "MATCH (c:Car {name:'Tesla Model S'}) return c");
-
-//    String nodeId;
-//
-//    final Label car = DynamicLabel.label("CAR");
-
-//    try (Transaction tx = database.beginTx())
-//    {
-//      Node node = database.createNode(car);
-//      node.setProperty("name", "Model S");
-//      node.setProperty("manufacturer", "Tesla");
-//      nodeId = String.valueOf(node.getId());
-//      tx.success();
-//    }
-
-    
-    
-    
     String executeCypher = httpClient.executeCypher(baseUrl(), "MATCH (p:Person {firstname:'Kelly', lastname:'Krajcik'}) return p");
     String response = httpClient.get(ES_CONN + "/" + ES_INDEX + "/Person/_search?q=firstname:Kelly", HttpStatus.OK_200);
     
@@ -195,7 +169,7 @@ public class CompleteElasticSearchModuleIntegrationEndToEndTest
 //    SearchResult result = client.execute(search);
     
     //String response = httpClient.get(ES_CONN + "/" + ES_INDEX + "/Company/_search?q=firstname:Kelly", HttpStatus.OK_200);
-    //String result1 = httpClient.get(baseUrl() + "/recommendation/Durgan%20LLC?limit=2", HttpStatus.OK_200);
+    String result1 = httpClient.get(baseUrl() + "/graphaware/recommendation/filter/Durgan%20LLC?limit=10&ids=148,197,27,4,5,6,7,8,9", HttpStatus.OK_200);
         
     boolean res = response.contains("total\": 1");
     //assertEquals(res, true);

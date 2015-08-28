@@ -16,11 +16,12 @@
 
 package com.graphaware.module.elasticsearch.reco.demo.engine;
 
+import com.graphaware.module.elasticsearch.reco.demo.engine.web.CypherParametersEngine;
+import com.graphaware.reco.generic.config.Config;
 import com.graphaware.reco.generic.engine.RecommendationEngine;
 import com.graphaware.reco.generic.filter.BlacklistBuilder;
 import com.graphaware.reco.generic.filter.Filter;
 import com.graphaware.reco.generic.log.Logger;
-import com.graphaware.reco.generic.post.PostProcessor;
 import com.graphaware.reco.neo4j.engine.CypherEngine;
 import com.graphaware.reco.neo4j.engine.Neo4jTopLevelDelegatingRecommendationEngine;
 import com.graphaware.reco.neo4j.filter.CypherBlacklistBuilder;
@@ -36,8 +37,8 @@ public class RecruitingRecoEngine extends Neo4jTopLevelDelegatingRecommendationE
     protected List<RecommendationEngine<Node, Node>> engines() {
         return Arrays.<RecommendationEngine<Node, Node>>asList(
                 new RecruitPeopleBySkills(),
-                new CypherEngine("employed-contacts",
-                        "MATCH (c:Company)<-[:WORKS_FOR]-(p)-[:KNOWS]-(reco) WHERE id(c)={id} RETURN reco, p.name as name")
+                new CypherParametersEngine("employed-contacts",
+                        "MATCH (c:Company)<-[:WORKS_FOR]-(p)-[:KNOWS]-(reco) WHERE id(c)={id} and id(p) in {ids} RETURN reco, p.name as name")
         );
     }
 
