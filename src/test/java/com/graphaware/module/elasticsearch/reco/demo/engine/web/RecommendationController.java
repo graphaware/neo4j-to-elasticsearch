@@ -63,11 +63,7 @@ public class RecommendationController {
     @ResponseBody
     public List<RecommendationVO> filter(@PathVariable String companyName, @RequestParam("ids") long[] ids, @RequestParam(defaultValue = "10") int limit, @RequestParam(defaultValue = "") String config) {
         try (Transaction tx = database.beginTx()) {            
-            Map<String, Object> extraParam = new HashMap<>();
-            Long[] longObjects = ArrayUtils.toObject(ids);
-            extraParam.put("ids", Arrays.asList(longObjects));
-            MapBasedConfig configuration = new MapBasedConfig(limit, extraParam);
-            return convert(engine.recommend(findCompanyByName(companyName), configuration));
+            return convert(engine.recommend(findCompanyByName(companyName), parser.produceConfig(limit, config)), ids);
         }
     }
 
@@ -77,9 +73,22 @@ public class RecommendationController {
 
     private List<RecommendationVO> convert(List<Recommendation<Node>> recommendations) {
         List<RecommendationVO> result = new LinkedList<>();
-
+        
         for (Recommendation<Node> recommendation : recommendations) {
-            result.add(new RecommendationVO(recommendation.getItem().getId(), recommendation.getUuid(), recommendation.getItem().getProperty("name", "unknown").toString(), recommendation.getScore()));
+              result.add(new RecommendationVO(recommendation.getItem().getId(), recommendation.getUuid(), recommendation.getItem().getProperty("name", "unknown").toString(), recommendation.getScore()));
+        }
+
+        return result;
+    }
+    
+    private List<RecommendationVO> convert(List<Recommendation<Node>> recommendations, long[] ids) {
+        List<RecommendationVO> result = new LinkedList<>();
+        Long[] longObjects = ArrayUtils.toObject(ids);
+        List<Long> asList = Arrays.asList(longObjects);
+        
+        for (Recommendation<Node> recommendation : recommendations) {
+            if (asList.contains(recommendation.getItem().getId()))
+              result.add(new RecommendationVO(recommendation.getItem().getId(), recommendation.getUuid(), recommendation.getItem().getProperty("name", "unknown").toString(), recommendation.getScore()));
         }
 
         return result;

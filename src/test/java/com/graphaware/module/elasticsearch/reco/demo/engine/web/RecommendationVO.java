@@ -31,7 +31,7 @@ public class RecommendationVO {
     public RecommendationVO(long nodeId, String uuid, String item, Score score) {
         this.uuid = uuid;
         this.item = item;
-        this.score = score;
+        //this.score = score;
         this.nodeId = nodeId;
     }
 
@@ -51,13 +51,13 @@ public class RecommendationVO {
         this.item = item;
     }
 
-    public Score getScore() {
-        return score;
-    }
-
-    public void setScore(Score score) {
-        this.score = score;
-    }
+//    public Score getScore() {
+//        return score;
+//    }
+//
+//    public void setScore(Score score) {
+//        this.score = score;
+//    }
     
     public long getNodeId() {
       return nodeId;

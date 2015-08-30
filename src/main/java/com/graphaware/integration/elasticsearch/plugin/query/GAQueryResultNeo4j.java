@@ -5,12 +5,9 @@ package com.graphaware.integration.elasticsearch.plugin.query;
 import java.io.IOException;
 import java.util.Map;
 import com.graphaware.integration.elasticsearch.plugin.GAQueryResultNeo4jPlugin;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.search.SearchRequest;
@@ -44,7 +41,6 @@ public class GAQueryResultNeo4j extends AbstractComponent
 {
 
   public static final String INDEX_GA_ES_NEO4J_ENABLED = "index.ga-es-neo4j.enable";
-  public static final String INDEX_GA_ES_NEO4J_HOST = "index.ga-es-neo4j.host";
   private static final String DYNARANK_RERANK_ENABLE = "_rerank";
 
   protected final ESLogger logger;
@@ -57,7 +53,8 @@ public class GAQueryResultNeo4j extends AbstractComponent
 
   private Client client;
   
-  private String neo4jHost = "http://localhost:7474";
+  
+  private QueryResultBooster booster;
 
   @Inject
   public GAQueryResultNeo4j(final Settings settings,
@@ -69,7 +66,8 @@ public class GAQueryResultNeo4j extends AbstractComponent
     this.threadPool = threadPool;
     this.logger = Loggers.getLogger(GAQueryResultNeo4jPlugin.INDEX_LOGGER_NAME, settings);
     this.enabled = settings.getAsBoolean(INDEX_GA_ES_NEO4J_ENABLED, false);
-    this.neo4jHost = settings.get(INDEX_GA_ES_NEO4J_HOST, "http://localhost:7474");
+    this.booster = new Neo4JRecommenderBooster(settings);
+    
   }
 
   public SearchResponse process(SearchResponse response)
@@ -186,7 +184,7 @@ public class GAQueryResultNeo4j extends AbstractComponent
     Map<String, InternalSearchHit> hitIds = new HashMap<>();
     for (InternalSearchHit hit : searchHits)
       hitIds.put(hit.getId(), hit);
-    Collection<String> orderedList = externalDoReorder(hitIds.keySet(), reorderSize);
+    Collection<String> orderedList = externalDoReorder(hitIds.keySet(), reorderSize, userId);
     
     InternalSearchHit[] newSearchHits = new InternalSearchHit[reorderSize < searchHits.length ? reorderSize : searchHits.length];
     if (logger.isDebugEnabled())
@@ -502,20 +500,12 @@ public class GAQueryResultNeo4j extends AbstractComponent
     }
     return defaultValue;
   }
-  private Collection<String> externalDoReorder(Collection<String> hitIds, int reorderSize)
+  private Collection<String> externalDoReorder(Collection<String> hitIds, int reorderSize, String userId)
   {
     logger.warn("Query cypher for: " + hitIds);
-    Set<String> newSet = new HashSet<>();
-    int i = 0;
-    for (String key : hitIds)
-    {
-      if (i < reorderSize)
-        newSet.add(key);
-      else
-        break;
-      i++;
-    }
-    return newSet;
+    
+    List<String> newOrderedHotsId = booster.doReorder(userId, hitIds, reorderSize);
+    return newOrderedHotsId;
   }
   private String findUser(Object sourceAsMap)
   {

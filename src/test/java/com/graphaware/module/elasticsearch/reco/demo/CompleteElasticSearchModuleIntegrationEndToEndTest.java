@@ -136,12 +136,12 @@ public class CompleteElasticSearchModuleIntegrationEndToEndTest
     String executeCypher = httpClient.executeCypher(baseUrl(), "MATCH (p:Person {firstname:'Kelly', lastname:'Krajcik'}) return p");
     String response = httpClient.get(ES_CONN + "/" + ES_INDEX + "/Person/_search?q=firstname:Kelly", HttpStatus.OK_200);
     
-//    JestClientFactory factory = new JestClientFactory();
-//
-//    factory.setHttpClientConfig(new HttpClientConfig.Builder(ES_CONN)
-//            .multiThreaded(true)
-//            .build());
-//    JestClient client = factory.getObject();
+    JestClientFactory factory = new JestClientFactory();
+
+    factory.setHttpClientConfig(new HttpClientConfig.Builder(ES_CONN)
+            .multiThreaded(true)
+            .build());
+    JestClient client = factory.getObject();
 //    
 //    String query = "{\n" +
 //"  \"bool\" : {\n" +
@@ -159,14 +159,17 @@ public class CompleteElasticSearchModuleIntegrationEndToEndTest
 //"  }\n" +
 //"}";
 //    
-//    Search search = new Search.Builder(query)
-//                // multiple index or types can be added.
-//                .addIndex(ES_INDEX)
-//                .addType("Person")
-//                .build();
-//
-//
-//    SearchResult result = client.execute(search);
+    String query = "{" +
+          "\"match_all\" : {}" +
+        "}";
+    Search search = new Search.Builder(query)
+                // multiple index or types can be added.
+                .addIndex(ES_INDEX)
+                .addType("Person")
+                .build();
+
+
+    SearchResult result = client.execute(search);
     
     //String response = httpClient.get(ES_CONN + "/" + ES_INDEX + "/Company/_search?q=firstname:Kelly", HttpStatus.OK_200);
     String result1 = httpClient.get(baseUrl() + "/graphaware/recommendation/filter/Durgan%20LLC?limit=10&ids=148,197,27,4,5,6,7,8,9", HttpStatus.OK_200);

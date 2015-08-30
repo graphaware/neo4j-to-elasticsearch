@@ -37,8 +37,8 @@ public class RecruitingRecoEngine extends Neo4jTopLevelDelegatingRecommendationE
     protected List<RecommendationEngine<Node, Node>> engines() {
         return Arrays.<RecommendationEngine<Node, Node>>asList(
                 new RecruitPeopleBySkills(),
-                new CypherParametersEngine("employed-contacts",
-                        "MATCH (c:Company)<-[:WORKS_FOR]-(p)-[:KNOWS]-(reco) WHERE id(c)={id} and id(p) in {ids} RETURN reco, p.name as name")
+                new CypherEngine("employed-contacts",
+                        "MATCH (c:Company)<-[:WORKS_FOR]-(p)-[:KNOWS]-(reco) WHERE id(c)={id} RETURN reco, p.name as name")
         );
     }
 
