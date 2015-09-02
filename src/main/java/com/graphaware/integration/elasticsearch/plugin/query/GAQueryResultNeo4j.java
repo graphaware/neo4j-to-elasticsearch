@@ -264,7 +264,7 @@ public class GAQueryResultNeo4j extends AbstractComponent
 //            if (from + size > scriptInfo.getReorderSize()) {
 //                maxSize = from + size;
 //            }
-      int maxSize = 5;
+      int maxSize = Integer.MAX_VALUE; //from some parameters
       sourceAsMap.put("size", maxSize);
       sourceAsMap.put("from", 0);
 
@@ -283,7 +283,7 @@ public class GAQueryResultNeo4j extends AbstractComponent
       //String size = findSize(sourceAsMap);
 
       final ActionListener<SearchResponse> searchResponseListener
-              = createSearchResponseListener(listener, from, size, 5, startTime, userId);
+              = createSearchResponseListener(listener, from, size, 10, startTime, userId);
       return new ActionListener<SearchResponse>()
       {
         @Override

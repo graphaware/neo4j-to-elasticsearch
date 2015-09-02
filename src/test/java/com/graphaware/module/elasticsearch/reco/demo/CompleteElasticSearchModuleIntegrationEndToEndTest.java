@@ -19,8 +19,12 @@ import com.graphaware.test.integration.GraphAwareApiTest;
 import io.searchbox.core.Search;
 import io.searchbox.core.SearchResult;
 import java.lang.reflect.Proxy;
+import java.util.List;
 import org.eclipse.jetty.http.HttpStatus;
+import org.elasticsearch.search.SearchHits;
 import org.junit.After;
+import org.junit.Assert;
+import static org.junit.Assert.assertEquals;
 import org.junit.Before;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -159,9 +163,21 @@ public class CompleteElasticSearchModuleIntegrationEndToEndTest
 //"  }\n" +
 //"}";
 //    
+//    String query = "{" +
+//          "\"match_all\" : {}" +
+//        "}";
+    
     String query = "{" +
-          "\"match_all\" : {}" +
-        "}";
+"   \"filter\": {" +
+"      \"bool\": {" +
+"         \"must\": [" +
+"            {" +
+"                  \"match_all\": {}" +
+"            }" +
+"         ]\n" +
+"      }\n" +
+"   }\n" +
+"}";
     Search search = new Search.Builder(query)
                 // multiple index or types can be added.
                 .addIndex(ES_INDEX)
@@ -171,10 +187,19 @@ public class CompleteElasticSearchModuleIntegrationEndToEndTest
 
     SearchResult result = client.execute(search);
     
+    List<SearchResult.Hit<JestPersonResult, Void>> hits = result.getHits(JestPersonResult.class);
+    assertEquals(10, hits.size());
+    assertEquals("148", hits.get(0).source.getDocumentId());
+    assertEquals("16", hits.get(1).source.getDocumentId());
+    assertEquals("27", hits.get(2).source.getDocumentId());
+    //assertEquals(10, hits.hits().length);
+    //assertEquals("100", hits.hits()[0].id());
+    //assertEquals("91", hits.hits()[9].id());
+    
     //String response = httpClient.get(ES_CONN + "/" + ES_INDEX + "/Company/_search?q=firstname:Kelly", HttpStatus.OK_200);
     String result1 = httpClient.get(baseUrl() + "/graphaware/recommendation/filter/Durgan%20LLC?limit=10&ids=148,197,27,4,5,6,7,8,9", HttpStatus.OK_200);
         
-    boolean res = response.contains("total\": 1");
+    //boolean res = response.contains("total\": 1");
     //assertEquals(res, true);
 
 //    Get get = new Get.Builder(ES_INDEX, nodeId).type(car.name()).build();

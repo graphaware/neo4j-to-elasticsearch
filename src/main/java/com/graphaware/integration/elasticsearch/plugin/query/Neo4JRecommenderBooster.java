@@ -8,11 +8,15 @@ package com.graphaware.integration.elasticsearch.plugin.query;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.GenericType;
 import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.api.client.config.ClientConfig;
+import com.sun.jersey.api.client.config.DefaultClientConfig;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import javax.ws.rs.core.MediaType;
+import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
 import org.elasticsearch.common.settings.Settings;
 
 /**
@@ -37,7 +41,7 @@ public class Neo4JRecommenderBooster implements QueryResultBooster
             + "/graphaware/recommendation/filter/" 
             + "Durgan%20LLC"
             //+ nodeId 
-            + "?ids=";
+            + "?limit="+reorderSize+"&ids=";
     boolean isFirst = true;
     for (String id : hitIds)
     {
@@ -46,29 +50,37 @@ public class Neo4JRecommenderBooster implements QueryResultBooster
       isFirst = false;
       recommendationEndopint = recommendationEndopint.concat(id);
     }
-    WebResource resource = Client.create().resource( recommendationEndopint );
+    ClientConfig cfg = new DefaultClientConfig();
+    cfg.getClasses().add(JacksonJsonProvider.class);
+    WebResource resource = Client.create(cfg).resource( recommendationEndopint );
     ClientResponse response = resource
             .accept(MediaType.APPLICATION_JSON)
             .get(ClientResponse.class);
-    final String entity = response.getEntity(String.class);
+    GenericType<List<Neo4JResult>> type = new GenericType<List<Neo4JResult>>(){};
+    List<Neo4JResult> results = response.getEntity(type);
 
-    System.out.println(String.format("\n\n\n\n\n\n\nGET to [%s], status code [%d], returned data: "
-            + System.getProperty("line.separator") + "%s \n\n\n\n\n\n",
-            recommendationEndopint, response.getStatus(), entity));
+//    System.out.println(String.format("\n\n\n\n\n\n\nGET to [%s], status code [%d], returned data: "
+//            + System.getProperty("line.separator") + "%s \n\n\n\n\n\n",
+//            recommendationEndopint, response.getStatus(), entity));
 
     response.close();
-    
     List<String> newSet = new ArrayList<>();
-    int i = 0;
-    for (String key : hitIds)
-    {
-      if (i < reorderSize)
-        newSet.add(key);
-      else
-        break;
-      i++;
-    }
+    for (Neo4JResult res : results)
+      newSet.add(String.valueOf(res.getNodeId()));
+    
+//    List<String> newSet = new ArrayList<>();
+//    int i = 0;
+//    for (String key : hitIds)
+//    {
+//      if (i < reorderSize)
+//        newSet.add(key);
+//      else
+//        break;
+//      i++;
+//    }
+    
     return newSet;
   }
 
+  
 }
