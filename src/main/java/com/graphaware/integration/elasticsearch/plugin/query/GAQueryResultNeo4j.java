@@ -251,6 +251,18 @@ public class GAQueryResultNeo4j extends AbstractComponent
               .sourceAsMap(source);
       final int size = getInt(sourceAsMap.get("size"), 10);
       final int from = getInt(sourceAsMap.get("from"), 0);
+      
+      HashMap extParams = (HashMap)sourceAsMap.get("ga-params");
+      int reorderSize = 10;
+      String userId = "";
+      if (extParams != null)
+      {
+        userId = (String)extParams.get("recoTarget");
+        reorderSize = getInt(extParams.get("reorderSize"), 0);
+        sourceAsMap.remove("ga-params");
+      }
+      
+      
       if (size < 0 || from < 0)
       {
         return null;
@@ -276,14 +288,14 @@ public class GAQueryResultNeo4j extends AbstractComponent
 
       final XContentBuilder builder = XContentFactory
               .contentBuilder(Requests.CONTENT_TYPE);
-      String userId = findUser(sourceAsMap);
+      //String userId = findUser(sourceAsMap);
       builder.map(sourceAsMap);
       request.source(builder.bytes());
       
       //String size = findSize(sourceAsMap);
 
       final ActionListener<SearchResponse> searchResponseListener
-              = createSearchResponseListener(listener, from, size, 10, startTime, userId);
+              = createSearchResponseListener(listener, from, size, reorderSize, startTime, userId);
       return new ActionListener<SearchResponse>()
       {
         @Override

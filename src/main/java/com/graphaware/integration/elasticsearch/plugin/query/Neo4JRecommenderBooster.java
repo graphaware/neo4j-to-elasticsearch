@@ -39,8 +39,8 @@ public class Neo4JRecommenderBooster implements QueryResultBooster
   {
     String recommendationEndopint = neo4jHost 
             + "/graphaware/recommendation/filter/" 
-            + "Durgan%20LLC"
-            //+ nodeId 
+            //+ "Durgan%20LLC"
+            + nodeId 
             + "?limit="+reorderSize+"&ids=";
     boolean isFirst = true;
     for (String id : hitIds)

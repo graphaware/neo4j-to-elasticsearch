@@ -174,9 +174,13 @@ public class CompleteElasticSearchModuleIntegrationEndToEndTest
 "            {" +
 "                  \"match_all\": {}" +
 "            }" +
-"         ]\n" +
-"      }\n" +
-"   }\n" +
+"         ]" +
+"      }" +
+"   }," +
+"   \"ga-params\" :{" +
+"          \"recoTarget\": \"Durgan%20LLC\"," +
+"          \"reorderSize\": 10.0" +
+"      }" +
 "}";
     Search search = new Search.Builder(query)
                 // multiple index or types can be added.
