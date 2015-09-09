@@ -1,6 +1,7 @@
 
 package com.graphaware.module.elasticsearch.reco.demo;
 
+import com.graphaware.integration.elasticsearch.plugin.query.GAQueryResultNeo4j;
 import com.graphaware.integration.elasticsearch.wrapper.IGenericServerWrapper;
 import com.graphaware.integration.elasticsearch.util.CustomClassLoading;
 import com.graphaware.integration.elasticsearch.util.PassThroughProxyHandler;
@@ -19,11 +20,11 @@ import com.graphaware.test.integration.GraphAwareApiTest;
 import io.searchbox.core.Search;
 import io.searchbox.core.SearchResult;
 import java.lang.reflect.Proxy;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.eclipse.jetty.http.HttpStatus;
-import org.elasticsearch.search.SearchHits;
 import org.junit.After;
-import org.junit.Assert;
 import static org.junit.Assert.assertEquals;
 import org.junit.Before;
 import org.slf4j.Logger;
@@ -83,6 +84,9 @@ public class CompleteElasticSearchModuleIntegrationEndToEndTest
               },
               new PassThroughProxyHandler(loadedClass.newInstance()));
       embeddedServer.startEmbdeddedServer();
+      Map<String, Object> indexProperties = new HashMap<>();
+      indexProperties.put(GAQueryResultNeo4j.INDEX_GA_ES_NEO4J_REORDER_TYPE, "myIndexClass");
+      embeddedServer.createIndex(ES_INDEX, indexProperties);
     }
     catch (Exception ex)
     {

@@ -73,21 +73,6 @@ public class GAQueryResultNeo4jFilter implements ActionFilter
   public void apply(final String action, final ActionResponse response,
                     @SuppressWarnings("rawtypes") final ActionListener listener, final ActionFilterChain chain)
   {
-    if (SearchAction.INSTANCE.name().equals(action) && response instanceof SearchResponse)
-    {
-        logger.warn("Apply response called for action: " + action + " " + response);
-      
-//      SearchResponse searchResponse = (SearchResponse) response;
-//      SearchResponse newResponse = neo4jConnection.process(searchResponse);
-//      chain.proceed(action, newResponse, listener);
-//      logger.warn("Apply newResponse called for action: " + action + " " + response);
-//
-    }
-//    else
-//    {
-//      chain.proceed(action, response, listener);
-//
-//    }
     chain.proceed(action, response, listener);
   }
 

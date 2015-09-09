@@ -7,13 +7,17 @@
 package com.graphaware.integration.elasticsearch.wrapper;
 
 import com.esotericsoftware.minlog.Log;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner;
 import static org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner.newConfigs;
+import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.common.settings.ImmutableSettings;
+import static org.junit.Assert.assertTrue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,6 +84,18 @@ public class ESServerWrapper implements IGenericServerWrapper
       Log.error("Error while waiting");
     }
 
+  }
+  @Override
+  public void createIndex(String index, Map<String, Object> properties)
+  {
+    final ImmutableSettings.Builder builder = ImmutableSettings
+            .builder();
+    for (Map.Entry entry : properties.entrySet())
+      builder.put(entry.getKey(), entry.getValue());
+    
+    CreateIndexResponse createIndexResponse = runner
+                .createIndex(index, builder.build());
+          assertTrue(createIndexResponse.isAcknowledged());
   }
   @Override
   public void stopEmbdeddedServer()
