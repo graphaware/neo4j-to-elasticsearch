@@ -24,7 +24,7 @@ import java.util.*;
 
 public class ElasticSearchModule extends BaseTxDrivenModule<Void> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ElasticSearchBootstrapper.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ElasticSearchModuleBootstrapper.class);
 
     private final ElasticSearchConfiguration config;
 

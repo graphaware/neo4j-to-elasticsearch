@@ -17,6 +17,10 @@ public class ElasticSearchConfiguration extends BaseTxDrivenModuleConfiguration<
         this.elasticSearchIndex = elasticSearchIndex;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public ElasticSearchConfiguration newInstance(InclusionPolicies inclusionPolicies) {
         return new ElasticSearchConfiguration(inclusionPolicies, this.elasticSearchUri, this.elasticSearchPort, this.elasticSearchIndex);
     }
