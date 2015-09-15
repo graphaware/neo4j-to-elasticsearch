@@ -18,22 +18,22 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.graphaware.integration.elasticsearch</groupId>
+        <groupId>com.graphaware.integration.es</groupId>
         <artifactId>neo4j-es</artifactId>
-        <version>2.2.4.34.0-SNAPSHOT</version>
+        <version>0.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>integration-tests</artifactId>
 
-    <properties>
-        <elasticsearch.version>1.7.1</elasticsearch.version>
-    </properties>
+    <name>Integration Tests</name>
 
     <dependencies>
+
         <dependency>
             <groupId>com.graphaware.integration.elasticsearch</groupId>
             <artifactId>es-plugin</artifactId>
         </dependency>
+
         <dependency>
             <groupId>com.graphaware.integration.elasticsearch</groupId>
             <artifactId>neo4j-plugin</artifactId>
@@ -58,12 +58,7 @@
             <groupId>org.codelibs</groupId>
             <artifactId>elasticsearch-cluster-runner</artifactId>
         </dependency>
-        <!--<dependency>-->
-            <!--<groupId>org.apache.lucene</groupId>-->
-            <!--<artifactId>lucene-core</artifactId>-->
-            <!--<version>3.6.2</version>-->
-            <!--<scope>test</scope>-->
-        <!--</dependency>-->
+
         <dependency>
             <groupId>com.graphaware.neo4j</groupId>
             <artifactId>tests</artifactId>
@@ -73,32 +68,33 @@
             <groupId>io.searchbox</groupId>
             <artifactId>jest</artifactId>
         </dependency>
-    </dependencies>
-    <build>
 
-        <resources>
-            <resource>
-                <directory>src/main/resources</directory>
-                <filtering>true</filtering>
-                <includes>
-                    <include>**/*.properties</include>
-                </includes>
-            </resource>
-        </resources>
+    </dependencies>
+
+    <build>
+        <!--<resources>-->
+            <!--<resource>-->
+                <!--<directory>src/main/resources</directory>-->
+                <!--<filtering>true</filtering>-->
+                <!--<includes>-->
+                    <!--<include>**/*.properties</include>-->
+                <!--</includes>-->
+            <!--</resource>-->
+        <!--</resources>-->
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>2.6</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>test-jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
+            <!--<plugin>-->
+                <!--<groupId>org.apache.maven.plugins</groupId>-->
+                <!--<artifactId>maven-jar-plugin</artifactId>-->
+                <!--<version>2.6</version>-->
+                <!--<executions>-->
+                    <!--<execution>-->
+                        <!--<phase>package</phase>-->
+                        <!--<goals>-->
+                            <!--<goal>test-jar</goal>-->
+                        <!--</goals>-->
+                    <!--</execution>-->
+                <!--</executions>-->
+            <!--</plugin>-->
             <plugin>
                 <artifactId>maven-dependency-plugin</artifactId>
                 <executions>
@@ -111,12 +107,10 @@
                         <configuration>
                             <outputDirectory>${project.basedir}/extlib</outputDirectory>
                             <excludeArtifactIds>logback-classic logback-core logback-access</excludeArtifactIds>
-                            <!--<includeArtifactIds>elasticsearch-cluster-runner elasticsearch es-plugin</includeArtifactIds>-->
                             <overWriteReleases>true</overWriteReleases>
                             <overWriteSnapshots>true</overWriteSnapshots>
                             <overWriteIfNewer>true</overWriteIfNewer>
                             <includeScope>compile</includeScope>
-                            <excludeScope>test</excludeScope>
                         </configuration>
                     </execution>
                     <execution>
@@ -136,54 +130,34 @@
                                     <version>4.10.4</version>
                                     <overWrite>false</overWrite>
                                 </artifactItem>
-                                <!--<artifactItem>-->
-                                    <!--<groupId>junit</groupId>-->
-                                    <!--<artifactId>junit</artifactId>-->
-                                    <!--<version>4.11</version>-->
-                                    <!--<overWrite>false</overWrite>-->
-                                <!--</artifactItem>-->
-                                <!--<artifactItem>-->
-                                    <!--<groupId>com.graphaware.integration.elasticsearch</groupId>-->
-                                    <!--<artifactId>es-plugin</artifactId>-->
-                                    <!--<version>1.0-SNAPSHOT</version>-->
-                                    <!--<overWrite>true</overWrite>-->
-                                <!--</artifactItem>-->
-
                                 <artifactItem>
-                                    <groupId>com.graphaware.integration.elasticsearch</groupId>
+                                    <groupId>com.graphaware.integration.es</groupId>
                                     <artifactId>integration-tests</artifactId>
-                                    <version>2.2.4.34.0-SNAPSHOT</version>
+                                    <version>${project.version}</version>
                                     <overWrite>true</overWrite>
                                 </artifactItem>
-                                <!--<artifactItem>-->
-                                    <!--<groupId>com.sun.jersey</groupId>-->
-                                    <!--<artifactId>jersey-client</artifactId>-->
-                                    <!--<version>1.19</version>-->
-                                    <!--<overWrite>false</overWrite>-->
-                                <!--</artifactItem>-->
                                 <artifactItem>
                                     <groupId>log4j</groupId>
                                     <artifactId>log4j</artifactId>
                                     <version>1.2.17</version>
                                     <overWrite>false</overWrite>
                                 </artifactItem>
-                                <!--<artifactItem>-->
-                                    <!--<groupId>org.codelibs</groupId>-->
-                                    <!--<artifactId>elasticsearch-cluster-runner</artifactId>-->
-                                    <!--<version>1.7.0.0</version>-->
-                                    <!--<overWrite>false</overWrite>-->
-                                <!--</artifactItem>-->
-                                <!--<artifactItem>-->
-                                    <!--<groupId>org.elasticsearch</groupId>-->
-                                    <!--<artifactId>elasticsearch</artifactId>-->
-                                    <!--<version>${elasticsearch.version}</version>-->
-                                    <!--<overWrite>false</overWrite>-->
-                                <!--</artifactItem>-->
                             </artifactItems>
                             <outputDirectory>${project.basedir}/extlib</outputDirectory>
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-clean-plugin</artifactId>
+                <version>2.6.1</version>
+                <configuration>
+                    <filesets>
+                        <fileset>
+                            <directory>${project.basedir}/extlib</directory>
+                        </fileset>
+                    </filesets>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

@@ -4,16 +4,10 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.graphaware.integration.elasticsearch</groupId>
+    <groupId>com.graphaware.integration.es</groupId>
     <artifactId>neo4j-es</artifactId>
-    <version>2.2.4.34.0-SNAPSHOT</version>
+    <version>0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
-
-    <properties>
-        <elasticsearch.version>1.7.1</elasticsearch.version>
-        <java.version>1.7</java.version>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
 
     <modules>
         <module>es-plugin</module>
@@ -21,89 +15,67 @@
         <module>integration-tests</module>
     </modules>
 
-    <profiles>
-        <profile>
-            <id>release</id>
-            <activation>
-                <property>
-                    <name>performRelease</name>
-                    <value>true</value>
-                </property>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-source-plugin</artifactId>
-                        <version>2.2.1</version>
-                        <executions>
-                            <execution>
-                                <id>attach-sources</id>
-                                <goals>
-                                    <goal>jar-no-fork</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>2.9.1</version>
-                        <configuration>
-                            <aggregate>true</aggregate>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <id>attach-javadocs</id>
-                                <goals>
-                                    <goal>jar</goal>
-                                </goals>
-                            </execution>
-                            <execution>
-                                <id>aggregate</id>
-                                <goals>
-                                    <goal>aggregate</goal>
-                                </goals>
-                                <phase>site</phase>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.5</version>
-                        <executions>
-                            <execution>
-                                <id>sign-artifacts</id>
-                                <phase>verify</phase>
-                                <goals>
-                                    <goal>sign</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>doclint-java8-disable</id>
-            <activation>
-                <jdk>[1.8,)</jdk>
-            </activation>
+    <properties>
+        <java.version>1.7</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <neo4j.version>2.2.5</neo4j.version>
+        <elasticsearch.version>1.7.1</elasticsearch.version>
+    </properties>
 
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-javadoc-plugin</artifactId>
-                        <configuration>
-                            <additionalparam>-Xdoclint:none</additionalparam>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
+    <name>*** Neo4j Elasticsearch Integration Parent ***</name>
+    <description>Parent Project for GraphAware Enterprise-grade Neo4j-Elasticsearch Integration</description>
+
+    <url>http://graphaware.com</url>
+
+    <licenses>
+        <license>
+            <name>GNU General Public License, version 3</name>
+            <url>http://www.gnu.org/licenses/gpl-3.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <scm>
+        <connection>scm:git:git@github.com:graphaware/neo4j-es.git</connection>
+        <developerConnection>scm:git:git@github.com:graphaware/neo4j-es.git</developerConnection>
+        <url>git@github.com:graphaware/neo4j-es.git</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <developers>
+        <developer>
+            <id>alenegro</id>
+            <name>Alessandro Negro</name>
+            <email>alessandro@graphaware.com</email>
+        </developer>
+        <developer>
+            <id>bachmanm</id>
+            <name>Michal Bachman</name>
+            <email>neo4j-timetree@graphaware.com</email>
+        </developer>
+        <developer>
+            <id>mictech</id>
+            <name>Michal Tehnik</name>
+            <email>michal.tehnik@graphaware.com</email>
+        </developer>
+    </developers>
+
+    <ciManagement>
+        <url>https://travis-ci.org/graphaware/neo4j-es</url>
+        <system>Travis CI</system>
+    </ciManagement>
+
+    <inceptionYear>2015</inceptionYear>
+
+    <issueManagement>
+        <system>GitHub</system>
+        <url>https://github.com/graphaware/neo4j-es/issues</url>
+    </issueManagement>
+
+    <organization>
+        <name>Graph Aware Limited</name>
+        <url>http://graphaware.com</url>
+    </organization>
 
     <dependencyManagement>
         <dependencies>
@@ -118,14 +90,12 @@
                 <groupId>com.sun.jersey</groupId>
                 <artifactId>jersey-client</artifactId>
                 <version>1.19</version>
-                <!--<scope>provided</scope>-->
             </dependency>
             <dependency>
                 <groupId>org.codehaus.jackson</groupId>
                 <artifactId>jackson-jaxrs</artifactId>
                 <version>1.9.13</version>
             </dependency>
-
             <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
@@ -133,18 +103,21 @@
             </dependency>
 
             <!-- Integration Tests -->
-            <!-- Inter project dependencies -->
             <dependency>
                 <groupId>com.graphaware.integration.elasticsearch</groupId>
                 <artifactId>es-plugin</artifactId>
                 <version>1.0-SNAPSHOT</version>
-                <!--<scope>test</scope>-->
             </dependency>
             <dependency>
                 <groupId>com.graphaware.integration.elasticsearch</groupId>
                 <artifactId>neo4j-plugin</artifactId>
                 <version>2.2.4.34.0-SNAPSHOT</version>
                 <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.codelibs</groupId>
+                <artifactId>elasticsearch-cluster-runner</artifactId>
+                <version>1.7.0.0</version>
             </dependency>
             <dependency>
                 <groupId>com.graphaware.neo4j</groupId>
@@ -165,12 +138,6 @@
                 <scope>test</scope>
             </dependency>
             <dependency>
-                <groupId>org.codelibs</groupId>
-                <artifactId>elasticsearch-cluster-runner</artifactId>
-                <version>1.7.0.0</version>
-                <!--<scope>test</scope>-->
-            </dependency>
-            <dependency>
                 <groupId>org.apache.lucene</groupId>
                 <artifactId>lucene-core</artifactId>
                 <version>3.6.2</version>
@@ -182,16 +149,13 @@
                 <version>0.1.6</version>
                 <scope>test</scope>
             </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>1.7.12</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
-
-    <dependencies>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.7.12</version>
-        </dependency>
-    </dependencies>
 
     <build>
         <plugins>
