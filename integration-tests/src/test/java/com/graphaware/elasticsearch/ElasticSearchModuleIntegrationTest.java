@@ -48,7 +48,7 @@ public class ElasticSearchModuleIntegrationTest
     try
     {
       CustomClassLoading loader = new CustomClassLoading(classpath);
-      Class<Object> loadedClass = (Class<Object>) loader.loadClass("ESServerWrapper");
+      Class<Object> loadedClass = (Class<Object>) loader.loadClass("com.graphaware.elasticsearch.wrapper.ESServerWrapper");
       embeddedServer = (IGenericServerWrapper) Proxy.newProxyInstance(this.getClass().getClassLoader(),
               new Class[]
               {
