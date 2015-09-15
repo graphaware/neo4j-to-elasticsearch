@@ -6,7 +6,6 @@
 
 package com.graphaware.elasticsearch.wrapper;
 
-import com.esotericsoftware.minlog.Log;
 import org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.common.settings.ImmutableSettings;
@@ -53,7 +52,7 @@ public class ESServerWrapper implements IGenericServerWrapper {
                             .ramIndexStore());
 
                     runner.ensureYellow();
-                    Log.warn("Embedded ElasticSearch started ...");
+                    LOG.warn("Embedded ElasticSearch started ...");
                     done.countDown();
                 } catch (Exception e) {
                     LOG.error("Error while starting ES embedded server up ...", e);
@@ -61,11 +60,11 @@ public class ESServerWrapper implements IGenericServerWrapper {
             }
         });
         try {
-            Log.warn("Waiting for embedded startup completion ...");
+            LOG.warn("Waiting for embedded startup completion ...");
             done.await(20, TimeUnit.SECONDS);
-            Log.warn("... time is up!");
+            LOG.warn("... time is up!");
         } catch (InterruptedException ex) {
-            Log.error("Error while waiting");
+            LOG.error("Error while waiting");
         }
 
     }

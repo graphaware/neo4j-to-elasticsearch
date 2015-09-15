@@ -18,9 +18,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.graphaware.integration.elasticsearch</groupId>
-        <artifactId>neo4j-es</artifactId>
-        <version>2.2.4.34.0-SNAPSHOT</version>
+        <groupId>com.graphaware.neo4j</groupId>
+        <artifactId>module-parent</artifactId>
+        <version>2.2.4.34</version>
+        <relativePath>../../neo4j-framework/parent-pom/module/pom.xml</relativePath>
     </parent>
 
     <artifactId>neo4j-plugin</artifactId>
@@ -35,6 +36,7 @@
         <dependency>
             <groupId>io.searchbox</groupId>
             <artifactId>jest</artifactId>
+            <version>0.1.6</version>
         </dependency>
 
     </dependencies>

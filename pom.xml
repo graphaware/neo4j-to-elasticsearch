@@ -9,14 +9,10 @@
     <version>2.2.4.34.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
-    <parent>
-        <groupId>com.graphaware.neo4j</groupId>
-        <artifactId>module-parent</artifactId>
-        <version>2.2.4.34</version>
-    </parent>
-
     <properties>
         <elasticsearch.version>1.7.1</elasticsearch.version>
+        <java.version>1.7</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <modules>
@@ -25,15 +21,92 @@
         <module>integration-tests</module>
     </modules>
 
+    <profiles>
+        <profile>
+            <id>release</id>
+            <activation>
+                <property>
+                    <name>performRelease</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>2.2.1</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>2.9.1</version>
+                        <configuration>
+                            <aggregate>true</aggregate>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>aggregate</id>
+                                <goals>
+                                    <goal>aggregate</goal>
+                                </goals>
+                                <phase>site</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>1.5</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>doclint-java8-disable</id>
+            <activation>
+                <jdk>[1.8,)</jdk>
+            </activation>
+
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <configuration>
+                            <additionalparam>-Xdoclint:none</additionalparam>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
     <dependencyManagement>
         <dependencies>
-            <!-- Neo4j Plugin -->
-            <dependency>
-                <groupId>io.searchbox</groupId>
-                <artifactId>jest</artifactId>
-                <version>0.1.6</version>
-            </dependency>
-
             <!-- ES Plugin -->
             <dependency>
                 <groupId>org.elasticsearch</groupId>
@@ -46,6 +119,17 @@
                 <artifactId>jersey-client</artifactId>
                 <version>1.19</version>
                 <!--<scope>provided</scope>-->
+            </dependency>
+            <dependency>
+                <groupId>org.codehaus.jackson</groupId>
+                <artifactId>jackson-jaxrs</artifactId>
+                <version>1.9.13</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>18.0</version>
             </dependency>
 
             <!-- Integration Tests -->
@@ -69,6 +153,18 @@
                 <scope>test</scope>
             </dependency>
             <dependency>
+                <groupId>com.graphaware.neo4j</groupId>
+                <artifactId>tests</artifactId>
+                <version>2.2.4.34</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.graphaware.neo4j</groupId>
+                <artifactId>runtime</artifactId>
+                <version>2.2.4.34</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
                 <groupId>org.codelibs</groupId>
                 <artifactId>elasticsearch-cluster-runner</artifactId>
                 <version>1.7.0.0</version>
@@ -80,20 +176,64 @@
                 <version>3.6.2</version>
                 <scope>test</scope>
             </dependency>
+            <dependency>
+                <groupId>io.searchbox</groupId>
+                <artifactId>jest</artifactId>
+                <version>0.1.6</version>
+                <scope>test</scope>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
-    <!-- disable assembly from parent -->
+    <dependencies>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.12</version>
+        </dependency>
+    </dependencies>
+
     <build>
         <plugins>
             <plugin>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.4.1</version>
-                <executions>
-                    <execution>
-                        <phase/>
-                    </execution>
-                </executions>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.3.2</version>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                    <encoding>${project.build.sourceEncoding}</encoding>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>2.8.1</version>
+                <configuration>
+                    <retryFailedDeploymentCount>10</retryFailedDeploymentCount>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.sonatype.plugins</groupId>
+                <artifactId>nexus-staging-maven-plugin</artifactId>
+                <version>1.6.3</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <serverId>ossrh</serverId>
+                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.5</version>
+                <configuration>
+                    <autoVersionSubmodules>true</autoVersionSubmodules>
+                    <useReleaseProfile>false</useReleaseProfile>
+                    <releaseProfiles>release</releaseProfiles>
+                    <goals>deploy</goals>
+                </configuration>
             </plugin>
         </plugins>
     </build>

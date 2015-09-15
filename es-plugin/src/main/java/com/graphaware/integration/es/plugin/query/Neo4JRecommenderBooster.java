@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import javax.ws.rs.core.MediaType;
+
 import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
 import org.elasticsearch.common.settings.Settings;
 
