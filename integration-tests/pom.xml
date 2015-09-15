@@ -1,81 +1,112 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright (c) 2015 GraphAware
+  ~
+  ~ This file is part of GraphAware.
+  ~
+  ~ GraphAware is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License
+  ~ as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+  ~ warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+  ~ You should have received a copy of the GNU General Public License along with this program.
+  ~ If not, see <http://www.gnu.org/licenses/>.
+  -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.graphaware.integration.elasticsearch</groupId>
-    <artifactId>integration-elasticsearch</artifactId>
-    <version>2.2.4.34.0-SNAPSHOT</version>
-    <packaging>pom</packaging>
-
     <parent>
-        <groupId>com.graphaware.neo4j</groupId>
-        <artifactId>module-parent</artifactId>
-        <version>2.2.4.34</version>
+        <groupId>com.graphaware.integration.elasticsearch</groupId>
+        <artifactId>integration-elasticsearch</artifactId>
+        <version>2.2.4.34.0-SNAPSHOT</version>
     </parent>
+
+    <artifactId>integration-tests</artifactId>
 
     <properties>
         <elasticsearch.version>1.7.1</elasticsearch.version>
     </properties>
 
-    <modules>
-        <module>es-plugin</module>
-        <module>neo4j-plugin</module>
-        <module>integration-tests</module>
-    </modules>
+    <dependencies>
+        <dependency>
+            <groupId>com.graphaware.integration.elasticsearch</groupId>
+            <artifactId>es-plugin</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.graphaware.integration.elasticsearch</groupId>
+            <artifactId>neo4j-plugin</artifactId>
+            <scope>test</scope>
+        </dependency>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>com.graphaware.integration.elasticsearch</groupId>
-                <artifactId>es-plugin</artifactId>
-                <version>1.0-SNAPSHOT</version>
-            </dependency>
-            <dependency>
-                <groupId>com.graphaware.integration.elasticsearch</groupId>
-                <artifactId>neo4j-plugin</artifactId>
-                <version>2.2.4.34.0-SNAPSHOT</version>
-            </dependency>
-            <dependency>
-                <groupId>com.graphaware.neo4j</groupId>
-                <artifactId>recommendation-engine</artifactId>
-                <version>2.2.4.34.8</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.elasticsearch</groupId>
-                <artifactId>elasticsearch</artifactId>
-                <version>${elasticsearch.version}</version>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
-                <groupId>io.searchbox</groupId>
-                <artifactId>jest</artifactId>
-                <version>0.1.6</version>
-                <scope>compile</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.codelibs</groupId>
-                <artifactId>elasticsearch-cluster-runner</artifactId>
-                <version>1.7.0.0</version>
-                <scope>compile</scope>
-            </dependency>
-            <dependency>
-                <groupId>com.sun.jersey</groupId>
-                <artifactId>jersey-client</artifactId>
-                <version>1.19</version>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.lucene</groupId>
-                <artifactId>lucene-core</artifactId>
-                <version>3.6.2</version>
-                <scope>test</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
+        <dependency>
+            <groupId>com.graphaware.neo4j</groupId>
+            <artifactId>runtime</artifactId>
+            <scope>compile</scope>
+        </dependency>
 
+        <dependency>
+            <groupId>com.graphaware.neo4j</groupId>
+            <artifactId>tx-api</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.graphaware.neo4j</groupId>
+            <artifactId>tx-executor</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webmvc</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.graphaware.neo4j</groupId>
+            <artifactId>server-community</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.graphaware.neo4j</groupId>
+            <artifactId>recommendation-engine</artifactId>
+            <version>2.2.4.34.8</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.elasticsearch</groupId>
+            <artifactId>elasticsearch</artifactId>
+            <version>${elasticsearch.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.searchbox</groupId>
+            <artifactId>jest</artifactId>
+            <version>0.1.6</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.codelibs</groupId>
+            <artifactId>elasticsearch-cluster-runner</artifactId>
+            <version>1.7.0.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-client</artifactId>
+            <version>1.19</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-core</artifactId>
+            <version>3.6.2</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
     <build>
         <resources>
             <resource>
@@ -194,7 +225,7 @@
                     <appendAssemblyId>false</appendAssemblyId>
                     <outputDirectory>${project.build.directory}/releases/</outputDirectory>
                     <descriptors>
-                        <descriptor>es-plugin/src/main/assemblies/plugin.xml</descriptor>
+                        <descriptor>${basedir}/src/main/assemblies/plugin.xml</descriptor>
                     </descriptors>
                 </configuration>
                 <executions>
