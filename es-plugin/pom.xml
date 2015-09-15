@@ -26,27 +26,24 @@
     <artifactId>es-plugin</artifactId>
     <version>1.0-SNAPSHOT</version>
 
-    <properties>
-        <elasticsearch.version>1.7.1</elasticsearch.version>
-    </properties>
-
     <dependencies>
+
         <dependency>
             <groupId>org.elasticsearch</groupId>
             <artifactId>elasticsearch</artifactId>
-            <version>${elasticsearch.version}</version>
-            <scope>provided</scope>
         </dependency>
+
         <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-client</artifactId>
-            <version>1.19</version>
-            <scope>provided</scope>
         </dependency>
+
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
+            <scope>compile</scope>
         </dependency>
+
     </dependencies>
 
 </project>
