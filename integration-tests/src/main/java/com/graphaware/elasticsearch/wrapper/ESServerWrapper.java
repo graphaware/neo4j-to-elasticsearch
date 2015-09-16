@@ -9,20 +9,19 @@ package com.graphaware.elasticsearch.wrapper;
 import org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.common.settings.ImmutableSettings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import org.apache.log4j.Logger;
 
 /**
  * @author ale
  */
 public class ESServerWrapper implements IGenericServerWrapper {
-    private static final Logger LOG = LoggerFactory.getLogger(ESServerWrapper.class);
+    private static final Logger LOG = Logger.getLogger(ESServerWrapper.class);
     private ElasticsearchClusterRunner runner;
 
     public ESServerWrapper() {
