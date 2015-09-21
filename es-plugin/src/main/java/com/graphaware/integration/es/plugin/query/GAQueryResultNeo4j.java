@@ -1,6 +1,7 @@
 
 package com.graphaware.integration.es.plugin.query;
 
+import com.graphaware.integration.es.plugin.graphbooster.GARecommenderBooster;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.graphaware.integration.es.plugin.GAQueryResultNeo4jPlugin;
@@ -50,7 +51,7 @@ public class GAQueryResultNeo4j extends AbstractComponent
 {
 
   public static final String INDEX_GA_ES_NEO4J_ENABLED = "index.ga-es-neo4j.enable";
-  public static final String INDEX_GA_ES_NEO4J_REORDER_TYPE = "index.dynarank.reorder_size";
+  public static final String INDEX_GA_ES_NEO4J_REORDER_TYPE = "index.ga-es-neo4j.booster.defaultClass";
 
   private static final String DYNARANK_RERANK_ENABLE = "_rerank";
 
@@ -65,7 +66,7 @@ public class GAQueryResultNeo4j extends AbstractComponent
   private Client client;
   private Cache<String, ScriptInfo> scriptInfoCache;
 
-  private QueryResultBooster booster;
+  private GARecommenderBooster booster;
 
   @Inject
   public GAQueryResultNeo4j(final Settings settings,
@@ -77,7 +78,7 @@ public class GAQueryResultNeo4j extends AbstractComponent
     this.threadPool = threadPool;
     this.logger = Loggers.getLogger(GAQueryResultNeo4jPlugin.INDEX_LOGGER_NAME, settings);
     this.enabled = settings.getAsBoolean(INDEX_GA_ES_NEO4J_ENABLED, false);
-    this.booster = new Neo4JRecommenderBooster(settings);
+    this.booster = new GARecommenderBooster(settings);
     final CacheBuilder<Object, Object> builder = CacheBuilder.newBuilder()
             .concurrencyLevel(16);
     builder.expireAfterAccess(120, TimeUnit.SECONDS);
@@ -187,6 +188,7 @@ public class GAQueryResultNeo4j extends AbstractComponent
 //            if (from + size > scriptInfo.getReorderSize()) {
 //                maxSize = from + size;
 //            }
+      
       int maxSize = Integer.MAX_VALUE; //Get complete response to can reorder (may be some parameter could reduce the dimension)
       sourceAsMap.put("size", maxSize);
       sourceAsMap.put("from", 0);

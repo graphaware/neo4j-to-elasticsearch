@@ -4,8 +4,11 @@
  * and open the template in the editor.
  */
 
-package com.graphaware.integration.es.plugin.query;
+package com.graphaware.integration.es.plugin.graphbooster;
 
+import com.graphaware.integration.es.plugin.annotation.GAGraphBooster;
+import com.graphaware.integration.es.plugin.query.Neo4JResult;
+import com.graphaware.integration.es.plugin.query.QueryResultBooster;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.GenericType;
@@ -24,13 +27,14 @@ import org.elasticsearch.common.settings.Settings;
  *
  * @author ale
  */
-public class Neo4JRecommenderBooster implements QueryResultBooster
+@GAGraphBooster
+public class GARecommenderBooster implements IGAResultBooster
 {
   public static final String INDEX_GA_ES_NEO4J_HOST = "index.ga-es-neo4j.host";
 
   private String neo4jHost = "http://localhost:7575";
 
-  public Neo4JRecommenderBooster(Settings settings)
+  public GARecommenderBooster(Settings settings)
   {
     this.neo4jHost = settings.get(INDEX_GA_ES_NEO4J_HOST, neo4jHost);
 
