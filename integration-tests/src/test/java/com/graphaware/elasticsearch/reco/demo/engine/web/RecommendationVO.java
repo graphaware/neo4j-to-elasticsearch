@@ -18,38 +18,45 @@ package com.graphaware.elasticsearch.reco.demo.engine.web;
 
 import com.graphaware.reco.generic.result.Score;
 
-public class RecommendationVO {
+public class RecommendationVO
+{
 
-    private long nodeId;
-    private String uuid;
-    private String item;
-    private Score score;
+  private long nodeId;
+  private String uuid;
+  private String item;
+  private float score;
 
-    public RecommendationVO() {
-    }
+  public RecommendationVO()
+  {
+  }
 
-    public RecommendationVO(long nodeId, String uuid, String item, Score score) {
-        this.uuid = uuid;
-        this.item = item;
-        //this.score = score;
-        this.nodeId = nodeId;
-    }
+  public RecommendationVO(long nodeId, String uuid, String item, float score)
+  {
+    this.uuid = uuid;
+    this.item = item;
+    this.score = score;
+    this.nodeId = nodeId;
+  }
 
-    public String getUuid() {
-        return uuid;
-    }
+  public String getUuid()
+  {
+    return uuid;
+  }
 
-    public void setUuid(String uuid) {
-        this.uuid = uuid;
-    }
+  public void setUuid(String uuid)
+  {
+    this.uuid = uuid;
+  }
 
-    public String getItem() {
-        return item;
-    }
+  public String getItem()
+  {
+    return item;
+  }
 
-    public void setItem(String item) {
-        this.item = item;
-    }
+  public void setItem(String item)
+  {
+    this.item = item;
+  }
 
 //    public Score getScore() {
 //        return score;
@@ -58,9 +65,16 @@ public class RecommendationVO {
 //    public void setScore(Score score) {
 //        this.score = score;
 //    }
-    
-    public long getNodeId() {
-      return nodeId;
-    }
-    
+  public long getNodeId()
+  {
+    return nodeId;
+  }
+  public float getScore()
+  {
+    return score;
+  }
+  public void setScore(float score)
+  {
+    this.score = score;
+  }
 }

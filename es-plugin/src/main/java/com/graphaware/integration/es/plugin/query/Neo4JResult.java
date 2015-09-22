@@ -15,6 +15,7 @@ public class Neo4JResult
   private long nodeId;
   private String uuid;
   private String item;
+  private float score;
   public Neo4JResult()
   {
   }
@@ -43,5 +44,14 @@ public class Neo4JResult
   {
     this.item = item;
   }
+  public float getScore()
+  {
+    return score;
+  }
+  public void setScore(float score)
+  {
+    this.score = score;
+  }
 
+  
 }

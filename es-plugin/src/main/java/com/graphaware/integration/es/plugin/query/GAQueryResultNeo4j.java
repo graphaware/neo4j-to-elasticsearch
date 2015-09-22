@@ -5,6 +5,12 @@ import com.graphaware.integration.es.plugin.graphbooster.GARecommenderBooster;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.graphaware.integration.es.plugin.GAQueryResultNeo4jPlugin;
+import com.graphaware.integration.es.plugin.annotation.GAGraphBooster;
+import com.graphaware.integration.es.plugin.annotation.GAGraphFilter;
+import com.graphaware.integration.es.plugin.graphbooster.IGAResultBooster;
+import com.graphaware.integration.es.plugin.graphfilter.IGAResultFilter;
+import com.graphaware.integration.util.GAESUtil;
+import com.graphaware.integration.util.GaServiceLoader;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.search.SearchRequest;
@@ -37,12 +43,17 @@ import org.elasticsearch.search.suggest.Suggest;
 import org.elasticsearch.threadpool.ThreadPool;
 
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static org.elasticsearch.action.search.ShardSearchFailure.readShardSearchFailure;
 import static org.elasticsearch.search.internal.InternalSearchHits.readSearchHits;
@@ -66,7 +77,10 @@ public class GAQueryResultNeo4j extends AbstractComponent
   private Client client;
   private Cache<String, ScriptInfo> scriptInfoCache;
 
-  private GARecommenderBooster booster;
+  //private GARecommenderBooster booster;
+  
+  private Map<String, Class<IGAResultBooster>> boostersClasses;
+  private Map<String, Class<IGAResultFilter>> filtersClasses;
 
   @Inject
   public GAQueryResultNeo4j(final Settings settings,
@@ -78,7 +92,6 @@ public class GAQueryResultNeo4j extends AbstractComponent
     this.threadPool = threadPool;
     this.logger = Loggers.getLogger(GAQueryResultNeo4jPlugin.INDEX_LOGGER_NAME, settings);
     this.enabled = settings.getAsBoolean(INDEX_GA_ES_NEO4J_ENABLED, false);
-    this.booster = new GARecommenderBooster(settings);
     final CacheBuilder<Object, Object> builder = CacheBuilder.newBuilder()
             .concurrencyLevel(16);
     builder.expireAfterAccess(120, TimeUnit.SECONDS);
@@ -86,26 +99,26 @@ public class GAQueryResultNeo4j extends AbstractComponent
 
   }
 
-  private InternalSearchHits doReorder(final InternalSearchHits hits, int reorderSize, String userId)
-  {
-    final InternalSearchHit[] searchHits = hits.internalHits();
-    Map<String, InternalSearchHit> hitIds = new HashMap<>();
-    for (InternalSearchHit hit : searchHits)
-      hitIds.put(hit.getId(), hit);
-    Collection<String> orderedList = externalDoReorder(hitIds.keySet(), reorderSize, userId);
-
-    InternalSearchHit[] newSearchHits = new InternalSearchHit[reorderSize < searchHits.length ? reorderSize : searchHits.length];
-    if (logger.isDebugEnabled())
-    {
-      logger.debug("searchHits.length <= reorderSize: {}",
-              searchHits.length <= reorderSize);
-    }
-    int k = 0;
-    for (String newId : orderedList)
-      newSearchHits[k++] = hitIds.get(newId);
-    return new InternalSearchHits(newSearchHits, newSearchHits.length,
-            hits.maxScore());
-  }
+//  private InternalSearchHits doReorder(final InternalSearchHits hits, IGAResultBooster booster)
+//  {
+//    final InternalSearchHit[] searchHits = hits.internalHits();
+//    Map<String, InternalSearchHit> hitIds = new HashMap<>();
+//    for (InternalSearchHit hit : searchHits)
+//      hitIds.put(hit.getId(), hit);
+//    Collection<String> orderedList = externalDoReorder(hitIds.keySet(), reorderSize, userId);
+//
+//    InternalSearchHit[] newSearchHits = new InternalSearchHit[reorderSize < searchHits.length ? reorderSize : searchHits.length];
+//    if (logger.isDebugEnabled())
+//    {
+//      logger.debug("searchHits.length <= reorderSize: {}",
+//              searchHits.length <= reorderSize);
+//    }
+//    int k = 0;
+//    for (String newId : orderedList)
+//      newSearchHits[k++] = hitIds.get(newId);
+//    return new InternalSearchHits(newSearchHits, newSearchHits.length,
+//            hits.maxScore());
+//  }
 
   public ActionListener<SearchResponse> wrapActionListener(
           final String action, final SearchRequest request,
@@ -162,20 +175,21 @@ public class GAQueryResultNeo4j extends AbstractComponent
     {
       final Map<String, Object> sourceAsMap = SourceLookup
               .sourceAsMap(source);
-      final int size = getInt(sourceAsMap.get("size"), 10);
-      final int from = getInt(sourceAsMap.get("from"), 0);
 
-      HashMap extParams = (HashMap) sourceAsMap.get("ga-params");
-      int reorderSize = 10;
-      String userId = "";
-      if (extParams != null)
-      {
-        userId = (String) extParams.get("recoTarget");
-        reorderSize = getInt(extParams.get("reorderSize"), 0);
-        sourceAsMap.remove("ga-params");
-      }
-
+      
+      IGAResultBooster booster = getGABoosters(sourceAsMap);
+      IGAResultFilter filter = getGAFilters(sourceAsMap);
+      
+      
+      final int size = GAESUtil.getInt(sourceAsMap.get("size"), 10);
+      final int from = GAESUtil.getInt(sourceAsMap.get("from"), 0);
+//
       if (size < 0 || from < 0)
+      {
+        return null;
+      }
+      
+      if (booster == null && filter == null)
       {
         return null;
       }
@@ -189,15 +203,11 @@ public class GAQueryResultNeo4j extends AbstractComponent
 //                maxSize = from + size;
 //            }
       
-      int maxSize = Integer.MAX_VALUE; //Get complete response to can reorder (may be some parameter could reduce the dimension)
-      sourceAsMap.put("size", maxSize);
-      sourceAsMap.put("from", 0);
+//      int maxSize = Integer.MAX_VALUE; //Get complete response to can reorder (may be some parameter could reduce the dimension)
+//      sourceAsMap.put("size", maxSize);
+//      sourceAsMap.put("from", 0);
 
-      if (logger.isDebugEnabled())
-      {
-        logger.debug("Rewrite query: from:{}->{} size:{}->{}", from, 0,
-                size, maxSize);
-      }
+
 
       final XContentBuilder builder = XContentFactory
               .contentBuilder(Requests.CONTENT_TYPE);
@@ -207,7 +217,7 @@ public class GAQueryResultNeo4j extends AbstractComponent
 
       //String size = findSize(sourceAsMap);
       final ActionListener<SearchResponse> searchResponseListener
-              = createSearchResponseListener(listener, from, size, reorderSize, startTime, userId);
+              = createSearchResponseListener(listener, startTime, booster, filter);
       return new ActionListener<SearchResponse>()
       {
         @Override
@@ -266,8 +276,7 @@ public class GAQueryResultNeo4j extends AbstractComponent
   }
 
   private ActionListener<SearchResponse> createSearchResponseListener(
-          final ActionListener<SearchResponse> listener, final int from,
-          final int size, final int reorderSize, final long startTime, final String userId)
+          final ActionListener<SearchResponse> listener, final long startTime, final IGAResultBooster booster, final IGAResultFilter filter)
   {
     return new ActionListener<SearchResponse>()
     {
@@ -291,7 +300,7 @@ public class GAQueryResultNeo4j extends AbstractComponent
 
         try
         {
-          final SearchResponse newResponse = handleResponse(response, startTime, reorderSize, userId);
+          final SearchResponse newResponse = handleResponse(response, startTime, booster, filter);
           listener.onResponse(newResponse);
         }
         catch (final RetrySearchException e)
@@ -317,7 +326,7 @@ public class GAQueryResultNeo4j extends AbstractComponent
     };
   }
 
-  private SearchResponse handleResponse(final SearchResponse response, final long startTime, final int reorderSize, final String userId) throws IOException
+  private SearchResponse handleResponse(final SearchResponse response, final long startTime, IGAResultBooster booster, IGAResultFilter filter) throws IOException
   {
     final BytesStreamOutput out = new BytesStreamOutput();
     response.writeTo(out);
@@ -338,7 +347,7 @@ public class GAQueryResultNeo4j extends AbstractComponent
       logger.debug("Reading hits...");
     }
     final InternalSearchHits hits = readSearchHits(in);
-    final InternalSearchHits newHits = doReorder(hits, reorderSize, userId);
+    final InternalSearchHits newHits = booster.doReorder(hits);
     InternalFacets facets = null;
     if (in.readBoolean())
     {
@@ -418,26 +427,14 @@ public class GAQueryResultNeo4j extends AbstractComponent
     return newResponse;
   }
 
-  private int getInt(final Object value, final int defaultValue)
-  {
-    if (value instanceof Number)
-    {
-      return ((Number) value).intValue();
-    }
-    else if (value instanceof String)
-    {
-      return Integer.parseInt(value.toString());
-    }
-    return defaultValue;
-  }
 
-  private Collection<String> externalDoReorder(Collection<String> hitIds, int reorderSize, String userId)
-  {
-    logger.warn("Query cypher for: " + hitIds);
-
-    List<String> newOrderedHotsId = booster.doReorder(userId, hitIds, reorderSize);
-    return newOrderedHotsId;
-  }
+//  private Collection<String> externalDoReorder(Collection<String> hitIds, int reorderSize, String userId)
+//  {
+//    logger.warn("Query cypher for: " + hitIds);
+//
+//    List<String> newOrderedHotsId = booster.doReorder(userId, hitIds, reorderSize);
+//    return newOrderedHotsId;
+//  }
 
   public ScriptInfo getScriptInfo(final String index)
   {
@@ -482,6 +479,29 @@ public class GAQueryResultNeo4j extends AbstractComponent
       logger.warn("Failed to load ScriptInfo for {}.", e, index);
       return null;
     }
+  }
+  private IGAResultBooster getGABoosters(Map<String, Object> sourceAsMap)
+  {
+    HashMap extParams = (HashMap) sourceAsMap.get("ga-booster");
+    if (extParams == null)
+      return null;
+    String name = (String)extParams.get("name");
+    IGAResultBooster booster = getBooster(name);
+    if (booster == null)
+    {
+      logger.warn("No booster found with name " + name);
+      return null;
+    }
+    
+    booster.parseRequest(sourceAsMap);
+    sourceAsMap.remove("ga-booster");
+    return booster;
+  }
+  
+  private IGAResultFilter getGAFilters(Map<String, Object> sourceAsMap)
+  {
+    //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates
+    return null;
   }
 
   public static class ScriptInfo
@@ -546,6 +566,85 @@ public class GAQueryResultNeo4j extends AbstractComponent
     {
       return classname;
     }
+  }
+  private IGAResultBooster getBooster(String name)
+  {
+    if (boostersClasses == null)
+      boostersClasses = loadBoosters();
     
+    if (boostersClasses.isEmpty() || !boostersClasses.containsKey(name.toLowerCase()))
+      return null;
+    Class< IGAResultBooster> boosterClass = boostersClasses.get(name.toLowerCase());
+    IGAResultBooster newBooster = null;
+    try
+    {
+      try
+      {
+        Constructor<IGAResultBooster> constructor = boosterClass.getConstructor(Settings.class);
+        newBooster = constructor.newInstance(settings);
+      }
+      catch (NoSuchMethodException ex)
+      {
+        logger.warn("No constructor with settings for class {}. Using default", boosterClass.getName());
+        newBooster = boosterClass.newInstance();
+      }
+      catch (IllegalArgumentException | InvocationTargetException | SecurityException ex)
+      {
+        logger.error("Error while creating new instance for booster {}", boosterClass.getName(), ex);
+      }
+      return newBooster;
+    }
+    catch (InstantiationException | IllegalAccessException ex)
+    {
+      logger.error("Error while initializing new booster", ex);
+      return null;
+    }
+  }
+  
+  private static Map<String, Class<IGAResultBooster>> loadBoosters()
+  {
+    Collection<Class<IGAResultBooster>> boosters = GaServiceLoader.loadClass(IGAResultBooster.class, GAGraphBooster.class).values();
+
+    HashMap<String,  Class<IGAResultBooster>> result = new HashMap<>();
+    for (Class<IGAResultBooster> boosterClass : boosters)
+    {
+      String name = boosterClass.getAnnotation(GAGraphBooster.class).name().toLowerCase();
+      result.put(name, boosterClass);
+    }
+    return result;
+  }
+  
+  
+  private IGAResultFilter getFilter(String name)
+  {
+    if (filtersClasses == null)
+      filtersClasses = loadFilters();
+    
+    if (filtersClasses.isEmpty() || !filtersClasses.containsKey(name.toLowerCase()))
+      return null;
+    Class< IGAResultFilter> boosterClass = filtersClasses.get(name.toLowerCase());
+    try
+    {
+      IGAResultFilter newFilter = boosterClass.newInstance();
+      return newFilter;
+    }
+    catch (InstantiationException | IllegalAccessException ex)
+    {
+      logger.error("Error while initializing new booster", ex);
+      return null;
+    }
+  }
+  
+  private static Map<String, Class<IGAResultFilter>> loadFilters()
+  {
+    Collection<Class<IGAResultFilter>> filters = GaServiceLoader.loadClass(IGAResultFilter.class, GAGraphFilter.class).values();
+
+    HashMap<String,  Class<IGAResultFilter>> result = new HashMap<>();
+    for (Class<IGAResultFilter> filterClass : filters)
+    {
+      String name = filterClass.getAnnotation(GAGraphFilter.class).name().toLowerCase();
+      result.put(name, filterClass);
+    }
+    return result;
   }
 }

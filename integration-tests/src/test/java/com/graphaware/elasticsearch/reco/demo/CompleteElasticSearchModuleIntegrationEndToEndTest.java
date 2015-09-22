@@ -171,39 +171,103 @@ public class CompleteElasticSearchModuleIntegrationEndToEndTest
 //    String query = "{" +
 //          "\"match_all\" : {}" +
 //        "}";
-    
-    String query = "{" +
-"   \"filter\": {" +
-"      \"bool\": {" +
-"         \"must\": [" +
-"            {" +
-"                  \"match_all\": {}" +
-"            }" +
-"         ]" +
-"      }" +
-"   }," +
-"   \"ga-params\" :{" +
-"          \"recoTarget\": \"Durgan%20LLC\"," +
-"          \"reorderSize\": 10.0" +
-"      }" +
-"}";
-    Search search = new Search.Builder(query)
-                // multiple index or types can be added.
-                .addIndex(ES_INDEX)
-                .addType("Person")
-                .build();
+    {
+      String query = "{" +
+  "   \"filter\": {" +
+  "      \"bool\": {" +
+  "         \"must\": [" +
+  "            {" +
+  "                  \"match_all\": {}" +
+  "            }" +
+  "         ]" +
+  "      }" +
+  "   }," +
+  "   \"ga-booster\" :{" +
+  "          \"name\": \"GARecommenderBooster\"," +
+  "          \"recoTarget\": \"Durgan%20LLC\"" +
+  "      }" +
+  "}";
+      Search search = new Search.Builder(query)
+                  // multiple index or types can be added.
+                  .addIndex(ES_INDEX)
+                  .addType("Person")
+                  .build();
 
 
-    SearchResult result = client.execute(search);
+      SearchResult result = client.execute(search);
+
+      List<SearchResult.Hit<JestPersonResult, Void>> hits = result.getHits(JestPersonResult.class);
+      Assert.assertEquals(10, hits.size());
+      assertEquals("16", hits.get(0).source.getDocumentId());
+      assertEquals("148", hits.get(1).source.getDocumentId());
+      assertEquals("27", hits.get(2).source.getDocumentId());
+    }
     
-    List<SearchResult.Hit<JestPersonResult, Void>> hits = result.getHits(JestPersonResult.class);
-    Assert.assertEquals(10, hits.size());
-    assertEquals("148", hits.get(0).source.getDocumentId());
-    assertEquals("16", hits.get(1).source.getDocumentId());
-    assertEquals("27", hits.get(2).source.getDocumentId());
-    //assertEquals(10, hits.hits().length);
-    //assertEquals("100", hits.hits()[0].id());
-    //assertEquals("91", hits.hits()[9].id());
+    {
+      String query = "{" +
+  "   \"filter\": {" +
+  "      \"bool\": {" +
+  "         \"must\": [" +
+  "            {" +
+  "                  \"match_all\": {}" +
+  "            }" +
+  "         ]" +
+  "      }" +
+  "   }," +
+  "   \"ga-booster\" :{" +
+  "          \"name\": \"GARecommenderBooster\"," +
+  "          \"recoTarget\": \"Durgan%20LLC\"," +
+  "          \"maxResultSize\": 50" +
+  "      }" +
+  "}";
+      Search search = new Search.Builder(query)
+                  // multiple index or types can be added.
+                  .addIndex(ES_INDEX)
+                  .addType("Person")
+                  .build();
+
+
+      SearchResult result = client.execute(search);
+
+      List<SearchResult.Hit<JestPersonResult, Void>> hits = result.getHits(JestPersonResult.class);
+      Assert.assertEquals(10, hits.size());
+      assertEquals("16", hits.get(0).source.getDocumentId());
+      assertEquals("148", hits.get(1).source.getDocumentId());
+      assertEquals("42", hits.get(2).source.getDocumentId());
+    }
+    
+    {
+      String query = "{" +
+  "   \"filter\": {" +
+  "      \"bool\": {" +
+  "         \"must\": [" +
+  "            {" +
+  "                  \"match_all\": {}" +
+  "            }" +
+  "         ]" +
+  "      }" +
+  "   }," +
+  "   \"ga-booster\" :{" +
+  "          \"name\": \"GARecommenderMixedBooster\"," +
+  "          \"recoTarget\": \"Durgan%20LLC\"" +
+  "      }" +
+  "}";
+      Search search = new Search.Builder(query)
+                  // multiple index or types can be added.
+                  .addIndex(ES_INDEX)
+                  .addType("Person")
+                  .build();
+
+
+      SearchResult result = client.execute(search);
+
+      List<SearchResult.Hit<JestPersonResult, Void>> hits = result.getHits(JestPersonResult.class);
+      Assert.assertEquals(10, hits.size());
+      assertEquals("148", hits.get(0).source.getDocumentId());
+      assertEquals("197", hits.get(1).source.getDocumentId());
+      assertEquals("102", hits.get(2).source.getDocumentId());
+    }
+    
     
     //String response = httpClient.get(ES_CONN + "/" + ES_INDEX + "/Company/_search?q=firstname:Kelly", HttpStatus.OK_200);
     String result1 = httpClient.get(baseUrl() + "/graphaware/recommendation/filter/Durgan%20LLC?limit=10&ids=148,197,27,4,5,6,7,8,9", HttpStatus.OK_200);

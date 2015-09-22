@@ -1,8 +1,8 @@
 
 package com.graphaware.integration.es.plugin.graphbooster;
 
-import java.util.Collection;
-import java.util.List;
+import java.util.Map;
+import org.elasticsearch.search.internal.InternalSearchHits;
 
 /**
  *
@@ -10,6 +10,6 @@ import java.util.List;
  */
 public interface IGAResultBooster
 {
-  public List<String> doReorder(String nodeId, Collection<String> hitIds, int reorderSize);
-
+  public InternalSearchHits doReorder(final InternalSearchHits hits);
+  public void parseRequest(Map<String, Object> sourceAsMap);
 }

@@ -33,10 +33,10 @@ import org.elasticsearch.search.internal.InternalSearchHits;
  *
  * @author ale
  */
-@GAGraphBooster(name = "GARecommenderBooster")
-public class GARecommenderBooster implements IGAResultBooster
+@GAGraphBooster(name = "GARecommenderMixedBooster")
+public class GARecommenderMixedBooster implements IGAResultBooster
 {
-  private static final Logger logger = Logger.getLogger(GARecommenderBooster.class.getName());
+  private static final Logger logger = Logger.getLogger(GARecommenderMixedBooster.class.getName());
   public static final String INDEX_GA_ES_NEO4J_HOST = "index.ga-es-neo4j.host";
   private String neo4jHost = "http://localhost:7575";
 
@@ -45,7 +45,7 @@ public class GARecommenderBooster implements IGAResultBooster
   private String targetId;
   private int maxResultSize = -1;
 
-  public GARecommenderBooster(Settings settings)
+  public GARecommenderMixedBooster(Settings settings)
   {
     this.neo4jHost = settings.get(INDEX_GA_ES_NEO4J_HOST, neo4jHost);
 
@@ -72,26 +72,30 @@ public class GARecommenderBooster implements IGAResultBooster
   public InternalSearchHits doReorder(final InternalSearchHits hits)
   {
     final InternalSearchHit[] searchHits = hits.internalHits();
-    Map<String, InternalSearchHit> hitIds = new HashMap<>();
+    Map<String, InternalSearchHit> hitMap = new HashMap<>();
     for (InternalSearchHit hit : searchHits)
-      hitIds.put(hit.getId(), hit);
-    Collection<String> orderedList = externalDoReorder(hitIds.keySet());
-
-    InternalSearchHit[] newSearchHits = new InternalSearchHit[size < orderedList.size() ? size : orderedList.size()];
-    logger.log(Level.WARNING, "searchHits.length <= reorderSize: {0}", (searchHits.length <= size));
-    int k = 0;
-    for (String newId : orderedList)
+      hitMap.put(hit.getId(), hit);
+    
+    Map<String, Neo4JResult> remoteScore = externalDoReorder(hitMap.keySet());
+    InternalSearchHit[] newSearchHits = new InternalSearchHit[size < searchHits.length ? size : searchHits.length];
+    
+    for (Map.Entry<String, InternalSearchHit> item : hitMap.entrySet())
     {
-      newSearchHits[k++] = hitIds.get(newId);
-      if (k >= newSearchHits.length)
-        break;
+      Neo4JResult remoteResult = remoteScore.get(item.getKey());
+      if (remoteResult != null)
+        item.getValue().score(item.getValue().score()*remoteResult.getScore());
+      int k = 0;
+      while (newSearchHits[k] != null && newSearchHits[k].score() > item.getValue().score() && k < newSearchHits.length)
+        k++;
+      if (k < newSearchHits.length)
+        newSearchHits[k] = item.getValue();
     }
     return new InternalSearchHits(newSearchHits, newSearchHits.length,
             hits.maxScore());
   }
 
   //@Override
-  private List<String> externalDoReorder(Collection<String> hitIds)
+  private Map<String, Neo4JResult> externalDoReorder(Collection<String> hitIds)
   {
     logger.log(Level.WARNING, "Query cypher for: {0}", hitIds);
 
@@ -119,27 +123,14 @@ public class GARecommenderBooster implements IGAResultBooster
     GenericType<List<Neo4JResult>> type = new GenericType<List<Neo4JResult>>()
     {
     };
-    List<Neo4JResult> results = response.getEntity(type);
-
-//    System.out.println(String.format("\n\n\n\n\n\n\nGET to [%s], status code [%d], returned data: "
-//            + System.getProperty("line.separator") + "%s \n\n\n\n\n\n",
-//            recommendationEndopint, response.getStatus(), entity));
+    List<Neo4JResult> res = response.getEntity(type);
+    
+    HashMap<String, Neo4JResult> results = new HashMap<>();
+    
+    for (Neo4JResult item : res)
+      results.put(String.valueOf(item.getNodeId()), item);
     response.close();
-    List<String> newSet = new ArrayList<>();
-    for (Neo4JResult res : results)
-      newSet.add(String.valueOf(res.getNodeId()));
-
-//    List<String> newSet = new ArrayList<>();
-//    int i = 0;
-//    for (String key : hitIds)
-//    {
-//      if (i < reorderSize)
-//        newSet.add(key);
-//      else
-//        break;
-//      i++;
-//    }
-    return newSet;
+    return results;
   }
   public int getSize()
   {

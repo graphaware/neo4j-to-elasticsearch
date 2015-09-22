@@ -76,7 +76,7 @@ public class RecommendationController {
         List<RecommendationVO> result = new LinkedList<>();
         
         for (Recommendation<Node> recommendation : recommendations) {
-              result.add(new RecommendationVO(recommendation.getItem().getId(), recommendation.getUuid(), recommendation.getItem().getProperty("name", "unknown").toString(), recommendation.getScore()));
+              result.add(new RecommendationVO(recommendation.getItem().getId(), recommendation.getUuid(), recommendation.getItem().getProperty("name", "unknown").toString(), recommendation.getScore().getTotalScore()));
         }
 
         return result;
@@ -89,7 +89,7 @@ public class RecommendationController {
         
         for (Recommendation<Node> recommendation : recommendations) {
             if (asList.contains(recommendation.getItem().getId()))
-              result.add(new RecommendationVO(recommendation.getItem().getId(), recommendation.getUuid(), recommendation.getItem().getProperty("name", "unknown").toString(), recommendation.getScore()));
+              result.add(new RecommendationVO(recommendation.getItem().getId(), recommendation.getUuid(), recommendation.getItem().getProperty("name", "unknown").toString(), recommendation.getScore().getTotalScore()));
         }
 
         return result;
