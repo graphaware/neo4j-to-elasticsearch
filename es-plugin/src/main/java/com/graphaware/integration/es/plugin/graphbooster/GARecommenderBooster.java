@@ -7,7 +7,6 @@
 package com.graphaware.integration.es.plugin.graphbooster;
 
 import com.graphaware.integration.es.plugin.annotation.GAGraphBooster;
-import com.graphaware.integration.es.plugin.query.Neo4JResult;
 import com.graphaware.integration.util.GAESUtil;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;

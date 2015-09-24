@@ -7,7 +7,6 @@
 package com.graphaware.integration.es.plugin.graphbooster;
 
 import com.graphaware.integration.es.plugin.annotation.GAGraphBooster;
-import com.graphaware.integration.es.plugin.query.Neo4JResult;
 import com.graphaware.integration.util.GAESUtil;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
@@ -15,7 +14,6 @@ import com.sun.jersey.api.client.GenericType;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;

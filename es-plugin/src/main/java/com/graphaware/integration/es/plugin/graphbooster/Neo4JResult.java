@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package com.graphaware.integration.es.plugin.query;
+package com.graphaware.integration.es.plugin.graphbooster;
 
 /**
  *

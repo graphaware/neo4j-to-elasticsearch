@@ -1,8 +1,8 @@
 
 package com.graphaware.integration.es.plugin.graphfilter;
 
-import java.util.Collection;
-import java.util.List;
+import java.util.Map;
+import org.elasticsearch.search.internal.InternalSearchHits;
 
 /**
  *
@@ -10,5 +10,6 @@ import java.util.List;
  */
 public interface IGAResultFilter
 {
-  public List<String> doFilter(Collection<String> hitIds);
+  public InternalSearchHits doFilter(final InternalSearchHits hits);
+  public void parseRequest(Map<String, Object> sourceAsMap);
 }

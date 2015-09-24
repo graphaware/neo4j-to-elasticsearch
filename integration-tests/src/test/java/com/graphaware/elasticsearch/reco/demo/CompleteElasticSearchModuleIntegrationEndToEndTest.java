@@ -269,6 +269,37 @@ public class CompleteElasticSearchModuleIntegrationEndToEndTest
     }
     
     
+    {
+      String query = "{" +
+  "   \"filter\": {" +
+  "      \"bool\": {" +
+  "         \"must\": [" +
+  "            {" +
+  "                  \"match_all\": {}" +
+  "            }" +
+  "         ]" +
+  "      }" +
+  "   }," +
+  "   \"ga-filter\" :{" +
+  "          \"name\": \"GACypherQueryFilter\"," +
+  "          \"query\": \"MATCH (n:Person) RETURN id(n)\"" +
+  "      }" +
+  "}";
+      Search search = new Search.Builder(query)
+                  // multiple index or types can be added.
+                  .addIndex(ES_INDEX)
+                  .addType("Person")
+                  .build();
+      SearchResult result = client.execute(search);
+
+      List<SearchResult.Hit<JestPersonResult, Void>> hits = result.getHits(JestPersonResult.class);
+      Assert.assertEquals(10, hits.size());
+//      assertEquals("148", hits.get(0).source.getDocumentId());
+//      assertEquals("197", hits.get(1).source.getDocumentId());
+//      assertEquals("102", hits.get(2).source.getDocumentId());
+    }
+    
+    
     //String response = httpClient.get(ES_CONN + "/" + ES_INDEX + "/Company/_search?q=firstname:Kelly", HttpStatus.OK_200);
     String result1 = httpClient.get(baseUrl() + "/graphaware/recommendation/filter/Durgan%20LLC?limit=10&ids=148,197,27,4,5,6,7,8,9", HttpStatus.OK_200);
         
