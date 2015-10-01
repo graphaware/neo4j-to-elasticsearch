@@ -8,12 +8,14 @@ package com.graphaware.integration.es.plugin.graphbooster;
 
 import com.graphaware.integration.es.plugin.annotation.GAGraphBooster;
 import com.graphaware.integration.util.GAESUtil;
+import com.sun.javafx.scene.control.skin.VirtualFlow;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.GenericType;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -75,7 +77,8 @@ public class GARecommenderMixedBooster implements IGAResultBooster
       hitMap.put(hit.getId(), hit);
     
     Map<String, Neo4JResult> remoteScore = externalDoReorder(hitMap.keySet());
-    InternalSearchHit[] newSearchHits = new InternalSearchHit[size < searchHits.length ? size : searchHits.length];
+    final int arraySize = size < searchHits.length ? size : searchHits.length;
+    List<InternalSearchHit> newSearchHits = new ArrayList<>(arraySize);
     
     for (Map.Entry<String, InternalSearchHit> item : hitMap.entrySet())
     {
@@ -83,12 +86,14 @@ public class GARecommenderMixedBooster implements IGAResultBooster
       if (remoteResult != null)
         item.getValue().score(item.getValue().score()*remoteResult.getScore());
       int k = 0;
-      while (newSearchHits[k] != null && newSearchHits[k].score() > item.getValue().score() && k < newSearchHits.length)
+      while (newSearchHits.size() > 0 && k < newSearchHits.size() && newSearchHits.get(k) != null && newSearchHits.get(k).score() > item.getValue().score() && k < arraySize)
         k++;
-      if (k < newSearchHits.length)
-        newSearchHits[k] = item.getValue();
+      if (k < arraySize)
+        newSearchHits.add(k,item.getValue());
+      if (newSearchHits.size() > arraySize)
+        newSearchHits.remove(arraySize);
     }
-    return new InternalSearchHits(newSearchHits, newSearchHits.length,
+    return new InternalSearchHits(newSearchHits.toArray(new InternalSearchHit[arraySize]), newSearchHits.size(),
             hits.maxScore());
   }
 
@@ -122,12 +127,13 @@ public class GARecommenderMixedBooster implements IGAResultBooster
     {
     };
     List<Neo4JResult> res = response.getEntity(type);
+    response.close();
     
     HashMap<String, Neo4JResult> results = new HashMap<>();
     
     for (Neo4JResult item : res)
-      results.put(String.valueOf(item.getNodeId()), item);
-    response.close();
+      results.put(String.valueOf(item.getUuid() != null ? item.getUuid() : item.getNodeId()), item);
+    
     return results;
   }
   public int getSize()

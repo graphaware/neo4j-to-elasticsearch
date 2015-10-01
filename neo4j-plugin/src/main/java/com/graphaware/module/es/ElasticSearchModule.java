@@ -29,10 +29,12 @@ public class ElasticSearchModule extends BaseTxDrivenModule<Void> {
     private final ElasticSearchConfiguration config;
 
     private JestClient client;
+    private String keyProperty;
 
     public ElasticSearchModule(String moduleId, ElasticSearchConfiguration config, GraphDatabaseService database) {
         super(moduleId);
         this.config = config;
+        this.keyProperty = config.getKeyProperty();
         createIndexIfNotExist();
     }
 
@@ -81,7 +83,7 @@ public class ElasticSearchModule extends BaseTxDrivenModule<Void> {
         final Iterator<Label> labelsIterator = node.getLabels().iterator();
         while (labelsIterator != null && labelsIterator.hasNext())
             labels.add(labelsIterator.next().name());
-        String id = String.valueOf(node.getId());
+        String id = String.valueOf(node.getProperty(keyProperty));
         Map<String, String> source = new LinkedHashMap<>();
         for (String key : node.getPropertyKeys())
             source.put(key, String.valueOf(node.getProperty(key)));
@@ -95,7 +97,7 @@ public class ElasticSearchModule extends BaseTxDrivenModule<Void> {
         final Iterator<Label> labelsIterator = node.getLabels().iterator();
         while (labelsIterator != null && labelsIterator.hasNext())
             labels.add(labelsIterator.next().name());
-        String id = String.valueOf(node.getId());
+        String id = String.valueOf(node.getProperty(keyProperty));
         for (String label : labels) {
             Delete delete = new Delete.Builder(id).index(config.getElasticSearchIndex()).type(label).build();
             execute(delete, id);
@@ -107,7 +109,7 @@ public class ElasticSearchModule extends BaseTxDrivenModule<Void> {
         final Iterator<Label> labelsIterator = node.getLabels().iterator();
         while (labelsIterator != null && labelsIterator.hasNext())
             labels.add(labelsIterator.next().name());
-        String id = String.valueOf(node.getId());
+        String id = String.valueOf(node.getProperty(keyProperty));
         Map<String, String> source = new LinkedHashMap<>();
         for (String key : node.getPropertyKeys())
             source.put(key, String.valueOf(node.getProperty(key)));

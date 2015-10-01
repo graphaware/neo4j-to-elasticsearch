@@ -62,7 +62,7 @@ public class RecommendationController {
     
     @RequestMapping("/recommendation/filter/{companyName}")
     @ResponseBody
-    public List<RecommendationVO> filter(@PathVariable String companyName, @RequestParam("ids") long[] ids, @RequestParam(defaultValue = "10") int limit, @RequestParam(defaultValue = "") String config) {
+    public List<RecommendationVO> filter(@PathVariable String companyName, @RequestParam("ids") String[] ids, @RequestParam(defaultValue = "10") int limit, @RequestParam(defaultValue = "") String config) {
         try (Transaction tx = database.beginTx()) {            
             return convert(engine.recommend(findCompanyByName(companyName), parser.produceConfig(limit, config)), ids);
         }
@@ -82,14 +82,13 @@ public class RecommendationController {
         return result;
     }
     
-    private List<RecommendationVO> convert(List<Recommendation<Node>> recommendations, long[] ids) {
+    private List<RecommendationVO> convert(List<Recommendation<Node>> recommendations, String[] ids) {
         List<RecommendationVO> result = new LinkedList<>();
-        Long[] longObjects = ArrayUtils.toObject(ids);
-        List<Long> asList = Arrays.asList(longObjects);
+        List<String> asList = Arrays.asList(ids);
         
         for (Recommendation<Node> recommendation : recommendations) {
-            if (asList.contains(recommendation.getItem().getId()))
-              result.add(new RecommendationVO(recommendation.getItem().getId(), recommendation.getUuid(), recommendation.getItem().getProperty("name", "unknown").toString(), recommendation.getScore().getTotalScore()));
+            if (asList.contains((String)recommendation.getItem().getProperty("uuid")))
+              result.add(new RecommendationVO(recommendation.getItem().getId(), (String)recommendation.getItem().getProperty("uuid"), recommendation.getItem().getProperty("name", "unknown").toString(), recommendation.getScore().getTotalScore()));
         }
 
         return result;

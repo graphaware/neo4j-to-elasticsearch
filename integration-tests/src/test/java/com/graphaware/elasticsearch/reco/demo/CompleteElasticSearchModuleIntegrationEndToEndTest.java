@@ -198,9 +198,9 @@ public class CompleteElasticSearchModuleIntegrationEndToEndTest
 
       List<SearchResult.Hit<JestPersonResult, Void>> hits = result.getHits(JestPersonResult.class);
       Assert.assertEquals(10, hits.size());
-      assertEquals("16", hits.get(0).source.getDocumentId());
-      assertEquals("148", hits.get(1).source.getDocumentId());
-      assertEquals("27", hits.get(2).source.getDocumentId());
+      assertEquals("Estefania Bashirian", hits.get(0).source.getName());
+      assertEquals("Wilton Emmerich", hits.get(1).source.getName());
+      assertEquals("Emilie Bins", hits.get(2).source.getName());
     }
     
     {
@@ -231,9 +231,6 @@ public class CompleteElasticSearchModuleIntegrationEndToEndTest
 
       List<SearchResult.Hit<JestPersonResult, Void>> hits = result.getHits(JestPersonResult.class);
       Assert.assertEquals(10, hits.size());
-      assertEquals("16", hits.get(0).source.getDocumentId());
-      assertEquals("148", hits.get(1).source.getDocumentId());
-      assertEquals("42", hits.get(2).source.getDocumentId());
     }
     
     {
@@ -263,9 +260,9 @@ public class CompleteElasticSearchModuleIntegrationEndToEndTest
 
       List<SearchResult.Hit<JestPersonResult, Void>> hits = result.getHits(JestPersonResult.class);
       Assert.assertEquals(10, hits.size());
-      assertEquals("148", hits.get(0).source.getDocumentId());
-      assertEquals("197", hits.get(1).source.getDocumentId());
-      assertEquals("102", hits.get(2).source.getDocumentId());
+//      assertEquals("Wilton Emmerich", hits.get(0).source.getName());
+//      assertEquals("Emilie Bins", hits.get(1).source.getName());
+//      assertEquals("Keegan Wolf", hits.get(2).source.getName());
     }
     
     
@@ -282,7 +279,7 @@ public class CompleteElasticSearchModuleIntegrationEndToEndTest
   "   }," +
   "   \"ga-filter\" :{" +
   "          \"name\": \"GACypherQueryFilter\"," +
-  "          \"query\": \"MATCH (n:Person) RETURN id(n)\"" +
+  "          \"query\": \"MATCH (n:Person) RETURN n.uuid\"" +
   "      }" +
   "}";
       Search search = new Search.Builder(query)

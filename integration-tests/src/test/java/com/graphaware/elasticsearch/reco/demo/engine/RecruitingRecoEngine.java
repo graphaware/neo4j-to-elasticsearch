@@ -16,7 +16,6 @@
 
 package com.graphaware.elasticsearch.reco.demo.engine;
 
-import com.graphaware.reco.generic.config.Config;
 import com.graphaware.reco.generic.engine.RecommendationEngine;
 import com.graphaware.reco.generic.filter.BlacklistBuilder;
 import com.graphaware.reco.generic.filter.Filter;

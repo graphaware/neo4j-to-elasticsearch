@@ -50,6 +50,12 @@
             <groupId>com.graphaware.neo4j</groupId>
             <artifactId>recommendation-engine</artifactId>
         </dependency>
+        
+        <dependency>
+            <groupId>com.graphaware.neo4j</groupId>
+            <artifactId>uuid</artifactId>
+            <version>2.2.4.34.7</version>
+        </dependency>
 
         <dependency>
             <groupId>org.elasticsearch</groupId>

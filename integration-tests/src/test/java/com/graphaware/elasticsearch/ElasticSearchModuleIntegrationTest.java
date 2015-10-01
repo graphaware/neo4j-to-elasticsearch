@@ -18,12 +18,12 @@ import org.neo4j.test.TestGraphDatabaseFactory;
 
 import java.io.IOException;
 
-import static com.graphaware.runtime.RuntimeRegistry.getRuntime;
 import java.lang.reflect.Proxy;
-import static org.apache.commons.lang.Validate.isTrue;
-import static org.apache.commons.lang3.Validate.notNull;
 import org.junit.After;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import org.junit.Before;
+import org.neo4j.tooling.GlobalGraphOperations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +34,8 @@ public class ElasticSearchModuleIntegrationTest
   private static final String ES_PORT = "9201";
   private static final String ES_CONN = String.format("http://%s:%s", ES_HOST, ES_PORT);
   private static final String ES_INDEX = "neo4jes";
+  private final String UUID = "uuid";
+
 
   private IGenericServerWrapper embeddedServer;
   
@@ -87,13 +89,21 @@ public class ElasticSearchModuleIntegrationTest
   
   private String testNewNode(GraphDatabaseService database, final Label label)
   {
-    String nodeId;
+    String nodeId = null;
     try (Transaction tx = database.beginTx())
     {
       Node node = database.createNode(label);
       node.setProperty("name", "Model S");
       node.setProperty("manufacturer", "Tesla");
-      nodeId = String.valueOf(node.getId());
+      tx.success();
+    }
+    
+    try (Transaction tx = database.beginTx()) {
+      for (Node node : GlobalGraphOperations.at(database).getAllNodesWithLabel(label)) {
+          assertTrue(node.hasProperty(UUID));
+          nodeId = String.valueOf(node.getProperty(UUID));
+          break;
+      }
       tx.success();
     }
     JestClientFactory factory = new JestClientFactory();

@@ -19,13 +19,14 @@ public class ElasticSearchModuleBootstrapper implements RuntimeModuleBootstrappe
     private static final String ES_URI = "uri";
     private static final String ES_PORT = "port";
     private static final String ES_INDEX = "index";
+    private static final String ES_KEY_PROPERTY = "keyProperty";
 
     /**
      * {@inheritDoc}
      */
     @Override
     public RuntimeModule bootstrapModule(String moduleId, Map<String, String> config, GraphDatabaseService database) {
-        ElasticSearchConfiguration configuration = new ElasticSearchConfiguration(InclusionPoliciesFactory.allBusiness(), config.get(ES_URI), config.get(ES_PORT), config.get(ES_INDEX));
+        ElasticSearchConfiguration configuration = new ElasticSearchConfiguration(InclusionPoliciesFactory.allBusiness(), config.get(ES_URI), config.get(ES_PORT), config.get(ES_INDEX), config.get(ES_KEY_PROPERTY));
 
         return new ElasticSearchModule(moduleId, configuration, database);
     }

@@ -6,7 +6,6 @@
 
 package com.graphaware.integration.es.plugin.graphfilter;
 
-import com.graphaware.integration.es.plugin.annotation.GAGraphBooster;
 import com.graphaware.integration.es.plugin.annotation.GAGraphFilter;
 import com.graphaware.integration.util.GAESUtil;
 import com.sun.jersey.api.client.Client;
@@ -20,7 +19,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
@@ -76,8 +74,10 @@ public class GACypherQueryFilter implements IGAResultFilter
     for (Map.Entry<String, InternalSearchHit> item : hitMap.entrySet())
     {
       if (remoteFilter.contains(item.getKey()))
+      {
         tmpSearchHits[k] = item.getValue();
-      k++;
+        k++;
+      }
     }
     
     logger.log(Level.WARNING, "searchHits.length <= reorderSize: {0}", (searchHits.length <= size));
@@ -136,16 +136,16 @@ public class GACypherQueryFilter implements IGAResultFilter
     GenericType<Map<String, Object>> type = new GenericType<Map<String, Object>>(){};
     Map<String, Object> results = response.getEntity(type);
 
-    System.out.println(String.format("\n\n\n\n\n\n\nGET to [%s], status code [%d], returned data: "
-            + System.getProperty("line.separator") + "%s \n\n\n\n\n\n",
-            url, response.getStatus(), results));
+//    System.out.println(String.format("\n\n\n\n\n\n\nGET to [%s], status code [%d], returned data: "
+//            + System.getProperty("line.separator") + "%s \n\n\n\n\n\n",
+//            url, response.getStatus(), results));
     Map res = (Map) ((ArrayList)results.get("results")).get(0);
     ArrayList<LinkedHashMap> rows = (ArrayList)res.get("data");
     response.close();
     Set<String> newSet = new HashSet<>();
     for (Iterator<LinkedHashMap> it = rows.iterator(); it.hasNext();)
     {
-      Integer nodeId = (Integer) ((ArrayList)(it.next().get("row"))).get(0);
+      String nodeId = (String) ((ArrayList)(it.next().get("row"))).get(0);
       newSet.add(String.valueOf(nodeId));
     }
     return newSet;

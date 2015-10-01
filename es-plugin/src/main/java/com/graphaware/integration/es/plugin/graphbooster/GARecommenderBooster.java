@@ -120,24 +120,11 @@ public class GARecommenderBooster implements IGAResultBooster
     };
     List<Neo4JResult> results = response.getEntity(type);
 
-//    System.out.println(String.format("\n\n\n\n\n\n\nGET to [%s], status code [%d], returned data: "
-//            + System.getProperty("line.separator") + "%s \n\n\n\n\n\n",
-//            recommendationEndopint, response.getStatus(), entity));
     response.close();
     List<String> newSet = new ArrayList<>();
     for (Neo4JResult res : results)
-      newSet.add(String.valueOf(res.getNodeId()));
+      newSet.add(String.valueOf(res.getUuid() != null ? res.getUuid() : res.getNodeId()));
 
-//    List<String> newSet = new ArrayList<>();
-//    int i = 0;
-//    for (String key : hitIds)
-//    {
-//      if (i < reorderSize)
-//        newSet.add(key);
-//      else
-//        break;
-//      i++;
-//    }
     return newSet;
   }
   public int getSize()
