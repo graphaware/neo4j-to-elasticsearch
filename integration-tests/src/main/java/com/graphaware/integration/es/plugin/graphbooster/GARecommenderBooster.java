@@ -7,6 +7,7 @@
 package com.graphaware.integration.es.plugin.graphbooster;
 
 import com.graphaware.integration.es.plugin.annotation.GAGraphBooster;
+import com.graphaware.integration.es.plugin.query.GAQueryResultNeo4j;
 import com.graphaware.integration.util.GAESUtil;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
@@ -43,10 +44,12 @@ public class GARecommenderBooster implements IGAResultBooster
   private int from;
   private String targetId;
   private int maxResultSize = -1;
+  private String keyProperty = GAQueryResultNeo4j.DEFAULT_KEY_PROPERTY;
 
   public GARecommenderBooster(Settings settings)
   {
     this.neo4jHost = settings.get(INDEX_GA_ES_NEO4J_HOST, neo4jHost);
+    this.keyProperty = settings.get(GAQueryResultNeo4j.INDEX_GA_ES_NEO4J_KEY_PROPERTY, GAQueryResultNeo4j.DEFAULT_KEY_PROPERTY);
 
   }
 
@@ -60,6 +63,7 @@ public class GARecommenderBooster implements IGAResultBooster
     {
       targetId = (String) extParams.get("recoTarget");
       maxResultSize = GAESUtil.getInt(extParams.get("maxResultSize"), Integer.MAX_VALUE);
+      keyProperty = (String) (extParams.get("keyProperty") != null ? extParams.get("keyProperty") : keyProperty);
     }
     if (maxResultSize > 0)
     {
@@ -100,6 +104,7 @@ public class GARecommenderBooster implements IGAResultBooster
             + targetId
             + "?limit=" + Integer.MAX_VALUE
             + "&from=" + from
+            + "&keyProperty=" + keyProperty
             + "&ids=";
     boolean isFirst = true;
     for (String id : hitIds)

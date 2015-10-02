@@ -32,13 +32,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.LinkedList;
 import java.util.List;
 
-import static com.graphaware.common.util.IterableUtils.getSingle;
-
-import com.graphaware.reco.generic.config.MapBasedConfig;
 
 import java.util.Arrays;
 
-import org.apache.commons.lang3.ArrayUtils;
 
 @Controller
 public class RecommendationController {
@@ -62,9 +58,9 @@ public class RecommendationController {
     
     @RequestMapping("/recommendation/filter/{companyName}")
     @ResponseBody
-    public List<RecommendationVO> filter(@PathVariable String companyName, @RequestParam("ids") String[] ids, @RequestParam(defaultValue = "10") int limit, @RequestParam(defaultValue = "") String config) {
+    public List<RecommendationVO> filter(@PathVariable String companyName, @RequestParam("ids") String[] ids, @RequestParam(defaultValue = "10") int limit, @RequestParam("keyProperty") String keyProperty, @RequestParam(defaultValue = "") String config) {
         try (Transaction tx = database.beginTx()) {            
-            return convert(engine.recommend(findCompanyByName(companyName), parser.produceConfig(limit, config)), ids);
+            return convert(engine.recommend(findCompanyByName(companyName), parser.produceConfig(limit, config)), ids, keyProperty);
         }
     }
 
@@ -82,13 +78,13 @@ public class RecommendationController {
         return result;
     }
     
-    private List<RecommendationVO> convert(List<Recommendation<Node>> recommendations, String[] ids) {
+    private List<RecommendationVO> convert(List<Recommendation<Node>> recommendations, String[] ids, String keyProperty) {
         List<RecommendationVO> result = new LinkedList<>();
         List<String> asList = Arrays.asList(ids);
         
         for (Recommendation<Node> recommendation : recommendations) {
-            if (asList.contains((String)recommendation.getItem().getProperty("uuid")))
-              result.add(new RecommendationVO(recommendation.getItem().getId(), (String)recommendation.getItem().getProperty("uuid"), recommendation.getItem().getProperty("name", "unknown").toString(), recommendation.getScore().getTotalScore()));
+            if (asList.contains((String)recommendation.getItem().getProperty(keyProperty)))
+              result.add(new RecommendationVO(recommendation.getItem().getId(), (String)recommendation.getItem().getProperty(keyProperty), recommendation.getItem().getProperty("name", "unknown").toString(), recommendation.getScore().getTotalScore()));
         }
 
         return result;

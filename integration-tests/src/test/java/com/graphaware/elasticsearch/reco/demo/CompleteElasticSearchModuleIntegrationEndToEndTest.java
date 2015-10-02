@@ -298,7 +298,7 @@ public class CompleteElasticSearchModuleIntegrationEndToEndTest
     
     
     //String response = httpClient.get(ES_CONN + "/" + ES_INDEX + "/Company/_search?q=firstname:Kelly", HttpStatus.OK_200);
-    String result1 = httpClient.get(baseUrl() + "/graphaware/recommendation/filter/Durgan%20LLC?limit=10&ids=148,197,27,4,5,6,7,8,9", HttpStatus.OK_200);
+    String result1 = httpClient.get(baseUrl() + "/graphaware/recommendation/filter/Durgan%20LLC?limit=10&ids=148,197,27,4,5,6,7,8,9&keyProperty=uuid", HttpStatus.OK_200);
         
     //boolean res = response.contains("total\": 1");
     //assertEquals(res, true);

@@ -57,6 +57,8 @@ public class GAQueryResultNeo4j extends AbstractComponent
 
   public static final String INDEX_GA_ES_NEO4J_ENABLED = "index.ga-es-neo4j.enable";
   public static final String INDEX_GA_ES_NEO4J_REORDER_TYPE = "index.ga-es-neo4j.booster.defaultClass";
+  public static final String INDEX_GA_ES_NEO4J_KEY_PROPERTY= "index.ga-es-neo4j.booster.keyProperty";
+  public static final String DEFAULT_KEY_PROPERTY = "uuid";
 
   private static final String DYNARANK_RERANK_ENABLE = "_rerank";
 
