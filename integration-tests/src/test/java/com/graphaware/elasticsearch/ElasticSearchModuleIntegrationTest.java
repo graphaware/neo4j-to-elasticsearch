@@ -85,6 +85,8 @@ public class ElasticSearchModuleIntegrationTest
     String nodeId = testNewNode(database, label);
     testUpdateNode(database, label, nodeId);
     testDeleteNode(database, label, nodeId);
+
+    database.shutdown();
   }
   
   private String testNewNode(GraphDatabaseService database, final Label label)
@@ -106,6 +108,13 @@ public class ElasticSearchModuleIntegrationTest
       }
       tx.success();
     }
+
+    try {
+      Thread.sleep(1000);
+    } catch (InterruptedException e) {
+      //ok
+    }
+
     JestClientFactory factory = new JestClientFactory();
     factory.setHttpClientConfig(new HttpClientConfig.Builder(ES_CONN)
             .multiThreaded(true)
@@ -125,6 +134,7 @@ public class ElasticSearchModuleIntegrationTest
     Validate.isTrue(result.isSucceeded());
     return nodeId;
   }
+
   private void testUpdateNode(GraphDatabaseService database, Label label, String nodeId)
   {
     try (Transaction tx = database.beginTx())
@@ -132,6 +142,13 @@ public class ElasticSearchModuleIntegrationTest
       database.getNodeById(0).setProperty("newProp", "newPropValue");
       tx.success();
     }
+
+    try {
+      Thread.sleep(1000);
+    } catch (InterruptedException e) {
+      //ok
+    }
+
     JestClientFactory factory = new JestClientFactory();
     factory.setHttpClientConfig(new HttpClientConfig.Builder(ES_CONN)
             .multiThreaded(true)
@@ -151,6 +168,7 @@ public class ElasticSearchModuleIntegrationTest
     Validate.isTrue(result.isSucceeded());
     Validate.isTrue(((JsonObject) (result.getJsonObject().get("_source"))).get("newProp") != null);
   }
+
   private void testDeleteNode(GraphDatabaseService database, Label label, String nodeId)
   {
     try (Transaction tx = database.beginTx())
@@ -158,6 +176,13 @@ public class ElasticSearchModuleIntegrationTest
       database.getNodeById(0).delete();
       tx.success();
     }
+
+    try {
+      Thread.sleep(1000);
+    } catch (InterruptedException e) {
+      //ok
+    }
+
     JestClientFactory factory = new JestClientFactory();
     factory.setHttpClientConfig(new HttpClientConfig.Builder(ES_CONN)
             .multiThreaded(true)

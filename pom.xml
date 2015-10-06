@@ -101,17 +101,23 @@
                 <artifactId>guava</artifactId>
                 <version>18.0</version>
             </dependency>
+            <dependency>
+                <groupId>org.reflections</groupId>
+                <artifactId>reflections</artifactId>
+                <version>0.9.9</version>
+            </dependency>
+
 
             <!-- Integration Tests -->
             <dependency>
-                <groupId>com.graphaware.integration.elasticsearch</groupId>
+                <groupId>com.graphaware.integration.es</groupId>
                 <artifactId>es-plugin</artifactId>
-                <version>1.0-SNAPSHOT</version>
+                <version>0.1-SNAPSHOT</version>
             </dependency>
             <dependency>
-                <groupId>com.graphaware.integration.elasticsearch</groupId>
+                <groupId>com.graphaware.integration.es</groupId>
                 <artifactId>neo4j-plugin</artifactId>
-                <version>2.2.4.34.0-SNAPSHOT</version>
+                <version>2.2.5.35.0-SNAPSHOT</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
@@ -122,19 +128,37 @@
             <dependency>
                 <groupId>com.graphaware.neo4j</groupId>
                 <artifactId>recommendation-engine</artifactId>
-                <version>2.2.4.34.8</version>
+                <version>2.2.5.35.8</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.graphaware.neo4j</groupId>
+                <artifactId>uuid</artifactId>
+                <version>2.2.5.35.7</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>com.graphaware.neo4j</groupId>
                 <artifactId>tests</artifactId>
-                <version>2.2.4.34</version>
+                <version>2.2.5.35</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>com.graphaware.neo4j</groupId>
                 <artifactId>runtime</artifactId>
-                <version>2.2.4.34</version>
+                <version>2.2.5.35</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.graphaware.neo4j</groupId>
+                <artifactId>writer</artifactId>
+                <version>2.2.5.35</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.graphaware.neo4j</groupId>
+                <artifactId>writer-api</artifactId>
+                <version>2.2.5.35</version>
                 <scope>test</scope>
             </dependency>
             <dependency>

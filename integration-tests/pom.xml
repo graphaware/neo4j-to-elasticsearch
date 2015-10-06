@@ -32,13 +32,11 @@
         <dependency>
             <groupId>com.graphaware.integration.es</groupId>
             <artifactId>es-plugin</artifactId>
-            <version>0.1-SNAPSHOT</version>
         </dependency>
 
         <dependency>
-            <groupId>com.graphaware.neo4j</groupId>
+            <groupId>com.graphaware.integration.es</groupId>
             <artifactId>neo4j-plugin</artifactId>
-            <version>2.2.4.34.0-SNAPSHOT</version>
         </dependency>
 
         <dependency>
@@ -54,7 +52,6 @@
         <dependency>
             <groupId>com.graphaware.neo4j</groupId>
             <artifactId>uuid</artifactId>
-            <version>2.2.4.34.7</version>
         </dependency>
 
         <dependency>
