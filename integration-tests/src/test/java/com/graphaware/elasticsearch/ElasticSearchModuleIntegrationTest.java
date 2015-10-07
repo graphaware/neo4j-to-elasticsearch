@@ -2,6 +2,7 @@
 package com.graphaware.elasticsearch;
 
 import com.google.gson.JsonObject;
+import com.graphaware.elasticsearch.reco.demo.JestPersonResult;
 import com.graphaware.elasticsearch.wrapper.IGenericServerWrapper;
 import com.graphaware.elasticsearch.util.CustomClassLoading;
 import com.graphaware.elasticsearch.util.PassThroughProxyHandler;
@@ -11,6 +12,7 @@ import io.searchbox.client.JestClientFactory;
 import io.searchbox.client.JestResult;
 import io.searchbox.client.config.HttpClientConfig;
 import io.searchbox.core.Get;
+import io.searchbox.core.SearchResult;
 import org.apache.commons.lang.Validate;
 import org.junit.Test;
 import org.neo4j.graphdb.*;
@@ -19,6 +21,7 @@ import org.neo4j.test.TestGraphDatabaseFactory;
 import java.io.IOException;
 
 import java.lang.reflect.Proxy;
+import java.util.List;
 import org.junit.After;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -85,7 +88,8 @@ public class ElasticSearchModuleIntegrationTest
     String nodeId = testNewNode(database, label);
     testUpdateNode(database, label, nodeId);
     testDeleteNode(database, label, nodeId);
-
+    stressTest(database, label, 1000);
+    
     database.shutdown();
   }
   
@@ -200,5 +204,58 @@ public class ElasticSearchModuleIntegrationTest
     }
     Validate.notNull(result);
     Validate.isTrue(!result.getJsonObject().get("found").getAsBoolean());
+  }
+  
+  private void stressTest(GraphDatabaseService database, Label label, int maxNodes)
+  {
+    String nodeId = null;
+    try (Transaction tx = database.beginTx())
+    {
+      for (int i = 0; i < maxNodes; i++)
+      {
+        Node node = database.createNode(label);
+        node.setProperty("name", "Model_" + i);
+        node.setProperty("manufacturer", "Tesla_ " + i);
+      }
+      
+      tx.success();
+    }
+    try {
+      Thread.sleep(10000);
+    } catch (InterruptedException e) {
+      //ok
+    }
+    
+    JestClientFactory factory = new JestClientFactory();
+    factory.setHttpClientConfig(new HttpClientConfig.Builder(ES_CONN)
+            .multiThreaded(true)
+            .build());
+    JestClient client = factory.getObject();
+    int k = 1;
+    try (Transaction tx = database.beginTx()) {
+      for (Node node : GlobalGraphOperations.at(database).getAllNodesWithLabel(label)) {
+          assertTrue(node.hasProperty(UUID));
+          nodeId = String.valueOf(node.getProperty(UUID));
+          Get getRequest = new Get.Builder(ES_INDEX, nodeId).type(label.name()).build();
+          
+          try
+          {
+            JestResult result = null;
+            result = client.execute(getRequest);
+            Validate.notNull(result);
+            Validate.isTrue(result.isSucceeded());
+            JestUUIDResult hit = result.getSourceAsObject(JestUUIDResult.class);
+            Validate.isTrue(hit.getDocumentId().equalsIgnoreCase(nodeId));
+          }
+          catch (IOException e)
+          {
+            e.printStackTrace();
+          }
+          if (k++ % 100 == 0)
+            LOG.warn("Tested: " + (k -1) + " nodes");
+      }
+      tx.success();
+    }
+
   }
 }
