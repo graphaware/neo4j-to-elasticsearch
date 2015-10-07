@@ -19,6 +19,7 @@ public class ElasticSearchConfiguration extends BaseTxDrivenModuleConfiguration<
     private final String keyProperty;
     private final boolean retryOnError;
     private final int queueCapacity;
+    private final boolean executeBulk;
 
     private ElasticSearchConfiguration(InclusionPolicies inclusionPolicies, String esUri, String esPort, String indexName, String keyProperty, boolean retryOnError, int queueCapacity) {
         super(inclusionPolicies);
@@ -28,6 +29,7 @@ public class ElasticSearchConfiguration extends BaseTxDrivenModuleConfiguration<
         this.keyProperty = keyProperty;
         this.retryOnError = retryOnError;
         this.queueCapacity = queueCapacity;
+        this.executeBulk = true;
     }
 
     /**
@@ -114,6 +116,10 @@ public class ElasticSearchConfiguration extends BaseTxDrivenModuleConfiguration<
         return keyProperty.equals(that.keyProperty);
 
     }
+    public boolean isExecuteBulk() {
+        return executeBulk;
+    }
+    
 
     @Override
     public int hashCode() {
@@ -123,6 +129,7 @@ public class ElasticSearchConfiguration extends BaseTxDrivenModuleConfiguration<
         result = 31 * result + indexName.hashCode();
         result = 31 * result + keyProperty.hashCode();
         result = 31 * result + (retryOnError ? 1 : 0);
+        result = 31 * result + (executeBulk ? 1 : 0);
         result = 31 * result + queueCapacity;
         return result;
     }

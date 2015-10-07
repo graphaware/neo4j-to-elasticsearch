@@ -14,8 +14,16 @@ public class ElasticSearchModule extends WriterBasedThirdPartyIntegrationModule 
     private final ElasticSearchConfiguration config;
 
     public ElasticSearchModule(String moduleId, ElasticSearchConfiguration config) {
-        super(moduleId, new ElasticSearchWriter(config.getQueueCapacity(), config.getEsUri(), config.getEsPort(), config.getKeyProperty(), config.getIndexName(), config.isRetryOnError()));
+        super(moduleId, elasticSearchWriterFactory(config));
         this.config = config;
+    }
+    
+    public static ElasticSearchWriter elasticSearchWriterFactory(ElasticSearchConfiguration config)
+    {
+      if (config.isExecuteBulk())
+        return new ElasticSearchBulkWriter(config.getQueueCapacity(), config.getEsUri(), config.getEsPort(), config.getKeyProperty(), config.getIndexName(), config.isRetryOnError());
+      else
+        return new ElasticSearchWriter(config.getQueueCapacity(), config.getEsUri(), config.getEsPort(), config.getKeyProperty(), config.getIndexName(), config.isRetryOnError());
     }
 
     @Override

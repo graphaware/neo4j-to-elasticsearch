@@ -188,6 +188,14 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
 
         client = factory.getObject();
     }
+    
+    protected JestClient getClient() {
+        return client;
+    }
+    
+    protected boolean getRetryOnError() {
+        return retryOnError;
+    }
 
     private void shutdownClient() {
         client.shutdownClient();
