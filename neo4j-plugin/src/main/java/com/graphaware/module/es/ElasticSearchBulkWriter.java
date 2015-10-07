@@ -11,21 +11,14 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <http://www.gnu.org/licenses/>.
  */
-
 package com.graphaware.module.es;
 
 import com.graphaware.common.representation.NodeRepresentation;
 import com.graphaware.writer.thirdparty.*;
-import io.searchbox.action.Action;
-import io.searchbox.client.JestClient;
-import io.searchbox.client.JestClientFactory;
 import io.searchbox.client.JestResult;
-import io.searchbox.client.config.HttpClientConfig;
 import io.searchbox.core.Bulk;
 import io.searchbox.core.Delete;
 import io.searchbox.core.Index;
-import io.searchbox.indices.CreateIndex;
-import io.searchbox.indices.IndicesExists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +31,6 @@ import java.util.*;
 public class ElasticSearchBulkWriter extends ElasticSearchWriter {
 
     private static final Logger LOG = LoggerFactory.getLogger(ElasticSearchBulkWriter.class);
-
 
     public ElasticSearchBulkWriter(String uri, String port, String keyProperty, String index, boolean retryOnError) {
         super(uri, port, keyProperty, index, retryOnError);
@@ -53,14 +45,14 @@ public class ElasticSearchBulkWriter extends ElasticSearchWriter {
     @Override
     protected void processOperations(List<Collection<WriteOperation<?>>> list) {
         List<Collection<WriteOperation<?>>> allFailed = new LinkedList<>();
-        
+
         Bulk.Builder bulkBuilder = startBulkOperation();
-        
+
         for (Collection<WriteOperation<?>> collection : list) {
             for (WriteOperation<?> operation : collection) {
                 switch (operation.getType()) {
                     case NODE_CREATED:
-                        createNode((NodeCreated) operation, bulkBuilder);; 
+                        createNode((NodeCreated) operation, bulkBuilder);
                         break;
                     case NODE_UPDATED:
                         updateNode((NodeUpdated) operation, bulkBuilder);
@@ -74,7 +66,7 @@ public class ElasticSearchBulkWriter extends ElasticSearchWriter {
             }
         }
         executeBulk(bulkBuilder);
-        
+
         if (getRetryOnError() && !executeBulk(bulkBuilder)) {
             retry(list);
         }
@@ -114,14 +106,14 @@ public class ElasticSearchBulkWriter extends ElasticSearchWriter {
 
         return success;
     }
-    
+
     private Bulk.Builder startBulkOperation() {
         return new Bulk.Builder().defaultIndex(getIndex());
     }
-    
+
     private boolean executeBulk(Bulk.Builder bulkBuilder) {
-      Bulk bulkOperation = bulkBuilder.build();
-      try {
+        Bulk bulkOperation = bulkBuilder.build();
+        try {
             JestResult execute = getClient().execute(bulkOperation);
             if (!execute.isSucceeded()) {
                 LOG.warn("Failed to execute an action against Elasticsearch. Details: " + execute.getErrorMessage());
