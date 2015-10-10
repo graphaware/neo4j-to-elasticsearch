@@ -186,8 +186,8 @@ public class CompleteElasticSearchModuleIntegrationEndToEndTest
 
             List<SearchResult.Hit<JestPersonResult, Void>> hits = result.getHits(JestPersonResult.class);
             Assert.assertEquals(10, hits.size());
-            assertEquals("Estefania Bashirian", hits.get(0).source.getName());
-            assertEquals("Wilton Emmerich", hits.get(1).source.getName());
+            assertEquals("Estefania Bashirian", hits.get(1).source.getName());
+            assertEquals("Wilton Emmerich", hits.get(0).source.getName());
             assertEquals("Emilie Bins", hits.get(2).source.getName());
         }
 

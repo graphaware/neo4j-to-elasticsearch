@@ -2,6 +2,9 @@ package com.graphaware.module.es;
 
 import com.graphaware.common.policy.NodeInclusionPolicy;
 import com.graphaware.common.policy.NodePropertyInclusionPolicy;
+import com.graphaware.module.es.executor.BulkOperationExecutorFactory;
+import com.graphaware.module.es.executor.OperationExecutorFactory;
+import com.graphaware.module.es.executor.RequestPerOperationExecutorFactory;
 import com.graphaware.runtime.config.function.StringToNodeInclusionPolicy;
 import com.graphaware.runtime.config.function.StringToNodePropertyInclusionPolicy;
 import com.graphaware.runtime.module.RuntimeModule;
@@ -27,6 +30,8 @@ public class ElasticSearchModuleBootstrapper implements RuntimeModuleBootstrappe
     private static final String NODES = "nodes";
     private static final String PROPERTIES = "properties";
     private static final String QUEUE_CAPACITY = "queueSize";
+    private static final String BULK = "bulk";
+    private static final String REINDEX_UNTIL = "reindexUntil";
 
     /**
      * {@inheritDoc}
@@ -38,8 +43,7 @@ public class ElasticSearchModuleBootstrapper implements RuntimeModuleBootstrappe
         if (configExists(config, URI)) {
             uri = config.get(URI);
             LOG.info("Elasticsearch URI set to {}", uri);
-        }
-        else {
+        } else {
             LOG.error("Elasticsearch URI must be specified!");
             throw new IllegalStateException("Elasticsearch URI must be specified!");
         }
@@ -47,47 +51,63 @@ public class ElasticSearchModuleBootstrapper implements RuntimeModuleBootstrappe
         if (configExists(config, PORT)) {
             port = config.get(PORT);
             LOG.info("Elasticsearch port set to {}", port);
-        }
-        else {
+        } else {
             LOG.error("Elasticsearch port must be specified!");
             throw new IllegalStateException("Elasticsearch port must be specified!");
         }
 
-        ElasticSearchConfiguration configuration = ElasticSearchConfiguration.defaultConfiguration(uri, port);
+        ElasticSearchConfiguration esConf = ElasticSearchConfiguration.defaultConfiguration(uri, port);
 
         if (configExists(config, INDEX)) {
-            configuration = configuration.withIndexName(config.get(INDEX));
-            LOG.info("Elasticsearch index set to {}", configuration.getIndexName());
+            esConf = esConf.withIndexName(config.get(INDEX));
+            LOG.info("Elasticsearch index set to {}", esConf.getIndex());
         }
 
         if (configExists(config, KEY_PROPERTY)) {
-            configuration = configuration.withKeyProperty(config.get(KEY_PROPERTY));
-            LOG.info("Elasticsearch key property set to {}", configuration.getKeyProperty());
+            esConf = esConf.withKeyProperty(config.get(KEY_PROPERTY));
+            LOG.info("Elasticsearch key property set to {}", esConf.getKeyProperty());
         }
 
         if (configExists(config, RETRY_ON_ERROR)) {
-            configuration = configuration.withRetryOnError(Boolean.valueOf(config.get(RETRY_ON_ERROR)));
-            LOG.info("Elasticsearch retry-on-error set to {}", configuration.isRetryOnError());
+            esConf = esConf.withRetryOnError(Boolean.valueOf(config.get(RETRY_ON_ERROR)));
+            LOG.info("Elasticsearch retry-on-error set to {}", esConf.isRetryOnError());
         }
 
         if (configExists(config, QUEUE_CAPACITY)) {
-            configuration = configuration.withQueueCapacity(Integer.valueOf(config.get(QUEUE_CAPACITY)));
-            LOG.info("Elasticsearch module queue capacity set to {}", configuration.getQueueCapacity());
+            esConf = esConf.withQueueCapacity(Integer.valueOf(config.get(QUEUE_CAPACITY)));
+            LOG.info("Elasticsearch module queue capacity set to {}", esConf.getQueueCapacity());
         }
 
         if (configExists(config, NODES)) {
             NodeInclusionPolicy policy = StringToNodeInclusionPolicy.getInstance().apply(config.get(NODES));
             LOG.info("Node Inclusion Policy set to {}", policy);
-            configuration = configuration.with(policy);
+            esConf = esConf.with(policy);
         }
 
         if (configExists(config, PROPERTIES)) {
             NodePropertyInclusionPolicy policy = StringToNodePropertyInclusionPolicy.getInstance().apply(config.get(PROPERTIES));
             LOG.info("Node Properties Inclusion Policy set to {}", policy);
-            configuration = configuration.with(policy);
+            esConf = esConf.with(policy);
         }
 
-        return new ElasticSearchModule(moduleId, configuration);
+        if (configExists(config, BULK)) {
+            esConf = esConf.withExecuteBulk(Boolean.valueOf(config.get(BULK)));
+            LOG.info("Elasticsearch bulk execution set to {}", esConf.isExecuteBulk());
+        }
+
+        if (configExists(config, REINDEX_UNTIL)) {
+            esConf = esConf.withReindexUntil(Long.valueOf(config.get(REINDEX_UNTIL)));
+            LOG.info("Elasticsearch re-index until set to {}", esConf.getReindexUntil());
+            if (esConf.getReindexUntil() != 0) {
+                long now = System.currentTimeMillis();
+                LOG.info("That's " + Math.abs(now - esConf.getReindexUntil()) + " ms in the " + (now > esConf.getReindexUntil() ? "past" : "future"));
+            }
+        }
+
+        OperationExecutorFactory executorFactory = esConf.isExecuteBulk() ? new BulkOperationExecutorFactory() : new RequestPerOperationExecutorFactory();
+        ElasticSearchWriter writer = new ElasticSearchWriter(esConf.getQueueCapacity(), esConf.getUri(), esConf.getPort(), esConf.getKeyProperty(), esConf.getIndex(), esConf.isRetryOnError(), executorFactory);
+
+        return new ElasticSearchModule(moduleId, writer, esConf);
     }
 
     private boolean configExists(Map<String, String> config, String key) {

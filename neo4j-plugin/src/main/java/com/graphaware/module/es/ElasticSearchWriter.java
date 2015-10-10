@@ -14,22 +14,25 @@
 
 package com.graphaware.module.es;
 
-import com.graphaware.common.representation.NodeRepresentation;
+import com.graphaware.module.es.executor.OperationExecutor;
+import com.graphaware.module.es.executor.OperationExecutorFactory;
 import com.graphaware.writer.thirdparty.*;
-import io.searchbox.action.Action;
 import io.searchbox.client.JestClient;
 import io.searchbox.client.JestClientFactory;
 import io.searchbox.client.JestResult;
 import io.searchbox.client.config.HttpClientConfig;
-import io.searchbox.core.Delete;
-import io.searchbox.core.Index;
 import io.searchbox.indices.CreateIndex;
 import io.searchbox.indices.IndicesExists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+
+import static org.springframework.util.Assert.hasLength;
+import static org.springframework.util.Assert.notNull;
 
 /**
  * A {@link ThirdPartyWriter} to Elasticsearch (https://www.elastic.co/).
@@ -44,171 +47,164 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
     private final String keyProperty;
     private final String index;
     private final boolean retryOnError;
+    private final OperationExecutorFactory executorFactory;
 
-    public ElasticSearchWriter(String uri, String port, String keyProperty, String index, boolean retryOnError) {
+    /**
+     * Create an Elasticsearch writer with default queue capacity ({@link #DEFAULT_QUEUE_CAPACITY}).
+     *
+     * @param uri             Elasticsearch URI. Must not be <code>null</code>.
+     * @param port            Elasticsearch port. Must not be <code>null</code>.
+     * @param keyProperty     name of the node property that serves as the key, under which the node will be indexed in Elasticsearch. Must not be <code>null</code> or empty.
+     * @param index           name of the Elasticsearch index. Must not be <code>null</code> or empty.
+     * @param retryOnError    whether to retry an index update after a failure (<code>true</code>) or throw the update away (<code>false</code>).
+     * @param executorFactory factory that produces executors of operations against Elasticsearch. Must not be <code>null</code>.
+     */
+    public ElasticSearchWriter(String uri, String port, String keyProperty, String index, boolean retryOnError, OperationExecutorFactory executorFactory) {
+        super();
+
+        notNull(uri);
+        notNull(port);
+        hasLength(index);
+        hasLength(keyProperty);
+        notNull(executorFactory);
+
         this.uri = uri;
         this.port = port;
         this.keyProperty = keyProperty;
         this.index = index;
         this.retryOnError = retryOnError;
+        this.executorFactory = executorFactory;
     }
 
-    public ElasticSearchWriter(int queueCapacity, String uri, String port, String keyProperty, String index, boolean retryOnError) {
+    /**
+     * Create an Elasticsearch writer with default queue capacity ({@link #DEFAULT_QUEUE_CAPACITY}).
+     *
+     * @param uri             Elasticsearch URI. Must not be <code>null</code>.
+     * @param port            Elasticsearch port. Must not be <code>null</code>.
+     * @param keyProperty     name of the node property that serves as the key, under which the node will be indexed in Elasticsearch. Must not be <code>null</code> or empty.
+     * @param index           name of the Elasticsearch index. Must not be <code>null</code> or empty.
+     * @param retryOnError    whether to retry an index update after a failure (<code>true</code>) or throw the update away (<code>false</code>).
+     * @param executorFactory factory that produces executors of operations against Elasticsearch. Must not be <code>null</code>.
+     */
+    public ElasticSearchWriter(int queueCapacity, String uri, String port, String keyProperty, String index, boolean retryOnError, OperationExecutorFactory executorFactory) {
         super(queueCapacity);
+
+        notNull(uri);
+        notNull(port);
+        hasLength(index);
+        hasLength(keyProperty);
+        notNull(executorFactory);
+
         this.uri = uri;
         this.port = port;
         this.keyProperty = keyProperty;
         this.index = index;
         this.retryOnError = retryOnError;
+        this.executorFactory = executorFactory;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void start() {
+        LOG.info("Starting Elasticsearch Writer...");
+
         super.start();
         createClient();
         createIndexIfNotExist();
+
+        LOG.info("Started Elasticsearch Writer.");
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void stop() {
+        LOG.info("Stopping Elasticsearch Writer...");
+
         super.stop();
         shutdownClient();
+
+        LOG.info("Stopped Elasticsearch Writer.");
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected void processOperations(List<Collection<WriteOperation<?>>> list) {
-        List<Collection<WriteOperation<?>>> allFailed = new LinkedList<>();
+        OperationExecutor executor = executorFactory.newExecutor(client, index, keyProperty);
+
+        executor.start();
 
         for (Collection<WriteOperation<?>> collection : list) {
-
-            Collection<WriteOperation<?>> failed = new HashSet<>();
-
             for (WriteOperation<?> operation : collection) {
                 switch (operation.getType()) {
                     case NODE_CREATED:
-                        if (!createNode((NodeCreated) operation)) {
-                            failed.add(operation);
-                        }
+                        executor.createNode((NodeCreated) operation);
                         break;
                     case NODE_UPDATED:
-                        if (!updateNode((NodeUpdated) operation)) {
-                            failed.add(operation);
-                        }
+                        executor.updateNode((NodeUpdated) operation);
                         break;
                     case NODE_DELETED:
-                        if (!deleteNode((NodeDeleted) operation)) {
-                            failed.add(operation);
-                        }
+                        executor.deleteNode((NodeDeleted) operation);
                         break;
                     default:
                         LOG.warn("Unsupported operation " + operation.getType());
                 }
             }
+        }
 
-            if (!failed.isEmpty()) {
-                allFailed.add(failed);
+        List<WriteOperation<?>> allFailed = executor.flush();
+
+        if (!allFailed.isEmpty()) {
+            if (retryOnError) {
+                LOG.warn("There were " + allFailed.size() + " failures in replicating to Elasticsearch. Will retry...");
+                retry(Collections.<Collection<WriteOperation<?>>>singletonList(allFailed));
+            } else {
+                LOG.warn("There were " + allFailed.size() + " failures in replicating to Elasticsearch. These updates got lost.");
             }
-        }
-
-        if (retryOnError && !allFailed.isEmpty()) {
-            retry(allFailed);
-        }
-    }
-
-    protected String getKey(NodeRepresentation node) {
-        return String.valueOf(node.getProperties().get(keyProperty));
-    }
-
-    protected String getIndex() {
-        return index;
-    }
-
-    private boolean createNode(NodeCreated nodeCreated) throws RuntimeException {
-        NodeRepresentation node = nodeCreated.getDetails();
-        return createOrUpdateNode(node);
-    }
-
-    private boolean updateNode(NodeUpdated nodeUpdated) {
-        NodeRepresentation node = nodeUpdated.getDetails().getCurrent();
-        return createOrUpdateNode(node);
-    }
-
-    private boolean createOrUpdateNode(NodeRepresentation node) {
-        String id = getKey(node);
-
-        Map<String, String> source = new LinkedHashMap<>();
-        for (String key : node.getProperties().keySet()) {
-            source.put(key, String.valueOf(node.getProperties().get(key)));
-        }
-
-        boolean success = true;
-        for (String label : node.getLabels()) {
-            if (!execute(new Index.Builder(source).index(getIndex()).type(label).id(id).build(), id)) {
-                success = false;
-            }
-        }
-
-        return success;
-    }
-
-    private boolean deleteNode(NodeDeleted nodeDeleted) {
-        NodeRepresentation node = nodeDeleted.getDetails();
-        String id = getKey(node);
-
-        boolean success = true;
-        for (String label : node.getLabels()) {
-            if (!execute(new Delete.Builder(id).index(getIndex()).type(label).build(), id)) {
-                success = false;
-            }
-        }
-
-        return success;
-    }
-
-    private boolean execute(Action<? extends JestResult> insert, String nodeId) {
-        try {
-            final JestResult execute = client.execute(insert);
-
-            if (!execute.isSucceeded()) {
-                LOG.warn("Failed to execute an action against Elasticsearch. Details: " + execute.getErrorMessage());
-            }
-
-            return execute.isSucceeded();
-        } catch (IOException e) {
-            LOG.warn("Failed to execute an action against Elasticsearch. ", e);
-            return false;
         }
     }
 
     private void createClient() {
+        LOG.info("Creating Jest Client...");
+
         JestClientFactory factory = new JestClientFactory();
         factory.setHttpClientConfig(new HttpClientConfig.Builder(String.format("http://%s:%s", uri, port))
                 .multiThreaded(true)
                 .build());
 
         client = factory.getObject();
-    }
-    
-    protected JestClient getClient() {
-        return client;
-    }
-    
-    protected boolean getRetryOnError() {
-        return retryOnError;
+
+        LOG.info("Created Jest Client.");
     }
 
     private void shutdownClient() {
+        LOG.info("Shutting down Jest Client...");
+
         client.shutdownClient();
         client = null;
+
+        LOG.info("Shut down Jest Client.");
     }
 
     private void createIndexIfNotExist() {
         try {
-            if (client.execute(new IndicesExists.Builder(getIndex()).build()).isSucceeded()) {
+            if (client.execute(new IndicesExists.Builder(index).build()).isSucceeded()) {
+                LOG.info("Index " + index + " already exists in Elasticsearch.");
                 return;
             }
-            final JestResult execute = client.execute(new CreateIndex.Builder(getIndex()).build());
-            if (!execute.isSucceeded()) {
+
+            LOG.info("Index " + index + " does not exist in Elasticsearch, creating...");
+
+            final JestResult execute = client.execute(new CreateIndex.Builder(index).build());
+
+            if (execute.isSucceeded()) {
+                LOG.info("Created Elasticsearch index.");
+            } else {
                 LOG.error("Failed to create Elasticsearch index. Details: " + execute.getErrorMessage());
             }
         } catch (IOException e) {
