@@ -38,7 +38,7 @@ public class ElasticSearchBulkWriter extends ElasticSearchWriter {
     }
 
     public ElasticSearchBulkWriter(int queueCapacity, String uri, String port, String keyProperty, String index, boolean retryOnError) {
-        super(uri, port, keyProperty, index, retryOnError);
+        super(queueCapacity, uri, port, keyProperty, index, retryOnError);
         LOG.warn("Starting bulk writer");
     }
 
