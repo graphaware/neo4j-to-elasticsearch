@@ -4,7 +4,7 @@ package com.graphaware.elasticsearch.reco.demo;
 import com.graphaware.elasticsearch.util.CustomClassLoading;
 import com.graphaware.elasticsearch.util.PassThroughProxyHandler;
 import com.graphaware.elasticsearch.util.TestUtil;
-import com.graphaware.elasticsearch.wrapper.IGenericServerWrapper;
+import com.graphaware.elasticsearch.wrapper.EmbeddedServerWrapper;
 import com.graphaware.integration.es.plugin.query.GAQueryResultNeo4j;
 import com.graphaware.test.data.DatabasePopulator;
 import com.graphaware.test.data.GraphgenPopulator;
@@ -40,7 +40,7 @@ public class CompleteElasticSearchModuleIntegrationEndToEndTest
     private static final String ES_CONN = String.format("http://%s:%s", ES_HOST, ES_PORT);
     private static final String ES_INDEX = "neo4jes";
 
-    private IGenericServerWrapper embeddedServer;
+    private EmbeddedServerWrapper embeddedServer;
 
     private static final Logger LOG = LoggerFactory.getLogger(CompleteElasticSearchModuleIntegrationEndToEndTest.class);
 
@@ -71,14 +71,14 @@ public class CompleteElasticSearchModuleIntegrationEndToEndTest
         LOG.warn("classpath: " + classpath);
         try {
             CustomClassLoading loader = new CustomClassLoading(classpath);
-            Class<Object> loadedClass = (Class<Object>) loader.loadClass("com.graphaware.elasticsearch.wrapper.ESServerWrapper");
-            embeddedServer = (IGenericServerWrapper) Proxy.newProxyInstance(this.getClass().getClassLoader(),
+            Class<Object> loadedClass = (Class<Object>) loader.loadClass("com.graphaware.elasticsearch.wrapper.ElasticSearchEmbeddedServerWrapper");
+            embeddedServer = (EmbeddedServerWrapper) Proxy.newProxyInstance(this.getClass().getClassLoader(),
                     new Class[]
                             {
-                                    IGenericServerWrapper.class
+                                    EmbeddedServerWrapper.class
                             },
                     new PassThroughProxyHandler(loadedClass.newInstance()));
-            embeddedServer.startEmbdeddedServer();
+            embeddedServer.startEmbeddedServer();
             Map<String, Object> indexProperties = new HashMap<>();
             indexProperties.put(GAQueryResultNeo4j.INDEX_GA_ES_NEO4J_REORDER_TYPE, "myIndexClass");
             embeddedServer.createIndex(ES_INDEX, indexProperties);
@@ -90,7 +90,7 @@ public class CompleteElasticSearchModuleIntegrationEndToEndTest
 
     @After
     public void tearDown() throws IOException, InterruptedException, Exception {
-        embeddedServer.stopEmbdeddedServer();
+        embeddedServer.stopEmbeddedServer();
         super.tearDown();
         TestUtil.deleteDataDirectory();
     }

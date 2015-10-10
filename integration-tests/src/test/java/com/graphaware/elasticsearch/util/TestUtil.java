@@ -20,7 +20,7 @@ public class TestUtil
   {
     try
     {
-//      FileUtils.deleteDirectory(new File(ESServerWrapper.DEFAULT_DATA_DIRECTORY));
+//      FileUtils.deleteDirectory(new File(ElasticSearchEmbeddedServerWrapper.DEFAULT_DATA_DIRECTORY));
 //      FileUtils.deleteDirectory(new File(ESClientWrapper.DEFAULT_DATA_DIRECTORY));
       FileUtils.deleteDirectory(new File("data"));
     }

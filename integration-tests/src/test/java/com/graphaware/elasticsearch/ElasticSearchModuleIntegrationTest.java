@@ -2,8 +2,7 @@
 package com.graphaware.elasticsearch;
 
 import com.google.gson.JsonObject;
-import com.graphaware.elasticsearch.reco.demo.JestPersonResult;
-import com.graphaware.elasticsearch.wrapper.IGenericServerWrapper;
+import com.graphaware.elasticsearch.wrapper.EmbeddedServerWrapper;
 import com.graphaware.elasticsearch.util.CustomClassLoading;
 import com.graphaware.elasticsearch.util.PassThroughProxyHandler;
 import com.graphaware.runtime.RuntimeRegistry;
@@ -23,8 +22,7 @@ import java.io.IOException;
 
 import java.lang.reflect.Proxy;
 import java.util.List;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
+
 import org.junit.After;
 import org.junit.Assert;
 import static org.junit.Assert.assertTrue;
@@ -41,7 +39,7 @@ public class ElasticSearchModuleIntegrationTest
     private static final String ES_CONN = String.format("http://%s:%s", ES_HOST, ES_PORT);
     private static final String ES_INDEX = "neo4jes";
     private final String UUID = "uuid";
-    private IGenericServerWrapper embeddedServer;
+    private EmbeddedServerWrapper embeddedServer;
 
     private static final Logger LOG = LoggerFactory.getLogger(ElasticSearchModuleIntegrationTest.class);
 
@@ -53,14 +51,14 @@ public class ElasticSearchModuleIntegrationTest
         try
         {
             CustomClassLoading loader = new CustomClassLoading(classpath);
-            Class<Object> loadedClass = (Class<Object>) loader.loadClass("com.graphaware.elasticsearch.wrapper.ESServerWrapper");
-            embeddedServer = (IGenericServerWrapper) Proxy.newProxyInstance(this.getClass().getClassLoader(),
+            Class<Object> loadedClass = (Class<Object>) loader.loadClass("com.graphaware.elasticsearch.wrapper.ElasticSearchEmbeddedServerWrapper");
+            embeddedServer = (EmbeddedServerWrapper) Proxy.newProxyInstance(this.getClass().getClassLoader(),
                     new Class[]
                     {
-                      IGenericServerWrapper.class
+                      EmbeddedServerWrapper.class
                     },
                     new PassThroughProxyHandler(loadedClass.newInstance()));
-            embeddedServer.startEmbdeddedServer();
+            embeddedServer.startEmbeddedServer();
         }
         catch (Exception ex)
         {
@@ -70,7 +68,7 @@ public class ElasticSearchModuleIntegrationTest
 
     @After
     public void tearDown() {
-        embeddedServer.stopEmbdeddedServer();
+        embeddedServer.stopEmbeddedServer();
     }
 
     @Test
