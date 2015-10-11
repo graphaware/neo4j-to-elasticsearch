@@ -34,7 +34,6 @@ import java.io.IOException;
 
 import static com.graphaware.elasticsearch.util.TestUtil.waitFor;
 
-
 public class ElasticSearchModuleProgrammaticTest extends ElasticSearchModuleIntegrationTest {
 
     @Before
