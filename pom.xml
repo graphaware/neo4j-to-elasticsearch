@@ -1,182 +1,229 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  
-  <artifactId>neo4j-es</artifactId>
-  <version>2.2.2.32.0-SNAPSHOT</version>
-    
-    
-  <parent>
-    <groupId>com.graphaware.neo4j</groupId>
-    <artifactId>module-parent</artifactId>
-    <version>2.2.2.32</version>
-  </parent>
-    
-  <name>GraphAware Neo4J-ES Integration Module</name>
-  <description>GraphAware Neo4J ElasticSearch Integration Module.</description>
-  <url>http://graphaware.com</url>
-  
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.source>1.7</maven.compiler.source>
-    <maven.compiler.target>1.7</maven.compiler.target>
-    <!--neo4j.version>2.2.2</neo4j.version-->
-    <es.version>1.6.0</es.version>
-  </properties>
-    
-  <licenses>
-    <license>
-      <name>GNU General Public License, version 3</name>
-      <url>http://www.gnu.org/licenses/gpl-3.0.txt</url>
-      <distribution>repo</distribution>
-    </license>
-  </licenses>
 
-  <scm>
-    <connection>scm:git:git@github.com:graphaware/neo4j-es.git</connection>
-    <developerConnection>scm:git:git@github.com:graphaware/neo4j-es.git</developerConnection>
-    <url>git@github.com:graphaware/neo4j-es.git</url>
-    <tag>HEAD</tag>
-  </scm>
-  
-  <dependencies>
-    <dependency>
-      <groupId>com.graphaware.neo4j</groupId>
-      <artifactId>runtime</artifactId>
-      <scope>compile</scope>
-    </dependency>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-    <dependency>
-      <groupId>com.graphaware.neo4j</groupId>
-      <artifactId>tx-api</artifactId>
-      <scope>compile</scope>
-    </dependency>
+    <groupId>com.graphaware.integration.es</groupId>
+    <artifactId>neo4j-es</artifactId>
+    <version>0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
 
-    <dependency>
-      <groupId>com.graphaware.neo4j</groupId>
-      <artifactId>tx-executor</artifactId>
-      <scope>compile</scope>
-    </dependency>
+    <modules>
+        <module>es-plugin</module>
+        <module>neo4j-plugin</module>
+        <module>integration-tests</module>
+    </modules>
 
-    <dependency>
-      <groupId>com.graphaware.neo4j</groupId>
-      <artifactId>server-community</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.elasticsearch</groupId>
-      <artifactId>elasticsearch</artifactId>
-      <version>${es.version}</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.codehaus.groovy</groupId>
-      <artifactId>groovy-all</artifactId>
-      <version>2.3.2</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.lucene</groupId>
-      <artifactId>lucene-expressions</artifactId>
-      <version>4.10.4</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.lucene</groupId>
-      <artifactId>lucene-codecs</artifactId>
-      <version>4.10.4</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.11</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.lucene</groupId>
-      <artifactId>lucene-core</artifactId>
-      <version>3.6.2</version>
-      <scope>test</scope>
-    </dependency>
-  </dependencies>
-  <build>
-    <plugins>
-      <plugin>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>copy-dependencies</id>
-            <phase>compile</phase>
-            <goals>
-              <goal>copy-dependencies</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>${project.basedir}/extlib</outputDirectory>
-              <excludeArtifactIds>logback-classic logback-core logback-access</excludeArtifactIds>
-              <overWriteReleases>true</overWriteReleases>
-              <overWriteSnapshots>false</overWriteSnapshots>
-              <overWriteIfNewer>true</overWriteIfNewer>
-              <includeScope>compile</includeScope>
-            </configuration>
-          </execution>
-          <execution>
-            <id>copy-model</id>
-            <phase>package</phase>
-            <goals>
-              <goal>copy</goal>
-            </goals>
-            <configuration>
-              <overWriteReleases>true</overWriteReleases>
-              <overWriteSnapshots>false</overWriteSnapshots>
-              <overWriteIfNewer>true</overWriteIfNewer>
-              <artifactItems>
-                <artifactItem>
-                  <groupId>org.apache.lucene</groupId>
-                  <artifactId>lucene-core</artifactId>
-                  <version>4.10.4</version>
-                  <overWrite>true</overWrite>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>com.graphaware.neo4j</groupId>
-                  <artifactId>neo4j-es</artifactId>
-                  <version>2.2.2.32.0-SNAPSHOT</version>
-                  <overWrite>true</overWrite>
-                </artifactItem>
-              </artifactItems>
-              <outputDirectory>${project.basedir}/extlib</outputDirectory>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.18.1</version>
-        <configuration>
-          <skip>true</skip>
-          <argLine>-Xmx1024m -XX:MaxPermSize=256m</argLine>
-          <systemPropertyVariables>
-            <classpath>${project.basedir}/extlib</classpath>
-          </systemPropertyVariables>
-        </configuration>
-        <executions>
-          <execution>
-            <id>unittests</id>
-            <phase>install</phase>
-            <goals>
-              <goal>test</goal>
-            </goals>
-            <configuration>
-              <skip>false</skip>
-              <argLine>-Xmx1024m -XX:MaxPermSize=256m</argLine>
-              <includes>
-                <include>**/**/**/*Test.java</include>
-              </includes>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-  </build>
+    <properties>
+        <java.version>1.7</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <neo4j.version>2.2.5</neo4j.version>
+        <elasticsearch.version>1.7.1</elasticsearch.version>
+    </properties>
+
+    <name>*** Neo4j Elasticsearch Integration Parent ***</name>
+    <description>Parent Project for GraphAware Enterprise-grade Neo4j-Elasticsearch Integration</description>
+
+    <url>http://graphaware.com</url>
+
+    <licenses>
+        <license>
+            <name>GNU General Public License, version 3</name>
+            <url>http://www.gnu.org/licenses/gpl-3.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <scm>
+        <connection>scm:git:git@github.com:graphaware/neo4j-es.git</connection>
+        <developerConnection>scm:git:git@github.com:graphaware/neo4j-es.git</developerConnection>
+        <url>git@github.com:graphaware/neo4j-es.git</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <developers>
+        <developer>
+            <id>alenegro</id>
+            <name>Alessandro Negro</name>
+            <email>alessandro@graphaware.com</email>
+        </developer>
+        <developer>
+            <id>bachmanm</id>
+            <name>Michal Bachman</name>
+            <email>neo4j-es@graphaware.com</email>
+        </developer>
+        <developer>
+            <id>mictech</id>
+            <name>Michal Tehnik</name>
+            <email>michal.tehnik@graphaware.com</email>
+        </developer>
+    </developers>
+
+    <ciManagement>
+        <url>https://travis-ci.org/graphaware/neo4j-es</url>
+        <system>Travis CI</system>
+    </ciManagement>
+
+    <inceptionYear>2015</inceptionYear>
+
+    <issueManagement>
+        <system>GitHub</system>
+        <url>https://github.com/graphaware/neo4j-es/issues</url>
+    </issueManagement>
+
+    <organization>
+        <name>Graph Aware Limited</name>
+        <url>http://graphaware.com</url>
+    </organization>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- ES Plugin -->
+            <dependency>
+                <groupId>org.elasticsearch</groupId>
+                <artifactId>elasticsearch</artifactId>
+                <version>${elasticsearch.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.sun.jersey</groupId>
+                <artifactId>jersey-client</artifactId>
+                <version>1.19</version>
+            </dependency>
+            <dependency>
+                <groupId>org.codehaus.jackson</groupId>
+                <artifactId>jackson-jaxrs</artifactId>
+                <version>1.9.13</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>18.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.reflections</groupId>
+                <artifactId>reflections</artifactId>
+                <version>0.9.9</version>
+            </dependency>
+
+
+            <!-- Integration Tests -->
+            <dependency>
+                <groupId>com.graphaware.integration.es</groupId>
+                <artifactId>es-plugin</artifactId>
+                <version>0.1-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>com.graphaware.integration.es</groupId>
+                <artifactId>neo4j-plugin</artifactId>
+                <version>2.2.5.35.0-SNAPSHOT</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.codelibs</groupId>
+                <artifactId>elasticsearch-cluster-runner</artifactId>
+                <version>1.7.0.0</version>
+            </dependency>
+            <dependency>
+                <groupId>com.graphaware.neo4j</groupId>
+                <artifactId>recommendation-engine</artifactId>
+                <version>2.2.5.35.8</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.graphaware.neo4j</groupId>
+                <artifactId>uuid</artifactId>
+                <version>2.2.5.35.7</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.graphaware.neo4j</groupId>
+                <artifactId>tests</artifactId>
+                <version>2.2.5.35</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.graphaware.neo4j</groupId>
+                <artifactId>runtime</artifactId>
+                <version>2.2.5.35</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.graphaware.neo4j</groupId>
+                <artifactId>writer</artifactId>
+                <version>2.2.5.35</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.graphaware.neo4j</groupId>
+                <artifactId>writer-api</artifactId>
+                <version>2.2.5.35</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-core</artifactId>
+                <version>3.6.2</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.searchbox</groupId>
+                <artifactId>jest</artifactId>
+                <version>0.1.6</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>1.7.12</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.3.2</version>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                    <encoding>${project.build.sourceEncoding}</encoding>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>2.8.1</version>
+                <configuration>
+                    <retryFailedDeploymentCount>10</retryFailedDeploymentCount>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.sonatype.plugins</groupId>
+                <artifactId>nexus-staging-maven-plugin</artifactId>
+                <version>1.6.3</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <serverId>ossrh</serverId>
+                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.5</version>
+                <configuration>
+                    <autoVersionSubmodules>true</autoVersionSubmodules>
+                    <useReleaseProfile>false</useReleaseProfile>
+                    <releaseProfiles>release</releaseProfiles>
+                    <goals>deploy</goals>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
 </project>
