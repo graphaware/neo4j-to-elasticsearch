@@ -101,7 +101,7 @@ public class ElasticSearchModuleDeclarativeTest extends ElasticSearchModuleInteg
         verifyEsReplication();
     }
 
-    @Test
+    @Test(timeout = 10_000)
     public void existingDatabaseShouldBeIndexedAndReIndexed() throws IOException {
         TemporaryFolder folder = new TemporaryFolder();
         folder.create();
@@ -143,11 +143,10 @@ public class ElasticSearchModuleDeclarativeTest extends ElasticSearchModuleInteg
         getRuntime(database).waitUntilStarted();
         configuration = (ElasticSearchConfiguration) getRuntime(database).getModule("ES", ElasticSearchModule.class).getConfiguration();
 
-        waitFor(1000);
-        verifyEsReplication();
+        verifyEventualEsReplication();
     }
 
-    @Test
+    @Test(timeout = 10_000)
     @RepeatRule.Repeat(times = 5)
     public void dataShouldBeCorrectlyReplicatedWithRetryAfterFailureBulk() {
         database = new TestGraphDatabaseFactory().newImpermanentDatabaseBuilder()
@@ -157,13 +156,11 @@ public class ElasticSearchModuleDeclarativeTest extends ElasticSearchModuleInteg
         getRuntime(database).waitUntilStarted();
         configuration = (ElasticSearchConfiguration) getRuntime(database).getModule("ES", ElasticSearchModule.class).getConfiguration();
 
-        //Actual test:
         writeSomeStuffToNeo4j();
-        waitFor(500);
-        verifyEsReplication();
+        verifyEventualEsReplication();
     }
 
-    @Test
+    @Test(timeout = 10_000)
     @RepeatRule.Repeat(times = 5)
     public void dataShouldBeCorrectlyReplicatedWithRetryAfterFailurePerRequest() {
         database = new TestGraphDatabaseFactory().newImpermanentDatabaseBuilder()
@@ -173,13 +170,11 @@ public class ElasticSearchModuleDeclarativeTest extends ElasticSearchModuleInteg
         getRuntime(database).waitUntilStarted();
         configuration = (ElasticSearchConfiguration) getRuntime(database).getModule("ES", ElasticSearchModule.class).getConfiguration();
 
-        //Actual test:
         writeSomeStuffToNeo4j();
-        waitFor(1000);
-        verifyEsReplication();
+        verifyEventualEsReplication();
     }
 
-    @Test
+    @Test(timeout = 10_000)
     public void dataShouldBeCorrectlyReplicatedWithRetryWhenEsStartsLate() {
         esServer.stop();
         esServer = new EmbeddedElasticSearchServer();
@@ -196,8 +191,7 @@ public class ElasticSearchModuleDeclarativeTest extends ElasticSearchModuleInteg
         waitFor(200);
 
         esServer.start();
-        waitFor(2000);
-        verifyEsReplication();
+        verifyEventualEsReplication();
     }
 
     private String properties(String name) {

@@ -182,7 +182,7 @@ public class ElasticSearchModuleProgrammaticTest extends ElasticSearchModuleInte
         verifyEsReplication();
     }
 
-    @Test
+    @Test(timeout = 10_000)
     @RepeatRule.Repeat(times = 5)
     public void dataShouldBeCorrectlyReplicatedWithRetryAfterFailureBulk() {
         //Framework & Modules setup:
@@ -197,11 +197,10 @@ public class ElasticSearchModuleProgrammaticTest extends ElasticSearchModuleInte
 
         //Actual test:
         writeSomeStuffToNeo4j();
-        waitFor(500);
-        verifyEsReplication();
+        verifyEventualEsReplication();
     }
 
-    @Test
+    @Test(timeout = 10_000)
     @RepeatRule.Repeat(times = 5)
     public void dataShouldBeCorrectlyReplicatedWithRetryAfterFailurePerRequest() {
         //Framework & Modules setup:
@@ -216,11 +215,10 @@ public class ElasticSearchModuleProgrammaticTest extends ElasticSearchModuleInte
 
         //Actual test:
         writeSomeStuffToNeo4j();
-        waitFor(5000);
-        verifyEsReplication();
+        verifyEventualEsReplication();
     }
 
-    @Test
+    @Test(timeout = 10_000)
     public void dataShouldBeCorrectlyReplicatedWithRetryWhenEsStartsLate() {
         esServer.stop();
         esServer = new EmbeddedElasticSearchServer();
@@ -240,7 +238,6 @@ public class ElasticSearchModuleProgrammaticTest extends ElasticSearchModuleInte
         waitFor(200);
 
         esServer.start();
-        waitFor(2000);
-        verifyEsReplication();
+        verifyEventualEsReplication();
     }
 }

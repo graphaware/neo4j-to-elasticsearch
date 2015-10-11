@@ -13,6 +13,7 @@
  */
 package com.graphaware.module.es;
 
+import com.graphaware.elasticsearch.util.TestUtil;
 import com.graphaware.integration.es.test.ElasticSearchClient;
 import com.graphaware.integration.es.test.ElasticSearchServer;
 import com.graphaware.integration.es.test.EmbeddedElasticSearchServer;
@@ -30,6 +31,7 @@ import org.neo4j.tooling.GlobalGraphOperations;
 import java.util.HashSet;
 import java.util.Set;
 
+import static com.graphaware.elasticsearch.util.TestUtil.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -75,6 +77,20 @@ public abstract class ElasticSearchModuleIntegrationTest {
             database.execute("MATCH (p:Person {name:'Adam'})-[r]-() DELETE p,r");
             database.execute("MATCH (p:Person {name:'Michal'})-[r:WORKS_FOR]->() REMOVE r.role");
             tx.success();
+        }
+    }
+
+    protected void verifyEventualEsReplication() {
+        Neo4jElasticVerifier verifier = new Neo4jElasticVerifier(database, configuration, esClient);
+
+        while (true) {
+            try {
+                verifier.verifyEsReplication();
+                return;
+            } catch (AssertionError e) {
+                //not yet
+                waitFor(100);
+            }
         }
     }
 
