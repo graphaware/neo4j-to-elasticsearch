@@ -47,5 +47,7 @@ public class EmbeddedElasticSearchServer implements ElasticSearchServer {
 
     public void stop() {
         embeddedServer.stopEmbeddedServer();
+        embeddedServer = null;
+        System.gc();
     }
 }

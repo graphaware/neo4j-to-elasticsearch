@@ -120,7 +120,7 @@ public class ElasticSearchModuleDeclarativeTest extends ElasticSearchModuleInteg
         getRuntime(database).waitUntilStarted();
         configuration = (ElasticSearchConfiguration) getRuntime(database).getModule("ES", ElasticSearchModule.class).getConfiguration();
 
-        waitFor(200);
+        waitFor(500);
         verifyEsReplication();
 
         database.shutdown();

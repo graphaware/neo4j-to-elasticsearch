@@ -75,7 +75,7 @@ public class ElasticSearchModuleProgrammaticTest extends ElasticSearchModuleInte
 
         //Actual test:
         writeSomeStuffToNeo4j();
-        waitFor(200);
+        waitFor(1000);
         verifyEsReplication();
     }
 
@@ -217,7 +217,7 @@ public class ElasticSearchModuleProgrammaticTest extends ElasticSearchModuleInte
 
         //Actual test:
         writeSomeStuffToNeo4j();
-        waitFor(500);
+        waitFor(5000);
         verifyEsReplication();
     }
 
@@ -241,7 +241,7 @@ public class ElasticSearchModuleProgrammaticTest extends ElasticSearchModuleInte
         waitFor(200);
 
         esServer.start();
-        waitFor(1000);
+        waitFor(2000);
         verifyEsReplication();
     }
 }
