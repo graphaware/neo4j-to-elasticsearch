@@ -101,7 +101,11 @@ public class ElasticSearchModuleBootstrapper implements RuntimeModuleBootstrappe
             }
         }
 
-        return new ElasticSearchModule(moduleId, new ElasticSearchWriter(esConf), esConf);
+        return new ElasticSearchModule(moduleId, produceWriter(esConf), esConf);
+    }
+
+    protected ElasticSearchWriter produceWriter(ElasticSearchConfiguration esConf) {
+        return new ElasticSearchWriter(esConf);
     }
 
     private boolean configExists(Map<String, String> config, String key) {

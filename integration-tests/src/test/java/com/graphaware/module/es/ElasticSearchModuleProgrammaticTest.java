@@ -13,53 +13,29 @@
  */
 package com.graphaware.module.es;
 
-import com.google.gson.JsonObject;
 import com.graphaware.common.policy.BaseNodeInclusionPolicy;
 import com.graphaware.common.policy.NodePropertyInclusionPolicy;
-import com.graphaware.integration.es.test.ElasticSearchClient;
-import com.graphaware.integration.es.test.ElasticSearchServer;
 import com.graphaware.integration.es.test.EmbeddedElasticSearchServer;
 import com.graphaware.integration.es.test.JestElasticSearchClient;
 import com.graphaware.module.uuid.UuidConfiguration;
 import com.graphaware.module.uuid.UuidModule;
 import com.graphaware.runtime.GraphAwareRuntime;
 import com.graphaware.runtime.GraphAwareRuntimeFactory;
-import io.searchbox.client.JestResult;
-import io.searchbox.core.Count;
-import io.searchbox.core.CountResult;
-import io.searchbox.core.Get;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.neo4j.graphdb.*;
+import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.test.RepeatRule;
 import org.neo4j.test.TestGraphDatabaseFactory;
-import org.neo4j.tooling.GlobalGraphOperations;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 import static com.graphaware.elasticsearch.util.TestUtil.waitFor;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 
-public class ElasticSearchModuleEmbeddedProgrammaticTest {
-
-    private static final String ES_INDEX = "neo4j-index";
-    private static final String HOST = "localhost";
-    private static final String PORT = "9201";
-    private static final Label PERSON = DynamicLabel.label("Person");
-
-    private GraphDatabaseService database;
-    private ElasticSearchConfiguration configuration;
-    private ElasticSearchServer esServer;
-    private ElasticSearchClient esClient;
+public class ElasticSearchModuleProgrammaticTest extends ElasticSearchModuleIntegrationTest {
 
     @Before
     public void setUp() {
@@ -267,141 +243,5 @@ public class ElasticSearchModuleEmbeddedProgrammaticTest {
         esServer.start();
         waitFor(1000);
         verifyEsReplication();
-    }
-
-    private void writeSomeStuffToNeo4j() {
-        //tx1
-        database.execute("CREATE (p:Person {name:'Michal', age:30})-[:WORKS_FOR {since:2013, role:'MD'}]->(c:Company {name:'GraphAware', est: 2013})");
-
-        //tx2
-        database.execute("MATCH (ga:Company {name:'GraphAware'}) CREATE (p:Person {name:'Adam'})-[:WORKS_FOR {since:2014}]->(ga)");
-
-        //tx3
-        try (Transaction tx = database.beginTx()) {
-            database.execute("MATCH (ga:Company {name:'GraphAware'}) CREATE (p:Person {name:'Daniela'})-[:WORKS_FOR]->(ga)");
-            database.execute("MATCH (p:Person {name:'Michal'}) SET p.age=31");
-            database.execute("MATCH (p:Person {name:'Adam'})-[r]-() DELETE p,r");
-            database.execute("MATCH (p:Person {name:'Michal'})-[r:WORKS_FOR]->() REMOVE r.role");
-            tx.success();
-        }
-    }
-
-    private void verifyEsReplication() {
-        verifyEsReplication(ES_INDEX);
-    }
-
-    private void verifyEsReplication(String index) {
-        try (Transaction tx = database.beginTx()) {
-            for (Node node : GlobalGraphOperations.at(database).getAllNodes()) {
-                if (configuration.getInclusionPolicies().getNodeInclusionPolicy().include(node)) {
-                    verifyEsReplication(node, index);
-                }
-            }
-            tx.success();
-        }
-    }
-
-    private void verifyNoEsReplication() {
-        try (Transaction tx = database.beginTx()) {
-            for (Node node : GlobalGraphOperations.at(database).getAllNodes()) {
-                verifyNoEsReplication(node);
-            }
-            tx.success();
-        }
-    }
-
-    private void verifyEsReplication(Node node) {
-        verifyEsReplication(node, ES_INDEX);
-    }
-
-    private void verifyEsReplication(Node node, String index) {
-        Map<String, Object> properties = new HashMap<>();
-        Set<String> labels = new HashSet<>();
-        String nodeKey;
-        try (Transaction tx = database.beginTx()) {
-            nodeKey = node.getProperty(configuration.getKeyProperty()).toString();
-
-            for (String key : node.getPropertyKeys()) {
-                if (configuration.getInclusionPolicies().getNodePropertyInclusionPolicy().include(key, node)) {
-                    properties.put(key, node.getProperty(key));
-                }
-            }
-
-            for (Label label : node.getLabels()) {
-                labels.add(label.name());
-            }
-
-            tx.success();
-        }
-
-        for (String label : labels) {
-            Get get = new Get.Builder(index, nodeKey).type(label).build();
-            JestResult result = esClient.execute(get);
-
-            assertTrue(result.getErrorMessage(), result.isSucceeded());
-            assertEquals(configuration.getIndex(), result.getValue("_index"));
-            assertEquals(label, result.getValue("_type"));
-            assertEquals(nodeKey, result.getValue("_id"));
-            assertTrue((Boolean) result.getValue("found"));
-
-            JsonObject source = result.getJsonObject().getAsJsonObject("_source");
-            assertEquals(properties.size(), source.entrySet().size());
-            for (String key : properties.keySet()) {
-                assertEquals(properties.get(key).toString(), source.get(key).getAsString());
-            }
-        }
-    }
-
-    private void verifyNoEsReplication(Node node) {
-        Set<String> labels = new HashSet<>();
-        String nodeKey;
-        try (Transaction tx = database.beginTx()) {
-            if (configuration != null) {
-                nodeKey = node.getProperty(configuration.getKeyProperty()).toString();
-            } else {
-                nodeKey = node.getProperty("uuid", "unknown").toString();
-            }
-
-            for (Label label : node.getLabels()) {
-                labels.add(label.name());
-            }
-
-            tx.success();
-        }
-
-        for (String label : labels) {
-            Get get = new Get.Builder(ES_INDEX, nodeKey).type(label).build();
-            JestResult result = esClient.execute(get);
-
-            assertTrue(!result.isSucceeded() || !((Boolean) result.getValue("found")));
-        }
-    }
-
-    //todo this method never fails, claims 0 results even when there are things in the index. Alessandro pls help
-    private void verifyEsEmpty() {
-        Count.Builder count = new Count.Builder().query("");
-        count = count.addIndex(ES_INDEX);
-
-        try (Transaction tx = database.beginTx()) {
-            for (Label label : GlobalGraphOperations.at(database).getAllLabels()) {
-                count = count.addType(label.name());
-                tx.success();
-            }
-        }
-
-        CountResult result = esClient.execute(count.build());
-
-        if (result.isSucceeded()) {
-            assertEquals(0.0, result.getCount(), 0.001);
-        }
-    }
-
-    private Node findNode(Label label, String property, String value) {
-        Node result;
-        try (Transaction tx = database.beginTx()) {
-            result = database.findNode(label, property, value);
-            tx.success();
-        }
-        return result;
     }
 }
