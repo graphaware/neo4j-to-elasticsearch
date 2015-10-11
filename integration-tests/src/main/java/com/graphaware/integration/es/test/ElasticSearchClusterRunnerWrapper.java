@@ -1,4 +1,4 @@
-package com.graphaware.elasticsearch.wrapper;
+package com.graphaware.integration.es.test;
 
 import org.apache.log4j.Logger;
 import org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner;
@@ -10,8 +10,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-public class ElasticSearchEmbeddedServerWrapper implements EmbeddedServerWrapper {
-    private static final Logger LOG = Logger.getLogger(ElasticSearchEmbeddedServerWrapper.class);
+/**
+ * {@link ElasticSearchServerWrapper} for testing that uses {@link ElasticsearchClusterRunner} to run an embedded ES server.
+ */
+public class ElasticSearchClusterRunnerWrapper implements ElasticSearchServerWrapper {
+    private static final Logger LOG = Logger.getLogger(ElasticSearchClusterRunnerWrapper.class);
     private ElasticsearchClusterRunner runner;
 
     @Override
@@ -64,7 +67,7 @@ public class ElasticSearchEmbeddedServerWrapper implements EmbeddedServerWrapper
 
         CreateIndexResponse createIndexResponse = runner.createIndex(index, builder.build());
 
-        if (! createIndexResponse.isAcknowledged()) {
+        if (!createIndexResponse.isAcknowledged()) {
             throw new IllegalStateException("Index create response now acknowledged!");
         }
     }

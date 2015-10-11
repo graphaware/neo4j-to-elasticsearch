@@ -2,9 +2,6 @@ package com.graphaware.module.es;
 
 import com.graphaware.common.policy.NodeInclusionPolicy;
 import com.graphaware.common.policy.NodePropertyInclusionPolicy;
-import com.graphaware.module.es.executor.BulkOperationExecutorFactory;
-import com.graphaware.module.es.executor.OperationExecutorFactory;
-import com.graphaware.module.es.executor.RequestPerOperationExecutorFactory;
 import com.graphaware.runtime.config.function.StringToNodeInclusionPolicy;
 import com.graphaware.runtime.config.function.StringToNodePropertyInclusionPolicy;
 import com.graphaware.runtime.module.RuntimeModule;
@@ -104,10 +101,7 @@ public class ElasticSearchModuleBootstrapper implements RuntimeModuleBootstrappe
             }
         }
 
-        OperationExecutorFactory executorFactory = esConf.isExecuteBulk() ? new BulkOperationExecutorFactory() : new RequestPerOperationExecutorFactory();
-        ElasticSearchWriter writer = new ElasticSearchWriter(esConf.getQueueCapacity(), esConf.getUri(), esConf.getPort(), esConf.getKeyProperty(), esConf.getIndex(), esConf.isRetryOnError(), executorFactory);
-
-        return new ElasticSearchModule(moduleId, writer, esConf);
+        return new ElasticSearchModule(moduleId, new ElasticSearchWriter(esConf), esConf);
     }
 
     private boolean configExists(Map<String, String> config, String key) {

@@ -1,11 +1,11 @@
 
 package com.graphaware.elasticsearch.reco.demo;
 
-import com.graphaware.elasticsearch.util.CustomClassLoading;
-import com.graphaware.elasticsearch.util.PassThroughProxyHandler;
 import com.graphaware.elasticsearch.util.TestUtil;
-import com.graphaware.elasticsearch.wrapper.EmbeddedServerWrapper;
-import com.graphaware.integration.es.plugin.query.GAQueryResultNeo4j;
+import com.graphaware.integration.es.test.ElasticSearchClient;
+import com.graphaware.integration.es.test.ElasticSearchServer;
+import com.graphaware.integration.es.test.EmbeddedElasticSearchServer;
+import com.graphaware.integration.es.test.JestElasticSearchClient;
 import com.graphaware.test.data.DatabasePopulator;
 import com.graphaware.test.data.GraphgenPopulator;
 import com.graphaware.test.integration.GraphAwareApiTest;
@@ -25,22 +25,20 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
 
 import java.io.IOException;
-import java.lang.reflect.Proxy;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
+import static com.graphaware.elasticsearch.util.TestUtil.*;
 import static org.junit.Assert.assertEquals;
 
-public class CompleteElasticSearchModuleIntegrationEndToEndTest
-        extends GraphAwareApiTest {
+public class CompleteElasticSearchModuleIntegrationEndToEndTest extends GraphAwareApiTest {
 
     private static final String ES_HOST = "localhost";
     private static final String ES_PORT = "9201";
     private static final String ES_CONN = String.format("http://%s:%s", ES_HOST, ES_PORT);
     private static final String ES_INDEX = "neo4jes";
 
-    private EmbeddedServerWrapper embeddedServer;
+    private ElasticSearchClient esClient;
+    private ElasticSearchServer esServer;
 
     private static final Logger LOG = LoggerFactory.getLogger(CompleteElasticSearchModuleIntegrationEndToEndTest.class);
 
@@ -64,35 +62,20 @@ public class CompleteElasticSearchModuleIntegrationEndToEndTest
     }
 
     @Before
-    public void setUp() throws IOException, InterruptedException, Exception {
-        TestUtil.deleteDataDirectory();
-
-        final String classpath = System.getProperty("classpath");
-        LOG.warn("classpath: " + classpath);
-        try {
-            CustomClassLoading loader = new CustomClassLoading(classpath);
-            Class<Object> loadedClass = (Class<Object>) loader.loadClass("com.graphaware.elasticsearch.wrapper.ElasticSearchEmbeddedServerWrapper");
-            embeddedServer = (EmbeddedServerWrapper) Proxy.newProxyInstance(this.getClass().getClassLoader(),
-                    new Class[]
-                            {
-                                    EmbeddedServerWrapper.class
-                            },
-                    new PassThroughProxyHandler(loadedClass.newInstance()));
-            embeddedServer.startEmbeddedServer();
-            Map<String, Object> indexProperties = new HashMap<>();
-            indexProperties.put(GAQueryResultNeo4j.INDEX_GA_ES_NEO4J_REORDER_TYPE, "myIndexClass");
-            embeddedServer.createIndex(ES_INDEX, indexProperties);
-        } catch (Exception ex) {
-            LOG.warn("Error while creating and starting client", ex);
-        }
+    public void setUp() throws Exception {
+        deleteDataDirectory();
+        esServer = new EmbeddedElasticSearchServer();
+        esServer.start();
+        esClient = new JestElasticSearchClient(ES_HOST, ES_PORT);
         super.setUp();
     }
 
     @After
-    public void tearDown() throws IOException, InterruptedException, Exception {
-        embeddedServer.stopEmbeddedServer();
+    public void tearDown() throws Exception {
+        esClient.shutdown();
+        esServer.stop();
         super.tearDown();
-        TestUtil.deleteDataDirectory();
+        deleteDataDirectory();
     }
 
     protected DatabasePopulator databasePopulator() {
@@ -126,20 +109,12 @@ public class CompleteElasticSearchModuleIntegrationEndToEndTest
     }
 
     @Test
-    public void test() throws IOException, InterruptedException {
-
-        Thread.sleep(1000);
+    public void test() throws IOException {
+        waitFor(1000);
 
         String executeCypher = httpClient.executeCypher(baseUrl(), "MATCH (p:Person {firstname:'Kelly', lastname:'Krajcik'}) return p");
         String response = httpClient.get(ES_CONN + "/" + ES_INDEX + "/Person/_search?q=firstname:Kelly", HttpStatus.OK_200);
 
-        JestClientFactory factory = new JestClientFactory();
-
-        factory.setHttpClientConfig(new HttpClientConfig.Builder(ES_CONN)
-                .multiThreaded(true)
-                .build());
-        JestClient client = factory.getObject();
-//    
 //    String query = "{\n" +
 //"  \"bool\" : {\n" +
 //"    \"must\" : {\n" +
@@ -182,7 +157,7 @@ public class CompleteElasticSearchModuleIntegrationEndToEndTest
                     .build();
 
 
-            SearchResult result = client.execute(search);
+            SearchResult result = esClient.execute(search);
 
             List<SearchResult.Hit<JestPersonResult, Void>> hits = result.getHits(JestPersonResult.class);
             Assert.assertEquals(10, hits.size());
@@ -215,7 +190,7 @@ public class CompleteElasticSearchModuleIntegrationEndToEndTest
                     .build();
 
 
-            SearchResult result = client.execute(search);
+            SearchResult result = esClient.execute(search);
 
             List<SearchResult.Hit<JestPersonResult, Void>> hits = result.getHits(JestPersonResult.class);
             Assert.assertEquals(10, hits.size());
@@ -244,7 +219,7 @@ public class CompleteElasticSearchModuleIntegrationEndToEndTest
                     .build();
 
 
-            SearchResult result = client.execute(search);
+            SearchResult result = esClient.execute(search);
 
             List<SearchResult.Hit<JestPersonResult, Void>> hits = result.getHits(JestPersonResult.class);
             Assert.assertEquals(10, hits.size());
@@ -275,7 +250,7 @@ public class CompleteElasticSearchModuleIntegrationEndToEndTest
                     .addIndex(ES_INDEX)
                     .addType("Person")
                     .build();
-            SearchResult result = client.execute(search);
+            SearchResult result = esClient.execute(search);
 
             List<SearchResult.Hit<JestPersonResult, Void>> hits = result.getHits(JestPersonResult.class);
             Assert.assertEquals(10, hits.size());

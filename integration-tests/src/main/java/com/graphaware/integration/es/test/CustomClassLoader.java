@@ -1,10 +1,4 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
-package com.graphaware.elasticsearch.util;
+package com.graphaware.integration.es.test;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,16 +10,13 @@ import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author ale
- */
-public class CustomClassLoading {
-    private static final Logger LOG = LoggerFactory.getLogger(CustomClassLoading.class);
+public class CustomClassLoader {
+    private static final Logger LOG = LoggerFactory.getLogger(CustomClassLoader.class);
 
     private final String libPath;
     private final ClassLoader classloader;
 
-    public CustomClassLoading(String libPath, ClassLoader parent) throws MalformedURLException {
+    public CustomClassLoader(String libPath, ClassLoader parent) throws MalformedURLException {
         this.libPath = libPath;
 
         List<URL> urls = new ArrayList();
@@ -46,7 +37,7 @@ public class CustomClassLoading {
         //Thread.currentThread().setContextClassLoader(classloader);
     }
 
-    public CustomClassLoading(String libPath) throws MalformedURLException {
+    public CustomClassLoader(String libPath) throws MalformedURLException {
         this(libPath, ClassLoader.getSystemClassLoader().getParent());
     }
 

@@ -14,8 +14,10 @@
 
 package com.graphaware.module.es;
 
+import com.graphaware.module.es.executor.BulkOperationExecutorFactory;
 import com.graphaware.module.es.executor.OperationExecutor;
 import com.graphaware.module.es.executor.OperationExecutorFactory;
+import com.graphaware.module.es.executor.RequestPerOperationExecutorFactory;
 import com.graphaware.writer.thirdparty.*;
 import io.searchbox.client.JestClient;
 import io.searchbox.client.JestClientFactory;
@@ -30,6 +32,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.springframework.util.Assert.hasLength;
 import static org.springframework.util.Assert.notNull;
@@ -48,6 +51,20 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
     private final String index;
     private final boolean retryOnError;
     private final OperationExecutorFactory executorFactory;
+    private AtomicBoolean indexExists = new AtomicBoolean(false); //this must be thread-safe
+
+    public ElasticSearchWriter(ElasticSearchConfiguration configuration) {
+        super(configuration.getQueueCapacity());
+
+        notNull(configuration);
+
+        this.uri = configuration.getUri();
+        this.port = configuration.getPort();
+        this.keyProperty = configuration.getKeyProperty();
+        this.index = configuration.getIndex();
+        this.retryOnError = configuration.isRetryOnError();
+        this.executorFactory = configuration.isExecuteBulk() ? new BulkOperationExecutorFactory() : new RequestPerOperationExecutorFactory();
+    }
 
     /**
      * Create an Elasticsearch writer with default queue capacity ({@link #DEFAULT_QUEUE_CAPACITY}).
@@ -111,7 +128,7 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
         LOG.info("Starting Elasticsearch Writer...");
 
         super.start();
-        createClient();
+        client = createClient();
         createIndexIfNotExist();
 
         LOG.info("Started Elasticsearch Writer.");
@@ -135,6 +152,8 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
      */
     @Override
     protected void processOperations(List<Collection<WriteOperation<?>>> list) {
+        createIndexIfNotExist();
+
         OperationExecutor executor = executorFactory.newExecutor(client, index, keyProperty);
 
         executor.start();
@@ -169,7 +188,7 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
         }
     }
 
-    private void createClient() {
+    protected JestClient createClient() {
         LOG.info("Creating Jest Client...");
 
         JestClientFactory factory = new JestClientFactory();
@@ -177,12 +196,12 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
                 .multiThreaded(true)
                 .build());
 
-        client = factory.getObject();
-
         LOG.info("Created Jest Client.");
+
+        return factory.getObject();
     }
 
-    private void shutdownClient() {
+    protected void shutdownClient() {
         LOG.info("Shutting down Jest Client...");
 
         client.shutdownClient();
@@ -191,24 +210,36 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
         LOG.info("Shut down Jest Client.");
     }
 
-    private void createIndexIfNotExist() {
-        try {
-            if (client.execute(new IndicesExists.Builder(index).build()).isSucceeded()) {
-                LOG.info("Index " + index + " already exists in Elasticsearch.");
+    protected void createIndexIfNotExist() {
+        if (indexExists.get()) {
+            return;
+        }
+
+        synchronized (this) {
+            if (indexExists.get()) {
                 return;
             }
 
-            LOG.info("Index " + index + " does not exist in Elasticsearch, creating...");
+            try {
+                if (client.execute(new IndicesExists.Builder(index).build()).isSucceeded()) {
+                    LOG.info("Index " + index + " already exists in Elasticsearch.");
+                    indexExists.set(true);
+                    return;
+                }
 
-            final JestResult execute = client.execute(new CreateIndex.Builder(index).build());
+                LOG.info("Index " + index + " does not exist in Elasticsearch, creating...");
 
-            if (execute.isSucceeded()) {
-                LOG.info("Created Elasticsearch index.");
-            } else {
-                LOG.error("Failed to create Elasticsearch index. Details: " + execute.getErrorMessage());
+                final JestResult execute = client.execute(new CreateIndex.Builder(index).build());
+
+                if (execute.isSucceeded()) {
+                    LOG.info("Created Elasticsearch index.");
+                    indexExists.set(true);
+                } else {
+                    LOG.error("Failed to create Elasticsearch index. Details: " + execute.getErrorMessage());
+                }
+            } catch (IOException e) {
+                LOG.error("Failed to create Elasticsearch index.", e);
             }
-        } catch (IOException e) {
-            LOG.error("Failed to create Elasticsearch index.", e);
         }
     }
 }

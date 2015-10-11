@@ -32,7 +32,7 @@ public class ElasticSearchModule extends WriterBasedThirdPartyIntegrationModule 
     private static final int REINDEX_BATCH_SIZE = 1000;
 
     private final ElasticSearchConfiguration config;
-    private boolean reindex = false;
+    private boolean reindex = false; //this is checked in a single thread
 
     /**
      * Create a new module.

@@ -1,8 +1,11 @@
-package com.graphaware.elasticsearch.wrapper;
+package com.graphaware.integration.es.test;
 
 import java.util.Map;
 
-public interface EmbeddedServerWrapper {
+/**
+ * An embedded Elasticsearch server for testing.
+ */
+public interface ElasticSearchServerWrapper {
 
     void startEmbeddedServer();
 
