@@ -196,7 +196,7 @@ public class ElasticSearchModuleDeclarativeTest extends ElasticSearchModuleInteg
         waitFor(200);
 
         esServer.start();
-        waitFor(1000);
+        waitFor(2000);
         verifyEsReplication();
     }
 
