@@ -5,7 +5,7 @@
 
     <groupId>com.graphaware.integration.es</groupId>
     <artifactId>neo4j-es</artifactId>
-    <version>0.1</version>
+    <version>0.2-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <modules>
@@ -38,7 +38,7 @@
         <connection>scm:git:git@github.com:graphaware/neo4j-es.git</connection>
         <developerConnection>scm:git:git@github.com:graphaware/neo4j-es.git</developerConnection>
         <url>git@github.com:graphaware/neo4j-es.git</url>
-        <tag>neo4j-es-0.1</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <developers>
@@ -111,12 +111,12 @@
             <dependency>
                 <groupId>com.graphaware.integration.es</groupId>
                 <artifactId>es-plugin</artifactId>
-                <version>0.1</version>
+                <version>0.2-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.graphaware.integration.es</groupId>
                 <artifactId>neo4j-plugin</artifactId>
-                <version>0.1</version>
+                <version>0.2-SNAPSHOT</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
