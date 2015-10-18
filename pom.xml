@@ -10,11 +10,9 @@
   ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
   ~ warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
   ~ You should have received a copy of the GNU General Public License along with this program.
-  ~ If not, see <http://www.gnu.org/licenses/>.
+  ~ If not, see <http://www.gnu.org/licenses />.
   -->
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -25,7 +23,7 @@
 
     <groupId>com.graphaware.integration.es</groupId>
     <artifactId>neo4j-to-elasticsearch</artifactId>
-    <version>2.2.6.35.0-SNAPSHOT</version>
+    <version>2.2.6.35.0</version>
 
     <name>GraphAware Elasticsearch Integration for Neo4j</name>
     <description>GraphAware Framework Module for Integrating Neo4j with Elasticsearch</description>
@@ -43,7 +41,7 @@
         <connection>scm:git:git@github.com:graphaware/neo4j-to-elasticsearch.git</connection>
         <developerConnection>scm:git:git@github.com:graphaware/neo4j-to-elasticsearch.git</developerConnection>
         <url>git@github.com:graphaware/neo4j-to-elasticsearch.git</url>
-        <tag>HEAD</tag>
+        <tag>neo4j-to-elasticsearch-2.2.6.35.0</tag>
     </scm>
 
     <developers>
