@@ -182,6 +182,12 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
             if (retryOnError) {
                 LOG.warn("There were " + allFailed.size() + " failures in replicating to Elasticsearch. Will retry...");
                 retry(Collections.<Collection<WriteOperation<?>>>singletonList(allFailed));
+                try {
+                    LOG.info("Backing off for 2 seconds...");
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    LOG.warn("Wait interrupted", e);
+                }
             } else {
                 LOG.warn("There were " + allFailed.size() + " failures in replicating to Elasticsearch. These updates got lost.");
             }
