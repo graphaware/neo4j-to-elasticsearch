@@ -28,7 +28,7 @@
     <version>2.2.6.35.0-SNAPSHOT</version>
 
     <name>GraphAware Elasticsearch Integration for Neo4j</name>
-    <description>GraphAware Framework Module for integrating Neo4j with Elasticsearch</description>
+    <description>GraphAware Framework Module for Integrating Neo4j with Elasticsearch</description>
     <url>http://graphaware.com</url>
 
     <licenses>
@@ -113,8 +113,8 @@
 
         <dependency>
             <groupId>com.graphaware.integration.es</groupId>
-            <artifactId>neo4j-es-tests</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <artifactId>neo4j-elasticsearch-tests</artifactId>
+            <version>1.0</version>
             <scope>test</scope>
         </dependency>
 
@@ -144,8 +144,8 @@
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>com.graphaware.integration.es</groupId>
-                                    <artifactId>neo4j-es-tests</artifactId>
-                                    <version>1.0-SNAPSHOT</version>
+                                    <artifactId>neo4j-elasticsearch-tests</artifactId>
+                                    <version>1.0</version>
                                     <classifier>jar-with-dependencies</classifier>
                                     <overWrite>false</overWrite>
                                 </artifactItem>
