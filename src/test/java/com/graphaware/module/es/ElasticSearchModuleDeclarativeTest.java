@@ -207,7 +207,7 @@ public class ElasticSearchModuleDeclarativeTest extends ElasticSearchModuleInteg
         verifyEventualEsReplication();
     }
 
-    @Test(timeout = 10_000)
+    @Test(timeout = 30_000)
     public void stressTest() {
         database = new TestGraphDatabaseFactory().newImpermanentDatabaseBuilder()
                 .loadPropertiesFromFile(properties("integration/int-test-stress.properties"))

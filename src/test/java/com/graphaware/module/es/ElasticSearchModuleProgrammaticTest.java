@@ -218,7 +218,7 @@ public class ElasticSearchModuleProgrammaticTest extends ElasticSearchModuleInte
         verifyEventualEsReplication();
     }
 
-    @Test(timeout = 10_000)
+    @Test(timeout = 20_000)
     public void dataShouldBeCorrectlyReplicatedWithRetryWhenEsStartsLate() {
         esServer.stop();
         esServer = new EmbeddedElasticSearchServer();
