@@ -18,6 +18,7 @@ import com.graphaware.integration.es.test.ElasticSearchClient;
 import com.graphaware.integration.es.test.ElasticSearchServer;
 import com.graphaware.integration.es.test.EmbeddedElasticSearchServer;
 import com.graphaware.integration.es.test.JestElasticSearchClient;
+import com.graphaware.test.integration.CommunityNeoServerIntegrationTest;
 import com.graphaware.test.integration.NeoServerIntegrationTest;
 import io.searchbox.client.JestResult;
 import io.searchbox.core.Get;
@@ -28,7 +29,7 @@ import java.io.IOException;
 import static com.graphaware.module.es.util.TestUtil.waitFor;
 import static org.junit.Assert.assertEquals;
 
-public class ElasticSearchModuleEndToEndTest extends NeoServerIntegrationTest {
+public class ElasticSearchModuleEndToEndTest extends CommunityNeoServerIntegrationTest {
 
     protected ElasticSearchServer esServer;
 
