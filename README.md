@@ -98,7 +98,7 @@ com.graphaware.module.UIDM.node=hasLabel('Label1') || hasLabel('Label2')
 com.graphaware.module.UIDM.uuidIndex=uuidIndex
 
 #ES becomes the module ID:
-com.graphaware.module.ES.2=ElasticSearchModuleBootstrapper
+com.graphaware.module.ES.2=com.graphaware.module.es.ElasticSearchModuleBootstrapper
 
 #URI of Elasticsearch
 com.graphaware.module.ES.uri=localhost
