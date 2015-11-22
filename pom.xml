@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Copyright (c) 2015 GraphAware
+  ~ Copyright (c) 2013-2015 GraphAware
   ~
-  ~ This file is part of GraphAware.
+  ~ This file is part of the GraphAware Framework.
   ~
-  ~ GraphAware is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License
+  ~ GraphAware Framework is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License
   ~ as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
   ~
   ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
   ~ warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
   ~
-  ~ You should have received a copy of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses />.
+  ~ You should have received a copy of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
   -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
@@ -18,12 +18,12 @@
     <parent>
         <groupId>com.graphaware.neo4j</groupId>
         <artifactId>module-parent</artifactId>
-        <version>2.3.1.35</version>
+        <version>2.3.1.36</version>
     </parent>
 
     <groupId>com.graphaware.integration.es</groupId>
     <artifactId>neo4j-to-elasticsearch</artifactId>
-    <version>2.3.1.35.2-SNAPSHOT</version>
+    <version>2.3.1.36.1-SNAPSHOT</version>
 
     <name>GraphAware Elasticsearch Integration for Neo4j</name>
     <description>GraphAware Framework Module for Integrating Neo4j with Elasticsearch</description>
@@ -110,7 +110,7 @@
         <dependency>
             <groupId>com.graphaware.neo4j</groupId>
             <artifactId>uuid</artifactId>
-            <version>2.3.1.35.7</version>
+            <version>2.3.1.36.7</version>
             <scope>test</scope>
         </dependency>
 

@@ -1,9 +1,9 @@
 /*
- * Copyright (c) 2015 GraphAware
+ * Copyright (c) 2013-2015 GraphAware
  *
- * This file is part of GraphAware.
+ * This file is part of the GraphAware Framework.
  *
- * GraphAware is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License
+ * GraphAware Framework is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
@@ -16,31 +16,22 @@ package com.graphaware.module.es;
 import com.graphaware.integration.es.test.EmbeddedElasticSearchServer;
 import com.graphaware.integration.es.test.JestElasticSearchClient;
 import com.graphaware.module.es.util.TestUtil;
-import io.searchbox.client.JestClient;
-import io.searchbox.client.JestClientFactory;
-import io.searchbox.client.JestResult;
-import io.searchbox.client.config.HttpClientConfig;
-import io.searchbox.core.Get;
-import io.searchbox.core.Search;
-import io.searchbox.core.SearchResult;
-import org.apache.commons.lang.Validate;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.neo4j.graphdb.*;
+import org.neo4j.graphdb.DynamicLabel;
+import org.neo4j.graphdb.Label;
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.test.RepeatRule;
 import org.neo4j.test.TestGraphDatabaseFactory;
-import org.neo4j.tooling.GlobalGraphOperations;
 
 import java.io.IOException;
-import java.util.List;
 
 import static com.graphaware.runtime.RuntimeRegistry.getRuntime;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 
 public class ElasticSearchModuleDeclarativeTest extends ElasticSearchModuleIntegrationTest {

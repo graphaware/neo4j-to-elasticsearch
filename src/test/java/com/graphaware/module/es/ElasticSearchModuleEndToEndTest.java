@@ -1,9 +1,9 @@
 /*
- * Copyright (c) 2015 GraphAware
+ * Copyright (c) 2013-2015 GraphAware
  *
- * This file is part of GraphAware.
+ * This file is part of the GraphAware Framework.
  *
- * GraphAware is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License
+ * GraphAware Framework is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
@@ -18,7 +18,6 @@ import com.graphaware.integration.es.test.ElasticSearchClient;
 import com.graphaware.integration.es.test.ElasticSearchServer;
 import com.graphaware.integration.es.test.EmbeddedElasticSearchServer;
 import com.graphaware.integration.es.test.JestElasticSearchClient;
-import com.graphaware.test.integration.CommunityNeoServerIntegrationTest;
 import com.graphaware.test.integration.NeoServerIntegrationTest;
 import io.searchbox.client.JestResult;
 import io.searchbox.core.Get;
@@ -29,7 +28,7 @@ import java.io.IOException;
 import static com.graphaware.module.es.util.TestUtil.waitFor;
 import static org.junit.Assert.assertEquals;
 
-public class ElasticSearchModuleEndToEndTest extends CommunityNeoServerIntegrationTest {
+public class ElasticSearchModuleEndToEndTest extends NeoServerIntegrationTest {
 
     protected ElasticSearchServer esServer;
 
