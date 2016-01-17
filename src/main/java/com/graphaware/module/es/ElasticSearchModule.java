@@ -104,14 +104,14 @@ public class ElasticSearchModule extends WriterBasedThirdPartyIntegrationModule 
     }
 
     private boolean shouldReIndex(String logMessage) {
-        long reindexUntil = config.getReindexUntil();
+        long initializeUntil = config.initializeUntil();
         long now = System.currentTimeMillis();
 
-        if (reindexUntil > now) {
-            LOG.info("ReindexUntil set to " + reindexUntil + " and it is " + now + ". Will " + logMessage + " the entire database...");
+        if (initializeUntil > now) {
+            LOG.info("InitializeUntil set to " + initializeUntil + " and it is " + now + ". Will " + logMessage + " the entire database...");
             return true;
         } else {
-            LOG.info("ReindexUntil set to " + reindexUntil + " and it is " + now + ". Will NOT " + logMessage + " the entire database.");
+            LOG.info("InitializeUntil set to " + initializeUntil + " and it is " + now + ". Will NOT " + logMessage + " the entire database.");
             return false;
         }
     }

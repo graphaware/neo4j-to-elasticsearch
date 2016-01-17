@@ -30,7 +30,6 @@ public class ElasticSearchConfiguration extends BaseTxDrivenModuleConfiguration<
     private static final InclusionPolicies DEFAULT_INCLUSION_POLICIES = InclusionPoliciesFactory.allBusiness().with(IncludeNoRelationships.getInstance());
     private static final String DEFAULT_INDEX_NAME = "neo4j-index";
     private static final int DEFAULT_QUEUE_CAPACITY = 10000;
-    private static final long DEFAULT_REINDEX_UNTIL = 0;
 
     private final String uri;
     private final String port;
@@ -39,25 +38,24 @@ public class ElasticSearchConfiguration extends BaseTxDrivenModuleConfiguration<
     private final boolean retryOnError;
     private final int queueCapacity;
     private final boolean executeBulk;
-    private final long reindexUntil;
 
     /**
      * Construct a new configuration.
      *
      * @param inclusionPolicies specifying which nodes and node properties to index in Elasticsearch. Must not be <code>null</code>.
+     * @param initializeUntil   until what time in ms since epoch it is ok to re-index the entire database in case the configuration has changed since
+     *                          the last time the module was started, or if it is the first time the module was registered.
+     *                          0 for never. The purpose of this is not to re-index all the time if the user is unaware.
      * @param uri               Elasticsearch URI. Must not be <code>null</code>.
      * @param port              Elasticsearch port. Must not be <code>null</code>.
      * @param index             name of the Elasticsearch index. Must not be <code>null</code> or empty.
      * @param keyProperty       name of the node property that serves as the key, under which the node will be indexed in Elasticsearch. Must not be <code>null</code> or empty.
      * @param retryOnError      whether to retry an index update after a failure (<code>true</code>) or throw the update away (<code>false</code>).
      * @param queueCapacity     capacity of the queue holding operations to be written to Elasticsearch. Must be positive.
-     * @param executeBulk       whether or not to execute updates against Elasticsearch in bulk. It is recommended to set this to <code>true</code>.
-     * @param reindexUntil      until what time in ms since epoch it is ok to re-index the entire database in case the configuration has changed since
-     *                          the last time the module was started, or if it is the first time the module was registered.
-     *                          0 for never. The purpose of this is not to re-index all the time if the user is unaware.
+     * @param executeBulk       whether or not to execute updates against Elasticsearch in bulk. It is recommended to set this to <code>true</code>.*
      */
-    private ElasticSearchConfiguration(InclusionPolicies inclusionPolicies, String uri, String port, String index, String keyProperty, boolean retryOnError, int queueCapacity, boolean executeBulk, long reindexUntil) {
-        super(inclusionPolicies);
+    private ElasticSearchConfiguration(InclusionPolicies inclusionPolicies, long initializeUntil, String uri, String port, String index, String keyProperty, boolean retryOnError, int queueCapacity, boolean executeBulk) {
+        super(inclusionPolicies, initializeUntil);
         this.uri = uri;
         this.port = port;
         this.index = index;
@@ -65,43 +63,46 @@ public class ElasticSearchConfiguration extends BaseTxDrivenModuleConfiguration<
         this.retryOnError = retryOnError;
         this.queueCapacity = queueCapacity;
         this.executeBulk = executeBulk;
-        this.reindexUntil = reindexUntil;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public ElasticSearchConfiguration newInstance(InclusionPolicies inclusionPolicies) {
-        return new ElasticSearchConfiguration(inclusionPolicies, getUri(), getPort(), getIndex(), getKeyProperty(), isRetryOnError(), getQueueCapacity(), isExecuteBulk(), getReindexUntil());
+    public ElasticSearchConfiguration newInstance(InclusionPolicies inclusionPolicies, long initializeUntil) {
+        return new ElasticSearchConfiguration(inclusionPolicies, initializeUntil, getUri(), getPort(), getIndex(), getKeyProperty(), isRetryOnError(), getQueueCapacity(), isExecuteBulk());
     }
 
-    public static ElasticSearchConfiguration defaultConfiguration(String esUri, String esPort) {
-        return new ElasticSearchConfiguration(DEFAULT_INCLUSION_POLICIES, esUri, esPort, DEFAULT_INDEX_NAME, DEFAULT_KEY_PROPERTY, DEFAULT_RETRY_ON_ERROR, DEFAULT_QUEUE_CAPACITY, DEFAULT_EXECUTE_BULK, DEFAULT_REINDEX_UNTIL);
+    public static ElasticSearchConfiguration defaultConfiguration() {
+        return new ElasticSearchConfiguration(DEFAULT_INCLUSION_POLICIES, NEVER, null, null, DEFAULT_INDEX_NAME, DEFAULT_KEY_PROPERTY, DEFAULT_RETRY_ON_ERROR, DEFAULT_QUEUE_CAPACITY, DEFAULT_EXECUTE_BULK);
+    }
+
+    public ElasticSearchConfiguration withUri(String uri) {
+        return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), uri, getPort(), getIndex(), getKeyProperty(), isRetryOnError(), getQueueCapacity(), isExecuteBulk());
+    }
+
+    public ElasticSearchConfiguration withPort(String port) {
+        return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), getUri(), port, getIndex(), getKeyProperty(), isRetryOnError(), getQueueCapacity(), isExecuteBulk());
     }
 
     public ElasticSearchConfiguration withIndexName(String indexName) {
-        return new ElasticSearchConfiguration(getInclusionPolicies(), getUri(), getPort(), indexName, getKeyProperty(), isRetryOnError(), getQueueCapacity(), isExecuteBulk(), getReindexUntil());
+        return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), getUri(), getPort(), indexName, getKeyProperty(), isRetryOnError(), getQueueCapacity(), isExecuteBulk());
     }
 
     public ElasticSearchConfiguration withKeyProperty(String keyProperty) {
-        return new ElasticSearchConfiguration(getInclusionPolicies(), getUri(), getPort(), getIndex(), keyProperty, isRetryOnError(), getQueueCapacity(), isExecuteBulk(), getReindexUntil());
+        return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), getUri(), getPort(), getIndex(), keyProperty, isRetryOnError(), getQueueCapacity(), isExecuteBulk());
     }
 
     public ElasticSearchConfiguration withRetryOnError(boolean retryOnError) {
-        return new ElasticSearchConfiguration(getInclusionPolicies(), getUri(), getPort(), getIndex(), getKeyProperty(), retryOnError, getQueueCapacity(), isExecuteBulk(), getReindexUntil());
+        return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), getUri(), getPort(), getIndex(), getKeyProperty(), retryOnError, getQueueCapacity(), isExecuteBulk());
     }
 
     public ElasticSearchConfiguration withQueueCapacity(int queueCapacity) {
-        return new ElasticSearchConfiguration(getInclusionPolicies(), getUri(), getPort(), getIndex(), getKeyProperty(), isRetryOnError(), queueCapacity, isExecuteBulk(), getReindexUntil());
+        return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), getUri(), getPort(), getIndex(), getKeyProperty(), isRetryOnError(), queueCapacity, isExecuteBulk());
     }
 
     public ElasticSearchConfiguration withExecuteBulk(boolean executeBulk) {
-        return new ElasticSearchConfiguration(getInclusionPolicies(), getUri(), getPort(), getIndex(), getKeyProperty(), isRetryOnError(), getQueueCapacity(), executeBulk, getReindexUntil());
-    }
-
-    public ElasticSearchConfiguration withReindexUntil(long reindexUntil) {
-        return new ElasticSearchConfiguration(getInclusionPolicies(), getUri(), getPort(), getIndex(), getKeyProperty(), isRetryOnError(), getQueueCapacity(), isExecuteBulk(), reindexUntil);
+        return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), getUri(), getPort(), getIndex(), getKeyProperty(), isRetryOnError(), getQueueCapacity(), executeBulk);
     }
 
     public String getUri() {
@@ -132,10 +133,6 @@ public class ElasticSearchConfiguration extends BaseTxDrivenModuleConfiguration<
         return executeBulk;
     }
 
-    public long getReindexUntil() {
-        return reindexUntil;
-    }
-
     /**
      * {@inheritDoc}
      */
@@ -153,6 +150,9 @@ public class ElasticSearchConfiguration extends BaseTxDrivenModuleConfiguration<
 
         ElasticSearchConfiguration that = (ElasticSearchConfiguration) o;
 
+        if (initializeUntil() != that.initializeUntil()) { //a bit of a hack to force initialization if this changes
+            return false;
+        }
         if (retryOnError != that.retryOnError) {
             return false;
         }
@@ -160,9 +160,6 @@ public class ElasticSearchConfiguration extends BaseTxDrivenModuleConfiguration<
             return false;
         }
         if (executeBulk != that.executeBulk) {
-            return false;
-        }
-        if (reindexUntil != that.reindexUntil) {
             return false;
         }
         if (!uri.equals(that.uri)) {
@@ -184,6 +181,7 @@ public class ElasticSearchConfiguration extends BaseTxDrivenModuleConfiguration<
     @Override
     public int hashCode() {
         int result = super.hashCode();
+        result = 31 * result + (int) (initializeUntil() ^ (initializeUntil() >>> 32));
         result = 31 * result + uri.hashCode();
         result = 31 * result + port.hashCode();
         result = 31 * result + index.hashCode();
@@ -191,7 +189,6 @@ public class ElasticSearchConfiguration extends BaseTxDrivenModuleConfiguration<
         result = 31 * result + (retryOnError ? 1 : 0);
         result = 31 * result + queueCapacity;
         result = 31 * result + (executeBulk ? 1 : 0);
-        result = 31 * result + (int) (reindexUntil ^ (reindexUntil >>> 32));
         return result;
     }
 }

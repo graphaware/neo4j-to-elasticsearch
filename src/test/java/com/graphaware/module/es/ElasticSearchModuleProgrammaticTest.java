@@ -66,7 +66,7 @@ public class ElasticSearchModuleProgrammaticTest extends ElasticSearchModuleInte
         GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database);
         runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration(), database));
 
-        configuration = ElasticSearchConfiguration.defaultConfiguration(HOST, PORT);
+        configuration = ElasticSearchConfiguration.defaultConfiguration().withUri(HOST).withPort(PORT);
         runtime.registerModule(new ElasticSearchModule("ES", new ElasticSearchWriter(configuration), configuration));
 
         runtime.start();
@@ -84,7 +84,7 @@ public class ElasticSearchModuleProgrammaticTest extends ElasticSearchModuleInte
         GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database);
         runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration().withUuidProperty("id"), database));
 
-        configuration = ElasticSearchConfiguration.defaultConfiguration(HOST, PORT)
+        configuration = ElasticSearchConfiguration.defaultConfiguration().withUri(HOST).withPort(PORT)
                 .withIndexName("different-index-name")
                 .withKeyProperty("id")
                 .withQueueCapacity(1000)
@@ -118,7 +118,7 @@ public class ElasticSearchModuleProgrammaticTest extends ElasticSearchModuleInte
         GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database);
         runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration(), database));
 
-        configuration = ElasticSearchConfiguration.defaultConfiguration(HOST, PORT).withExecuteBulk(false);
+        configuration = ElasticSearchConfiguration.defaultConfiguration().withUri(HOST).withPort(PORT).withExecuteBulk(false);
         runtime.registerModule(new ElasticSearchModule("ES", new ElasticSearchWriter(configuration), configuration));
 
         runtime.start();
@@ -145,7 +145,7 @@ public class ElasticSearchModuleProgrammaticTest extends ElasticSearchModuleInte
         GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database);
         runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration(), database));
 
-        configuration = ElasticSearchConfiguration.defaultConfiguration(HOST, PORT).withReindexUntil(System.currentTimeMillis() + 1000);
+        configuration = ElasticSearchConfiguration.defaultConfiguration().withUri(HOST).withPort(PORT).withInitializeUntil(System.currentTimeMillis() + 1000);
         runtime.registerModule(new ElasticSearchModule("ES", new ElasticSearchWriter(configuration), configuration));
 
         runtime.start();
@@ -171,7 +171,7 @@ public class ElasticSearchModuleProgrammaticTest extends ElasticSearchModuleInte
         runtime = GraphAwareRuntimeFactory.createRuntime(database);
         runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration(), database));
 
-        configuration = ElasticSearchConfiguration.defaultConfiguration(HOST, PORT).withReindexUntil(System.currentTimeMillis() + 1000);
+        configuration = ElasticSearchConfiguration.defaultConfiguration().withUri(HOST).withPort(PORT).withInitializeUntil(System.currentTimeMillis() + 1001);
         runtime.registerModule(new ElasticSearchModule("ES", new ElasticSearchWriter(configuration), configuration));
 
         runtime.start();
@@ -189,7 +189,7 @@ public class ElasticSearchModuleProgrammaticTest extends ElasticSearchModuleInte
         GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database);
         runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration(), database));
 
-        configuration = ElasticSearchConfiguration.defaultConfiguration(HOST, PORT).withRetryOnError(true);
+        configuration = ElasticSearchConfiguration.defaultConfiguration().withUri(HOST).withPort(PORT).withRetryOnError(true);
         runtime.registerModule(new ElasticSearchModule("ES", new SometimesFailingElasticSearchWriter(configuration), configuration));
 
         runtime.start();
@@ -200,14 +200,14 @@ public class ElasticSearchModuleProgrammaticTest extends ElasticSearchModuleInte
         verifyEventualEsReplication();
     }
 
-    @Test(timeout = 20_000)
+    @Test(timeout = 30_000)
     @RepeatRule.Repeat(times = 5)
     public void dataShouldBeCorrectlyReplicatedWithRetryAfterFailurePerRequest() {
         //Framework & Modules setup:
         GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database);
         runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration(), database));
 
-        configuration = ElasticSearchConfiguration.defaultConfiguration(HOST, PORT).withRetryOnError(true).withExecuteBulk(false);
+        configuration = ElasticSearchConfiguration.defaultConfiguration().withUri(HOST).withPort(PORT).withRetryOnError(true).withExecuteBulk(false);
         runtime.registerModule(new ElasticSearchModule("ES", new SometimesFailingElasticSearchWriter(configuration), configuration));
 
         runtime.start();
@@ -227,7 +227,7 @@ public class ElasticSearchModuleProgrammaticTest extends ElasticSearchModuleInte
         GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database);
         runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration(), database));
 
-        configuration = ElasticSearchConfiguration.defaultConfiguration(HOST, PORT).withRetryOnError(true);
+        configuration = ElasticSearchConfiguration.defaultConfiguration().withUri(HOST).withPort(PORT).withRetryOnError(true);
         runtime.registerModule(new ElasticSearchModule("ES", new ElasticSearchWriter(configuration), configuration));
 
         runtime.start();

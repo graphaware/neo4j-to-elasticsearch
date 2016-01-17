@@ -1,7 +1,7 @@
 GraphAware Neo4j Elasticsearch Integration (Neo4j Module)
 =========================================================
 
-[![Build Status](https://travis-ci.org/graphaware/neo4j-to-elasticsearch.png)](https://travis-ci.org/graphaware/neo4j-to-elasticsearch) | <a href="http://graphaware.com/products/" target="_blank">Downloads</a> | <a href="http://graphaware.com/site/neo4j-to-elasticsearch/latest/apidocs/" target="_blank">Javadoc</a> | Latest Release: 2.3.1.36.1
+[![Build Status](https://travis-ci.org/graphaware/neo4j-to-elasticsearch.png)](https://travis-ci.org/graphaware/neo4j-to-elasticsearch) | <a href="http://graphaware.com/products/" target="_blank">Downloads</a> | <a href="http://graphaware.com/site/neo4j-to-elasticsearch/latest/apidocs/" target="_blank">Javadoc</a> | Latest Release: 2.3.1.37.1
 
 GraphAware Elasticsearch Integration is an enterprise-grade bi-directional integration between Neo4j and Elasticsearch.
 It consists of two independent modules plus a test suite. Both modules can be used independently or together to achieve
@@ -14,7 +14,7 @@ production-ready and officially supported by GraphAware for  <a href="http://gra
 The second module (TBA) is a plugin to Elasticsearch that can consult the Neo4j database during an Elasticsearch query to enrich
 the result (boost the score) by results that are more efficiently calculated in a graph database, e.g. recommendations.
 This module is in active alpha development and isn't yet officially released. We expect it to be production-ready by
-the end of 2015.
+mid-2016.
 
 # Neo4j -> Elasticsearch
 
@@ -48,7 +48,7 @@ Releases are synced to <a href="http://search.maven.org/#search%7Cga%7C1%7Ca%3A%
         <dependency>
             <groupId>com.graphaware.integration.es</groupId>
             <artifactId>neo4j-to-elasticsearch</artifactId>
-            <version>2.3.1.36.1</version>
+            <version>2.3.1.37.1</version>
         </dependency>
         ...
     </dependencies>
@@ -56,13 +56,13 @@ Releases are synced to <a href="http://search.maven.org/#search%7Cga%7C1%7Ca%3A%
 #### Snapshots
 
 To use the latest development version, just clone this repository, run `mvn clean install` and change the version in the
-dependency above to 2.3.1.36.2-SNAPSHOT.
+dependency above to 2.3.1.37.2-SNAPSHOT.
 
 #### Note on Versioning Scheme
 
 The version number has two parts. The first four numbers indicate compatibility with Neo4j GraphAware Framework.
- The last number is the version of the Elasticsearch Integration library. For example, version 2.3.1.36.1 is version 1 of the Elasticsearch Integration library
- compatible with GraphAware Neo4j Framework 2.3.1.36 (and thus Neo4j 2.3.1).
+ The last number is the version of the Elasticsearch Integration library. For example, version 2.3.1.37.1 is version 1 of the Elasticsearch Integration library
+ compatible with GraphAware Neo4j Framework 2.3.1.37 (and thus Neo4j 2.3.1).
 
 #### Note on UUID
 
@@ -119,23 +119,23 @@ com.graphaware.module.ES.retryOnError=false
 com.graphaware.module.ES.queueSize=10000
 
 #optional, specify which nodes to index in Elasticsearch, defaults to all nodes
-com.graphaware.module.ES.nodes=hasLabel('Person')
+com.graphaware.module.ES.node=hasLabel('Person')
 
 #optional, specify which node properties to index in Elasticsearch, defaults to all properties
-com.graphaware.module.ES.properties=key != 'age'
+com.graphaware.module.ES.node.property=key != 'age'
 
 #optional, specify whether to send updates to Elasticsearch in bulk, defaults to true (highly recommended)
 com.graphaware.module.ES.bulk=true
 
 #optional, read explanation below, defaults to 0
-com.graphaware.module.ES.reindexUntil=0
+com.graphaware.module.ES.initializeUntil=0
 
 ```
 
 For explanation of the UUID configurations, please see the [UUID Module docs](https://github.com/graphaware/neo4j-uuid).
 
 The Elasticsearch Integration configuration is described in the inline comments above. The only property that needs a little
-more explanation is `com.graphaware.module.ES.reindexUntil`:
+more explanation is `com.graphaware.module.ES.initializeUntil`:
 
 Every GraphAware Framework Module has methods (`initialize()` and `reinitialize()`) that provide a mechanism to get the
 world into a state equivalent to a situation in which the module has been running since the database was empty.
@@ -149,9 +149,9 @@ We've decided that we should not shoot the whole database at Elasticsearch in on
 it could well be quite large. Therefore, in order to trigger (re-)indexing, i.e. sending every node that should be indexed
 to Elasticsearch upon Neo4j restart, you have to manually intervene.
 
-The way you intervene is set the com.graphaware.module.ES.reindexUntil to a number slightly higher than a Java call to `System.currentTimeInMillis()`
+The way you intervene is set the com.graphaware.module.ES.initializeUntil to a number slightly higher than a Java call to `System.currentTimeInMillis()`
 would return when the module is starting. This way, the database will be (re-)indexed once, not with every following restart.
-In other words, re-indexing will happen iff `System.currentTimeInMillis() < com.graphaware.module.ES.reindexUntil`.
+In other words, re-indexing will happen iff `System.currentTimeInMillis() < com.graphaware.module.ES.initializeUntil`.
 If you're not sure what all of this means or don't know how to find the right number to set this value to, you're probably
 best off leaving it alone or getting in touch for some (paid) support.
 
@@ -183,10 +183,14 @@ Alternatively:
 Apart from the configuration described above, the GraphAware Elasticsearch Integration Module requires nothing else to function.
 It will replicate transactions asynchronously to Elasticsearch.
 
+#### Version of Elasticsearch
+
+This module has been tested with Elasticsearch 2.2.1.
+
 License
 -------
 
-Copyright (c) 2014 GraphAware
+Copyright (c) 2015 GraphAware
 
 GraphAware is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License
 as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.

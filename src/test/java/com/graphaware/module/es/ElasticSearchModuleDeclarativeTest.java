@@ -151,7 +151,7 @@ public class ElasticSearchModuleDeclarativeTest extends ElasticSearchModuleInteg
         verifyEventualEsReplication();
     }
 
-    @Test(timeout = 10_000)
+    @Test(timeout = 20_000)
     @RepeatRule.Repeat(times = 5)
     public void dataShouldBeCorrectlyReplicatedWithRetryAfterFailureBulk() {
         database = new TestGraphDatabaseFactory().newImpermanentDatabaseBuilder()
