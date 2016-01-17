@@ -2,6 +2,10 @@ language: java
 
 sudo: false
 
+jdk:
+  - oraclejdk8
+  - oraclejdk7
+
 branches:
   only:
     - master
