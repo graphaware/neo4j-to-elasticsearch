@@ -21,7 +21,9 @@ import com.graphaware.integration.es.test.JestElasticSearchClient;
 import com.graphaware.test.integration.NeoServerIntegrationTest;
 import io.searchbox.client.JestResult;
 import io.searchbox.core.Get;
+import org.json.JSONException;
 import org.junit.Test;
+import org.skyscreamer.jsonassert.JSONAssert;
 
 import java.io.IOException;
 
@@ -51,13 +53,13 @@ public class ElasticSearchModuleEndToEndTest extends NeoServerIntegrationTest {
     }
 
     @Test
-    public void testWorkflow() {
+    public void testWorkflow() throws JSONException {
         String uuid = writeSomeStuffToNeo4j();
         waitFor(200);
         ElasticSearchClient esClient = new JestElasticSearchClient("localhost", "9201");
         Get get = new Get.Builder("neo4j-index", uuid).type("Person").build();
         JestResult result = esClient.execute(get);
-        assertEquals("{\"_index\":\"neo4j-index\",\"_type\":\"Person\",\"_id\":\"" + uuid + "\",\"_version\":2,\"found\":true,\"_source\":{\"age\":\"31\",\"name\":\"Michal\",\"uuid\":\"" + uuid + "\"}}", result.getJsonString());
+        JSONAssert.assertEquals("{\"_index\":\"neo4j-index\",\"_type\":\"Person\",\"_id\":\"" + uuid + "\",\"_version\":2,\"found\":true,\"_source\":{\"age\":\"31\",\"name\":\"Michal\",\"uuid\":\"" + uuid + "\"}}", result.getJsonString(), false);
     }
 
     protected String writeSomeStuffToNeo4j() {
