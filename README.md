@@ -1,7 +1,7 @@
 GraphAware Neo4j Elasticsearch Integration (Neo4j Module)
 =========================================================
 
-[![Build Status](https://travis-ci.org/graphaware/neo4j-to-elasticsearch.png)](https://travis-ci.org/graphaware/neo4j-to-elasticsearch) | <a href="http://graphaware.com/products/" target="_blank">Downloads</a> | <a href="http://graphaware.com/site/neo4j-to-elasticsearch/latest/apidocs/" target="_blank">Javadoc</a> | Latest Release: 2.3.1.37.1
+[![Build Status](https://travis-ci.org/graphaware/neo4j-to-elasticsearch.png)](https://travis-ci.org/graphaware/neo4j-to-elasticsearch) | <a href="http://graphaware.com/products/" target="_blank">Downloads</a> | <a href="http://graphaware.com/site/neo4j-to-elasticsearch/latest/apidocs/" target="_blank">Javadoc</a> | Latest Release: 2.3.2.37.1
 
 GraphAware Elasticsearch Integration is an enterprise-grade bi-directional integration between Neo4j and Elasticsearch.
 It consists of two independent modules plus a test suite. Both modules can be used independently or together to achieve
@@ -48,7 +48,7 @@ Releases are synced to <a href="http://search.maven.org/#search%7Cga%7C1%7Ca%3A%
         <dependency>
             <groupId>com.graphaware.integration.es</groupId>
             <artifactId>neo4j-to-elasticsearch</artifactId>
-            <version>2.3.1.37.1</version>
+            <version>2.3.2.37.1</version>
         </dependency>
         ...
     </dependencies>
@@ -56,13 +56,13 @@ Releases are synced to <a href="http://search.maven.org/#search%7Cga%7C1%7Ca%3A%
 #### Snapshots
 
 To use the latest development version, just clone this repository, run `mvn clean install` and change the version in the
-dependency above to 2.3.1.37.2-SNAPSHOT.
+dependency above to 2.3.2.37.2-SNAPSHOT.
 
 #### Note on Versioning Scheme
 
 The version number has two parts. The first four numbers indicate compatibility with Neo4j GraphAware Framework.
- The last number is the version of the Elasticsearch Integration library. For example, version 2.3.1.37.1 is version 1 of the Elasticsearch Integration library
- compatible with GraphAware Neo4j Framework 2.3.1.37 (and thus Neo4j 2.3.1).
+ The last number is the version of the Elasticsearch Integration library. For example, version 2.3.2.37.1 is version 1 of the Elasticsearch Integration library
+ compatible with GraphAware Neo4j Framework 2.3.2.37 (and thus Neo4j 2.3.2).
 
 #### Note on UUID
 
