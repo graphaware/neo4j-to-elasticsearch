@@ -185,7 +185,7 @@ It will replicate transactions asynchronously to Elasticsearch.
 
 #### Version of Elasticsearch
 
-This module has been tested with Elasticsearch 2.2.1.
+This module has been tested with Elasticsearch 2.3.0+.
 
 License
 -------

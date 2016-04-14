@@ -171,7 +171,7 @@ public class Neo4jElasticVerifier {
         for (Label label : labels) {
             Search search = new Search.Builder(query).addIndex(ES_INDEX)
                     .addType(label.name())
-                    .setParameter("size", Integer.MAX_VALUE)
+                    .setParameter("size", 10_000)
                     .build();
             SearchResult result = esClient.execute(search);
 
