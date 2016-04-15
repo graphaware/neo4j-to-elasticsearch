@@ -1,4 +1,8 @@
 2.3.3.37.1:
+    - changed groupId
+    - updated testing framework
+
+2.3.3.37.1:
     - no changes
 
 2.3.2.37.1:

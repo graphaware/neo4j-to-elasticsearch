@@ -21,7 +21,6 @@
         <version>2.3.3.37</version>
     </parent>
 
-    <groupId>com.graphaware.integration.es</groupId>
     <artifactId>neo4j-to-elasticsearch</artifactId>
     <version>2.3.3.37.2-SNAPSHOT</version>
 
