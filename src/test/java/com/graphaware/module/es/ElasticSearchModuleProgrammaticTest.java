@@ -126,7 +126,7 @@ public class ElasticSearchModuleProgrammaticTest extends ElasticSearchModuleInte
 
         //Actual test:
         writeSomeStuffToNeo4j();
-        waitFor(200);
+        waitFor(300);
         verifyEsReplication();
     }
 
