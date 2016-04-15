@@ -46,7 +46,8 @@ Releases are synced to <a href="http://search.maven.org/#search%7Cga%7C1%7Ca%3A%
     <dependencies>
         ...
         <dependency>
-            <groupId>com.graphaware.neo4j</groupId>
+            <groupId>com.graphaware.integration.es</groupId>
+            <!-- this will be com.graphaware.neo4j in the next release -->
             <artifactId>neo4j-to-elasticsearch</artifactId>
             <version>2.3.3.37.1</version>
         </dependency>
