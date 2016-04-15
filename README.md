@@ -11,10 +11,8 @@ The first module (this project) is a plugin to Neo4j (more precisely, a [GraphAw
 which can be configured to transparently and asynchronously replicate data from Neo4j to Elasticsearch. This module is now
 production-ready and officially supported by GraphAware for  <a href="http://graphaware.com/enterprise/" target="_blank">GraphAware Enterprise</a> subscribers.
 
-The second module (TBA) is a plugin to Elasticsearch that can consult the Neo4j database during an Elasticsearch query to enrich
+The <a href="https://github.com/graphaware/graph-aided-search" target="_blank">second module (a.k.a. Graph-Aided Search)</a> is a plugin to Elasticsearch that can consult the Neo4j database during an Elasticsearch query to enrich
 the result (boost the score) by results that are more efficiently calculated in a graph database, e.g. recommendations.
-This module is in active alpha development and isn't yet officially released. We expect it to be production-ready by
-mid-2016.
 
 # Neo4j -> Elasticsearch
 
