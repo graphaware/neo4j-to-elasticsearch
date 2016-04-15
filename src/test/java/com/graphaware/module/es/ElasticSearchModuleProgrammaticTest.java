@@ -152,7 +152,7 @@ public class ElasticSearchModuleProgrammaticTest extends ElasticSearchModuleInte
         runtime.waitUntilStarted();
 
         //Actual test - indexing:
-        waitFor(200);
+        waitFor(300);
         verifyEsReplication();
 
         //stop DB
@@ -178,7 +178,7 @@ public class ElasticSearchModuleProgrammaticTest extends ElasticSearchModuleInte
         runtime.waitUntilStarted();
 
         //Actual test - reindexing:
-        waitFor(200);
+        waitFor(300);
         verifyEsReplication();
     }
 
