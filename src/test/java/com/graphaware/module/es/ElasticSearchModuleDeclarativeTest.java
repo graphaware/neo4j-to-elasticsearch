@@ -72,7 +72,7 @@ public class ElasticSearchModuleDeclarativeTest extends ElasticSearchModuleInteg
 
         //Actual test:
         writeSomeStuffToNeo4j();
-        TestUtil.waitFor(200);
+        TestUtil.waitFor(400);
         verifyEsReplication();
     }
 
