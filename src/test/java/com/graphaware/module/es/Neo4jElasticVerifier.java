@@ -24,7 +24,6 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.tooling.GlobalGraphOperations;
 
 import java.util.*;
 
@@ -51,7 +50,7 @@ public class Neo4jElasticVerifier {
 
     public void verifyEsReplication(String index) {
         try (Transaction tx = database.beginTx()) {
-            for (Node node : GlobalGraphOperations.at(database).getAllNodes()) {
+            for (Node node : database.getAllNodes()) {
                 if (configuration.getInclusionPolicies().getNodeInclusionPolicy().include(node)) {
                     verifyEsReplication(node, index);
                 }
@@ -62,7 +61,7 @@ public class Neo4jElasticVerifier {
 
     public void verifyNoEsReplication() {
         try (Transaction tx = database.beginTx()) {
-            for (Node node : GlobalGraphOperations.at(database).getAllNodes()) {
+            for (Node node : database.getAllNodes()) {
                 verifyNoEsReplication(node);
             }
             tx.success();
@@ -144,7 +143,7 @@ public class Neo4jElasticVerifier {
         Set<Label> labels = new HashSet<>();
 
         try (Transaction tx = database.beginTx()) {
-            for (Label label : GlobalGraphOperations.at(database).getAllLabels()) {
+            for (Label label : database.getAllLabels()) {
                 labels.add(label);
                 tx.success();
             }

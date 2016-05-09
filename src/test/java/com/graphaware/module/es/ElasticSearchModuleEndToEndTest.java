@@ -18,36 +18,33 @@ import com.graphaware.integration.es.test.ElasticSearchClient;
 import com.graphaware.integration.es.test.ElasticSearchServer;
 import com.graphaware.integration.es.test.EmbeddedElasticSearchServer;
 import com.graphaware.integration.es.test.JestElasticSearchClient;
-import com.graphaware.test.integration.NeoServerIntegrationTest;
+import com.graphaware.test.integration.GraphAwareIntegrationTest;
 import io.searchbox.client.JestResult;
 import io.searchbox.core.Get;
 import org.json.JSONException;
 import org.junit.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
 
-import java.io.IOException;
-
 import static com.graphaware.module.es.util.TestUtil.waitFor;
-import static org.junit.Assert.assertEquals;
 
-public class ElasticSearchModuleEndToEndTest extends NeoServerIntegrationTest {
+public class ElasticSearchModuleEndToEndTest extends GraphAwareIntegrationTest {
 
     protected ElasticSearchServer esServer;
 
     @Override
-    protected String neo4jConfigFile() {
-        return "integration/int-test-default.properties";
+    protected String configFile() {
+        return "integration/int-test-default.conf";
     }
 
     @Override
-    public void setUp() throws IOException, InterruptedException {
+    public void setUp() throws Exception {
         esServer = new EmbeddedElasticSearchServer();
         esServer.start();
         super.setUp();
     }
 
     @Override
-    public void tearDown() throws IOException, InterruptedException {
+    public void tearDown() throws Exception {
         esServer.stop();
         super.tearDown();
     }
@@ -59,23 +56,24 @@ public class ElasticSearchModuleEndToEndTest extends NeoServerIntegrationTest {
         ElasticSearchClient esClient = new JestElasticSearchClient("localhost", "9201");
         Get get = new Get.Builder("neo4j-index", uuid).type("Person").build();
         JestResult result = esClient.execute(get);
+        System.out.println(result.getJsonString());
         JSONAssert.assertEquals("{\"_index\":\"neo4j-index\",\"_type\":\"Person\",\"_id\":\"" + uuid + "\",\"_version\":2,\"found\":true,\"_source\":{\"age\":\"31\",\"name\":\"Michal\",\"uuid\":\"" + uuid + "\"}}", result.getJsonString(), false);
     }
 
     protected String writeSomeStuffToNeo4j() {
         //tx1
-        httpClient.executeCypher(baseUrl(), "CREATE (p:Person {name:'Michal', age:30})-[:WORKS_FOR {since:2013, role:'MD'}]->(c:Company {name:'GraphAware', est: 2013})");
+        httpClient.executeCypher(baseNeoUrl(), "CREATE (p:Person {name:'Michal', age:30})-[:WORKS_FOR {since:2013, role:'MD'}]->(c:Company {name:'GraphAware', est: 2013})");
 
         //tx2
-        httpClient.executeCypher(baseUrl(), "MATCH (ga:Company {name:'GraphAware'}) CREATE (p:Person {name:'Adam'})-[:WORKS_FOR {since:2014}]->(ga)");
+        httpClient.executeCypher(baseNeoUrl(), "MATCH (ga:Company {name:'GraphAware'}) CREATE (p:Person {name:'Adam'})-[:WORKS_FOR {since:2014}]->(ga)");
 
         //tx3
-        httpClient.executeCypher(baseUrl(),
+        httpClient.executeCypher(baseNeoUrl(),
                 "MATCH (ga:Company {name:'GraphAware'}) CREATE (p:Person {name:'Daniela'})-[:WORKS_FOR]->(ga)",
                 "MATCH (p:Person {name:'Michal'}) SET p.age=31",
                 "MATCH (p:Person {name:'Adam'})-[r]-() DELETE p,r",
                 "MATCH (p:Person {name:'Michal'})-[r:WORKS_FOR]->() REMOVE r.role");
 
-        return httpClient.executeCypher(baseUrl(), "MATCH (p:Person {name:'Michal'}) RETURN p.uuid").replace("{\"results\":[{\"columns\":[\"p.uuid\"],\"data\":[{\"row\":[\"", "").replace("\"]}]}],\"errors\":[]}", "");
+        return httpClient.executeCypher(baseNeoUrl(), "MATCH (p:Person {name:'Michal'}) RETURN p.uuid").replace("{\"results\":[{\"columns\":[\"p.uuid\"],\"data\":[{\"row\":[\"", "").replace("\"],\"meta\":[null]}]}],\"errors\":[]}", "");
     }
 }

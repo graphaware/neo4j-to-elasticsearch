@@ -137,7 +137,7 @@ public class ElasticSearchModuleProgrammaticTest extends ElasticSearchModuleInte
         folder.getRoot().deleteOnExit();
 
         database.shutdown();
-        database = new GraphDatabaseFactory().newEmbeddedDatabase(folder.getRoot().getAbsolutePath());
+        database = new GraphDatabaseFactory().newEmbeddedDatabase(folder.getRoot());
 
         writeSomeStuffToNeo4j();
 
@@ -164,7 +164,7 @@ public class ElasticSearchModuleProgrammaticTest extends ElasticSearchModuleInte
         esServer.start();
 
         //Restart DB with the plugins
-        database = new GraphDatabaseFactory().newEmbeddedDatabase(folder.getRoot().getAbsolutePath());
+        database = new GraphDatabaseFactory().newEmbeddedDatabase(folder.getRoot());
         verifyNoEsReplication();
         verifyEsEmpty();
 

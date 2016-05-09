@@ -20,7 +20,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.neo4j.graphdb.DynamicLabel;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
@@ -64,7 +63,7 @@ public class ElasticSearchModuleDeclarativeTest extends ElasticSearchModuleInteg
     @Test
     public void dataShouldBeCorrectlyReplicatedWithDefaultConfigEmptyDatabaseAndNoFailures() {
         database = new TestGraphDatabaseFactory().newImpermanentDatabaseBuilder()
-                .loadPropertiesFromFile(properties("integration/int-test-default.properties"))
+                .loadPropertiesFromFile(properties("integration/int-test-default.conf"))
                 .newGraphDatabase();
 
         getRuntime(database).waitUntilStarted();
@@ -79,7 +78,7 @@ public class ElasticSearchModuleDeclarativeTest extends ElasticSearchModuleInteg
     @Test
     public void dataShouldBeCorrectlyReplicatedWithCustomConfigEmptyDatabaseAndNoFailures() {
         database = new TestGraphDatabaseFactory().newImpermanentDatabaseBuilder()
-                .loadPropertiesFromFile(properties("integration/int-test-custom.properties"))
+                .loadPropertiesFromFile(properties("integration/int-test-custom.conf"))
                 .newGraphDatabase();
 
         getRuntime(database).waitUntilStarted();
@@ -94,7 +93,7 @@ public class ElasticSearchModuleDeclarativeTest extends ElasticSearchModuleInteg
     @Test
     public void dataShouldBeCorrectlyReplicatedWithPerRequestWriterAndNoFailures() {
         database = new TestGraphDatabaseFactory().newImpermanentDatabaseBuilder()
-                .loadPropertiesFromFile(properties("integration/int-test-write-per-request.properties"))
+                .loadPropertiesFromFile(properties("integration/int-test-write-per-request.conf"))
                 .newGraphDatabase();
 
         getRuntime(database).waitUntilStarted();
@@ -112,14 +111,14 @@ public class ElasticSearchModuleDeclarativeTest extends ElasticSearchModuleInteg
         folder.create();
         folder.getRoot().deleteOnExit();
 
-        database = new GraphDatabaseFactory().newEmbeddedDatabase(folder.getRoot().getAbsolutePath());
+        database = new GraphDatabaseFactory().newEmbeddedDatabase(folder.getRoot());
 
         writeSomeStuffToNeo4j();
 
         database.shutdown();
 
-        database = new GraphDatabaseFactory().newEmbeddedDatabaseBuilder(folder.getRoot().getAbsolutePath())
-                .loadPropertiesFromFile(properties("integration/int-test-default-with-reindex.properties"))
+        database = new GraphDatabaseFactory().newEmbeddedDatabaseBuilder(folder.getRoot())
+                .loadPropertiesFromFile(properties("integration/int-test-default-with-reindex.conf"))
                 .newGraphDatabase();
 
         getRuntime(database).waitUntilStarted();
@@ -134,15 +133,15 @@ public class ElasticSearchModuleDeclarativeTest extends ElasticSearchModuleInteg
         esServer = new EmbeddedElasticSearchServer();
         esServer.start();
 
-        database = new GraphDatabaseFactory().newEmbeddedDatabase(folder.getRoot().getAbsolutePath());
+        database = new GraphDatabaseFactory().newEmbeddedDatabase(folder.getRoot());
 
         verifyNoEsReplication();
         verifyEsEmpty();
 
         database.shutdown();
 
-        database = new GraphDatabaseFactory().newEmbeddedDatabaseBuilder(folder.getRoot().getAbsolutePath())
-                .loadPropertiesFromFile(properties("integration/int-test-default-with-reindex2.properties")) //must be different than before so that re-indexing happens
+        database = new GraphDatabaseFactory().newEmbeddedDatabaseBuilder(folder.getRoot())
+                .loadPropertiesFromFile(properties("integration/int-test-default-with-reindex2.conf")) //must be different than before so that re-indexing happens
                 .newGraphDatabase();
 
         getRuntime(database).waitUntilStarted();
@@ -155,7 +154,7 @@ public class ElasticSearchModuleDeclarativeTest extends ElasticSearchModuleInteg
     @RepeatRule.Repeat(times = 5)
     public void dataShouldBeCorrectlyReplicatedWithRetryAfterFailureBulk() {
         database = new TestGraphDatabaseFactory().newImpermanentDatabaseBuilder()
-                .loadPropertiesFromFile(properties("integration/int-test-default-with-fail-and-retry.properties"))
+                .loadPropertiesFromFile(properties("integration/int-test-default-with-fail-and-retry.conf"))
                 .newGraphDatabase();
 
         getRuntime(database).waitUntilStarted();
@@ -169,7 +168,7 @@ public class ElasticSearchModuleDeclarativeTest extends ElasticSearchModuleInteg
     @RepeatRule.Repeat(times = 5)
     public void dataShouldBeCorrectlyReplicatedWithRetryAfterFailurePerRequest() {
         database = new TestGraphDatabaseFactory().newImpermanentDatabaseBuilder()
-                .loadPropertiesFromFile(properties("integration/int-test-default-with-fail-and-retry-per-request.properties"))
+                .loadPropertiesFromFile(properties("integration/int-test-default-with-fail-and-retry-per-request.conf"))
                 .newGraphDatabase();
 
         getRuntime(database).waitUntilStarted();
@@ -185,7 +184,7 @@ public class ElasticSearchModuleDeclarativeTest extends ElasticSearchModuleInteg
         esServer = new EmbeddedElasticSearchServer();
 
         database = new TestGraphDatabaseFactory().newImpermanentDatabaseBuilder()
-                .loadPropertiesFromFile(properties("integration/int-test-default-with-retry.properties"))
+                .loadPropertiesFromFile(properties("integration/int-test-default-with-retry.conf"))
                 .newGraphDatabase();
 
         getRuntime(database).waitUntilStarted();
@@ -201,14 +200,14 @@ public class ElasticSearchModuleDeclarativeTest extends ElasticSearchModuleInteg
     @Test(timeout = 30_000)
     public void stressTest() {
         database = new TestGraphDatabaseFactory().newImpermanentDatabaseBuilder()
-                .loadPropertiesFromFile(properties("integration/int-test-stress.properties"))
+                .loadPropertiesFromFile(properties("integration/int-test-stress.conf"))
                 .newGraphDatabase();
 
         getRuntime(database).waitUntilStarted();
         configuration = (ElasticSearchConfiguration) getRuntime(database).getModule("ES", ElasticSearchModule.class).getConfiguration();
 
         int noNodes = 1000;
-        Label[] labels = new Label[]{DynamicLabel.label("CAR"), DynamicLabel.label("CAR2")};
+        Label[] labels = new Label[]{Label.label("CAR"), Label.label("CAR2")};
 
         try (Transaction tx = database.beginTx()) {
             for (int i = 0; i < noNodes; i++) {
