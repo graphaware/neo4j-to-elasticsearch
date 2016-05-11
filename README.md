@@ -133,6 +133,8 @@ com.graphaware.module.ES.initializeUntil=0
 
 For explanation of the UUID configurations, please see the [UUID Module docs](https://github.com/graphaware/neo4j-uuid).
 
+For explanation of the syntax used in the configuration, refer to the [Inclusion Policies](https://github.com/graphaware/neo4j-framework/tree/master/common#inclusion-policies).
+
 The Elasticsearch Integration configuration is described in the inline comments above. The only property that needs a little
 more explanation is `com.graphaware.module.ES.initializeUntil`:
 
