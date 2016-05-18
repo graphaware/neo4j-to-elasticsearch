@@ -84,6 +84,8 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
      * @param index           name of the Elasticsearch index. Must not be <code>null</code> or empty.
      * @param retryOnError    whether to retry an index update after a failure (<code>true</code>) or throw the update away (<code>false</code>).
      * @param executorFactory factory that produces executors of operations against Elasticsearch. Must not be <code>null</code>.
+     * @param authUser        User value for Authentication on Shield
+     * @param authPassword    Password value for Authentication on Shield
      */
     public ElasticSearchWriter(String uri, String port, String keyProperty, String index, boolean retryOnError, OperationExecutorFactory executorFactory, String authUser, String authPassword) {
         super();
@@ -113,6 +115,8 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
      * @param index           name of the Elasticsearch index. Must not be <code>null</code> or empty.
      * @param retryOnError    whether to retry an index update after a failure (<code>true</code>) or throw the update away (<code>false</code>).
      * @param executorFactory factory that produces executors of operations against Elasticsearch. Must not be <code>null</code>.
+     * @param authUser        User value for Authentication on Shield
+     * @param authPassword    Password value for Authentication on Shield
      */
     public ElasticSearchWriter(int queueCapacity, String uri, String port, String keyProperty, String index, boolean retryOnError, OperationExecutorFactory executorFactory, String authUser, String authPassword) {
         super(queueCapacity);
