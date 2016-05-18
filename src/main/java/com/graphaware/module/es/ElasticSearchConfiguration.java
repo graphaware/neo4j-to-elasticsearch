@@ -85,35 +85,35 @@ public class ElasticSearchConfiguration extends BaseTxDrivenModuleConfiguration<
     }
 
     public ElasticSearchConfiguration withUri(String uri) {
-        return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), uri, getPort(), getIndex(), getKeyProperty(), isRetryOnError(), getQueueCapacity(), isExecuteBulk(), DEFAULT_AUTH_USER, DEFAULT_AUTH_PASSWORD);
+        return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), uri, getPort(), getIndex(), getKeyProperty(), isRetryOnError(), getQueueCapacity(), isExecuteBulk(), getAuthUser(), getAuthPassword());
     }
 
     public ElasticSearchConfiguration withPort(String port) {
-        return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), getUri(), port, getIndex(), getKeyProperty(), isRetryOnError(), getQueueCapacity(), isExecuteBulk(), DEFAULT_AUTH_USER, DEFAULT_AUTH_PASSWORD);
+        return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), getUri(), port, getIndex(), getKeyProperty(), isRetryOnError(), getQueueCapacity(), isExecuteBulk(), getAuthUser(), getAuthPassword());
     }
 
     public ElasticSearchConfiguration withIndexName(String indexName) {
-        return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), getUri(), getPort(), indexName, getKeyProperty(), isRetryOnError(), getQueueCapacity(), isExecuteBulk(), DEFAULT_AUTH_USER, DEFAULT_AUTH_PASSWORD);
+        return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), getUri(), getPort(), indexName, getKeyProperty(), isRetryOnError(), getQueueCapacity(), isExecuteBulk(), getAuthUser(), getAuthPassword());
     }
 
     public ElasticSearchConfiguration withKeyProperty(String keyProperty) {
-        return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), getUri(), getPort(), getIndex(), keyProperty, isRetryOnError(), getQueueCapacity(), isExecuteBulk(), DEFAULT_AUTH_USER, DEFAULT_AUTH_PASSWORD);
+        return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), getUri(), getPort(), getIndex(), keyProperty, isRetryOnError(), getQueueCapacity(), isExecuteBulk(), getAuthUser(), getAuthPassword());
     }
 
     public ElasticSearchConfiguration withRetryOnError(boolean retryOnError) {
-        return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), getUri(), getPort(), getIndex(), getKeyProperty(), retryOnError, getQueueCapacity(), isExecuteBulk(), DEFAULT_AUTH_USER, DEFAULT_AUTH_PASSWORD);
+        return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), getUri(), getPort(), getIndex(), getKeyProperty(), retryOnError, getQueueCapacity(), isExecuteBulk(), getAuthUser(), getAuthPassword());
     }
 
     public ElasticSearchConfiguration withQueueCapacity(int queueCapacity) {
-        return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), getUri(), getPort(), getIndex(), getKeyProperty(), isRetryOnError(), queueCapacity, isExecuteBulk(), DEFAULT_AUTH_USER, DEFAULT_AUTH_PASSWORD);
+        return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), getUri(), getPort(), getIndex(), getKeyProperty(), isRetryOnError(), queueCapacity, isExecuteBulk(), getAuthUser(), getAuthPassword());
     }
 
     public ElasticSearchConfiguration withExecuteBulk(boolean executeBulk) {
-        return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), getUri(), getPort(), getIndex(), getKeyProperty(), isRetryOnError(), getQueueCapacity(), executeBulk, DEFAULT_AUTH_USER, DEFAULT_AUTH_PASSWORD);
+        return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), getUri(), getPort(), getIndex(), getKeyProperty(), isRetryOnError(), getQueueCapacity(), executeBulk, getAuthUser(), getAuthPassword());
     }
     
     public ElasticSearchConfiguration withAuthCredentials(String authUser, String authPassword) {
-        return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), getUri(), getPort(), getIndex(), getKeyProperty(), isRetryOnError(), getQueueCapacity(), executeBulk, authUser, authPassword);
+        return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), getUri(), getPort(), getIndex(), getKeyProperty(), isRetryOnError(), getQueueCapacity(), isExecuteBulk(), authUser, authPassword);
     }
 
     public String getUri() {
