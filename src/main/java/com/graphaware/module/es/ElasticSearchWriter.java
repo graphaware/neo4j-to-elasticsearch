@@ -33,7 +33,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.impl.client.BasicCredentialsProvider;
 
+import static org.springframework.util.Assert.hasLength;
+import static org.springframework.util.Assert.notNull;
 import static org.springframework.util.Assert.hasLength;
 import static org.springframework.util.Assert.notNull;
 
@@ -52,6 +57,8 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
     private final boolean retryOnError;
     private final OperationExecutorFactory executorFactory;
     private AtomicBoolean indexExists = new AtomicBoolean(false); //this must be thread-safe
+    private final String authUser;
+    private final String authPassword;
 
     public ElasticSearchWriter(ElasticSearchConfiguration configuration) {
         super(configuration.getQueueCapacity());
@@ -64,6 +71,8 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
         this.index = configuration.getIndex();
         this.retryOnError = configuration.isRetryOnError();
         this.executorFactory = configuration.isExecuteBulk() ? new BulkOperationExecutorFactory() : new RequestPerOperationExecutorFactory();
+        this.authUser = configuration.getAuthUser();
+        this.authPassword = configuration.getAuthPassword();
     }
 
     /**
@@ -76,7 +85,7 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
      * @param retryOnError    whether to retry an index update after a failure (<code>true</code>) or throw the update away (<code>false</code>).
      * @param executorFactory factory that produces executors of operations against Elasticsearch. Must not be <code>null</code>.
      */
-    public ElasticSearchWriter(String uri, String port, String keyProperty, String index, boolean retryOnError, OperationExecutorFactory executorFactory) {
+    public ElasticSearchWriter(String uri, String port, String keyProperty, String index, boolean retryOnError, OperationExecutorFactory executorFactory, String authUser, String authPassword) {
         super();
 
         notNull(uri);
@@ -91,6 +100,8 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
         this.index = index;
         this.retryOnError = retryOnError;
         this.executorFactory = executorFactory;
+        this.authUser = authUser;
+        this.authPassword = authPassword;
     }
 
     /**
@@ -103,7 +114,7 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
      * @param retryOnError    whether to retry an index update after a failure (<code>true</code>) or throw the update away (<code>false</code>).
      * @param executorFactory factory that produces executors of operations against Elasticsearch. Must not be <code>null</code>.
      */
-    public ElasticSearchWriter(int queueCapacity, String uri, String port, String keyProperty, String index, boolean retryOnError, OperationExecutorFactory executorFactory) {
+    public ElasticSearchWriter(int queueCapacity, String uri, String port, String keyProperty, String index, boolean retryOnError, OperationExecutorFactory executorFactory, String authUser, String authPassword) {
         super(queueCapacity);
 
         notNull(uri);
@@ -118,6 +129,8 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
         this.index = index;
         this.retryOnError = retryOnError;
         this.executorFactory = executorFactory;
+        this.authUser = authUser;
+        this.authPassword = authPassword;
     }
 
     /**
@@ -198,8 +211,17 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
         LOG.info("Creating Jest Client...");
 
         JestClientFactory factory = new JestClientFactory();
-        factory.setHttpClientConfig(new HttpClientConfig.Builder(String.format("http://%s:%s", uri, port))
-                .multiThreaded(true)
+        String esHost = String.format("http://%s:%s", uri, port);
+        HttpClientConfig.Builder clientConfigBuilder = 
+                new HttpClientConfig.Builder(esHost).multiThreaded(true);
+        if (authUser != null && authPassword != null) {
+            BasicCredentialsProvider customCredentialsProvider = new BasicCredentialsProvider();
+            customCredentialsProvider.setCredentials(
+                new AuthScope(uri, Integer.parseInt(port)),
+                new UsernamePasswordCredentials(authUser, authPassword));
+            clientConfigBuilder.credentialsProvider(customCredentialsProvider);
+        }
+        factory.setHttpClientConfig(clientConfigBuilder
                 .build());
 
         LOG.info("Created Jest Client.");
