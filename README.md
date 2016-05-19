@@ -162,11 +162,13 @@ best off leaving it alone or getting in touch for some (paid) support.
 If Shield plugin is installed and enabled on Elasticsearch node, it is possible to add authentication parameters in the configuration.
 Here an example:
 
+```
 #optional, specify the Shield user
 com.graphaware.module.ES.authUser=neo4j_user
 
 #optional, specify the Shield password
 com.graphaware.module.ES.authPassword=123456
+```
 
 Both of them MUST be specified to enabling Authentication. The user must be able to perform writes on the elasticsearch instance.
 
