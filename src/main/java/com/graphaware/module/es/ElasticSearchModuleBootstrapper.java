@@ -1,4 +1,4 @@
-/*
+    /*
  * Copyright (c) 2013-2016 GraphAware
  *
  * This file is part of the GraphAware Framework.
@@ -37,6 +37,8 @@ public class ElasticSearchModuleBootstrapper extends BaseRuntimeModuleBootstrapp
     private static final String RETRY_ON_ERROR = "retryOnError";
     private static final String QUEUE_CAPACITY = "queueSize";
     private static final String BULK = "bulk";
+    private static final String AUTH_USER = "authUser";
+    private static final String AUTH_PASSWORD = "authPassword";
 
     @Override
     protected ElasticSearchConfiguration defaultConfiguration() {
@@ -84,6 +86,11 @@ public class ElasticSearchModuleBootstrapper extends BaseRuntimeModuleBootstrapp
         if (configExists(config, BULK)) {
             configuration = configuration.withExecuteBulk(Boolean.valueOf(config.get(BULK)));
             LOG.info("Elasticsearch bulk execution set to {}", configuration.isExecuteBulk());
+        }
+        
+        if (configExists(config, AUTH_USER) && configExists(config, AUTH_PASSWORD)) {
+            configuration = configuration.withAuthCredentials(config.get(AUTH_USER), config.get(AUTH_PASSWORD));
+            LOG.info("Elasticsearch Auth Credentials bulk execution set to {}", configuration.isExecuteBulk());
         }
 
         return new ElasticSearchModule(moduleId, produceWriter(configuration), configuration);

@@ -24,11 +24,11 @@ public class SometimesFailingElasticSearchWriter extends ElasticSearchWriter {
     }
 
     public SometimesFailingElasticSearchWriter(String uri, String port, String keyProperty, String index, boolean retryOnError, OperationExecutorFactory executorFactory) {
-        super(uri, port, keyProperty, index, retryOnError, executorFactory);
+        super(uri, port, keyProperty, index, retryOnError, executorFactory, null, null);
     }
 
     public SometimesFailingElasticSearchWriter(int queueCapacity, String uri, String port, String keyProperty, String index, boolean retryOnError, OperationExecutorFactory executorFactory) {
-        super(queueCapacity, uri, port, keyProperty, index, retryOnError, executorFactory);
+        super(queueCapacity, uri, port, keyProperty, index, retryOnError, executorFactory, null, null);
     }
 
     @Override

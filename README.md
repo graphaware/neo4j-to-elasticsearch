@@ -156,6 +156,22 @@ In other words, re-indexing will happen iff `System.currentTimeInMillis() < com.
 If you're not sure what all of this means or don't know how to find the right number to set this value to, you're probably
 best off leaving it alone or getting in touch for some (paid) support.
 
+
+##### ElasticSearch Shield Support
+
+If Shield plugin is installed and enabled on Elasticsearch node, it is possible to add authentication parameters in the configuration.
+Here an example:
+
+```
+#optional, specify the Shield user
+com.graphaware.module.ES.authUser=neo4j_user
+
+#optional, specify the Shield password
+com.graphaware.module.ES.authPassword=123456
+```
+
+Both of them MUST be specified to enabling Authentication. The user must be able to perform writes on the elasticsearch instance.
+
 ##### Embedded Mode / Java Development
 
 To use the Elasticsearch Integration Module programmatically, register the module like this
