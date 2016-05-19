@@ -1,4 +1,4 @@
-/*
+    /*
  * Copyright (c) 2013-2016 GraphAware
  *
  * This file is part of the GraphAware Framework.
@@ -89,7 +89,7 @@ public class ElasticSearchModuleBootstrapper extends BaseRuntimeModuleBootstrapp
         }
         
         if (configExists(config, AUTH_USER) && configExists(config, AUTH_PASSWORD)) {
-            configuration = configuration.withAuthCredentials(config.get(AUTH_USER), config.get(AUTH_USER));
+            configuration = configuration.withAuthCredentials(config.get(AUTH_USER), config.get(AUTH_PASSWORD));
             LOG.info("Elasticsearch Auth Credentials bulk execution set to {}", configuration.isExecuteBulk());
         }
 

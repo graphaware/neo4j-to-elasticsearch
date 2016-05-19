@@ -223,6 +223,7 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
             customCredentialsProvider.setCredentials(
                 new AuthScope(uri, Integer.parseInt(port)),
                 new UsernamePasswordCredentials(authUser, authPassword));
+            LOG.info("Enabling Auth for elasticsearch: " + authUser);
             clientConfigBuilder.credentialsProvider(customCredentialsProvider);
         }
         factory.setHttpClientConfig(clientConfigBuilder
