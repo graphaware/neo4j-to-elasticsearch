@@ -208,8 +208,10 @@ on elasticsearch and getting back nodes for further use in the cypher query.
 Here an example of the usage:
 
 ```
-CALL ga.es.query({query: '{\"query\":{\"match\":{\"name\":\"alessandro\"}}}'}) YIELD node return node"
+CALL ga.es.query({query: '{\"query\":{\"match\":{\"name\":\"alessandro\"}}}'}) YIELD node, score return node, score"
 ```
+
+Together with the nodes also the related score is returned.
 
 Any query can be submitted through the procedure, it will be perfomed on the index configured 
 for replication on elasticsearch. 
