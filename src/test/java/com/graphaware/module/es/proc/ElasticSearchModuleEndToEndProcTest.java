@@ -21,7 +21,10 @@ import org.json.JSONException;
 import org.junit.Test;
 
 import static com.graphaware.module.es.util.TestUtil.waitFor;
+import java.util.List;
+import java.util.Map;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Result;
@@ -52,7 +55,7 @@ public class ElasticSearchModuleEndToEndProcTest extends GraphAwareIntegrationTe
     @Test
     public void testWorkflow() throws JSONException {
         String uuid = writeSomeStuffToNeo4j();
-        waitFor(200);
+        waitFor(2000);
         try( Transaction tx = getDatabase().beginTx()) {
             Result result = getDatabase().execute("CALL ga.es.query({query: '{\"query\":{\"match_all\":{}}}'}) YIELD node return node");
             ResourceIterator<Node> resIterator = result.columnAs("node");
@@ -61,9 +64,18 @@ public class ElasticSearchModuleEndToEndProcTest extends GraphAwareIntegrationTe
         }
         
         try( Transaction tx = getDatabase().beginTx()) {
-            Result result = getDatabase().execute("CALL ga.es.query({query: '{\"query\":{\"match\":{\"name\":\"michal\"}}}'}) YIELD node return node");
-            ResourceIterator<Node> resIterator = result.columnAs("node");
-            assertEquals(2, resIterator.stream().count());
+            Result result = getDatabase().execute("CALL ga.es.query({query: '{\"query\":{\"match\":{\"name\":\"michal\"}}}'}) YIELD node, score return node, score");
+            List<String> columns = result.columns();
+            assertEquals(2, columns.size());
+            
+            int count = 0;
+            while (result.hasNext()) {
+                count++;
+                Map<String, Object> next = result.next();
+                assertTrue(next.get("node") instanceof Node);
+                assertTrue(next.get("score") instanceof Float);
+            }
+            assertEquals(2, count);
             tx.success();
         }
         

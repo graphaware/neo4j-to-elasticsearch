@@ -40,8 +40,8 @@ public class ElasticSearchProcedures {
 
     @PostConstruct
     public void init() throws ProcedureException, KernelException {
-        ElasticSearchProcedure timeTreeProcedures = new ElasticSearchProcedure(database);
-        procedures.register(timeTreeProcedures.query());
+        ElasticSearchProcedure esProcedures = new ElasticSearchProcedure(database);
+        procedures.register(esProcedures.query());
     }
     
     

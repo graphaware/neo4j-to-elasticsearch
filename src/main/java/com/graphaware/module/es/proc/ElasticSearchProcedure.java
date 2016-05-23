@@ -55,6 +55,7 @@ public class ElasticSearchProcedure {
     private static final String PARAMETER_NAME_INPUT = "input";
     private static final String PARAMETER_NAME_QUERY = "query";
     private static final String PARAMETER_NAME_OUTPUT = "node";
+    private static final String PARAMETER_NAME_SCORE = "score";
     private final GraphDatabaseService database;
     private final String uri;
     private final String port;
@@ -82,21 +83,22 @@ public class ElasticSearchProcedure {
         return new CallableProcedure.BasicProcedure(procedureSignature(getProcedureName("query"))
                 .mode(ProcedureSignature.Mode.READ_WRITE)
                 .in(PARAMETER_NAME_INPUT, Neo4jTypes.NTMap)
-                .out(PARAMETER_NAME_OUTPUT, Neo4jTypes.NTNode).build()) {
+                .out(PARAMETER_NAME_OUTPUT, Neo4jTypes.NTNode)
+                .out(PARAMETER_NAME_SCORE, Neo4jTypes.NTFloat).build()) {
 
             @Override
             public RawIterator<Object[], ProcedureException> apply(Context ctx, Object[] input) throws ProcedureException {
                 checkIsMap(input[0]);
                 Map<String, Object> inputParams = (Map) input[0];
                 String query = (String) inputParams.get(PARAMETER_NAME_QUERY);
-                List<Node> nodes = performQuery(query);
+                List<KeySearchResult> nodes = performQuery(query);
                 return Iterators.asRawIterator(getObjectArray(nodes).iterator());
             }
 
         };
     }
 
-    private List<Node> performQuery(String query) {
+    private List<KeySearchResult> performQuery(String query) {
         Search search = new Search.Builder(query)
                 .addIndex(index)
                 .build();
@@ -108,14 +110,14 @@ public class ElasticSearchProcedure {
             throw new RuntimeException("Error while performing query on es", ex);
         }
         List<KeySearchResult> keys = extractKeys(result);
-        List<Node> nodes = extractNodesFromKeys(keys);
+        List<KeySearchResult> nodes = extractNodesFromKeys(keys);
         return nodes;
 
     }
 
-    private List<Object[]> getObjectArray(List<Node> nodes) {
+    private List<Object[]> getObjectArray(List<KeySearchResult> nodes) {
         List<Object[]> collector = nodes.stream()
-                .map((node) -> new Object[]{node})
+                .map((node) -> new Object[]{node.getNode(), Double.valueOf(node.getScore()).floatValue()})
                 .collect(Collectors.toList());
         return collector;
     }
@@ -166,6 +168,7 @@ public class ElasticSearchProcedure {
                     for (JsonElement element : hitsArray) {
                         JsonObject obj = (JsonObject) element;
                         String type = obj.get("_type").getAsString();
+                        double score = obj.get("_score").getAsDouble();
                         if (obj.get("_source") == null) {
                             throw new RuntimeException("No _source in the elasticsearch response");
                         }
@@ -174,20 +177,21 @@ public class ElasticSearchProcedure {
                         if (keyField == null) {
                             LOG.warn("No keyProperty " + keyProperty + " found in document: " + source);
                         } else {
-                            result.add(new KeySearchResult(type, keyField));
+                            result.add(new KeySearchResult(type, keyField, score));
                         }
                     }
                 });
         return result;
     }
 
-    private List<Node> extractNodesFromKeys(List<KeySearchResult> keys) {
-        List<Node> result = new ArrayList<>();
+    private List<KeySearchResult> extractNodesFromKeys(List<KeySearchResult> keys) {
+        List<KeySearchResult> result = new ArrayList<>();
         try (Transaction tx = database.beginTx()) {
             keys.stream().forEach((key) -> {
                 Node node = database.findNode(Label.label(key.getType()), keyProperty, key.getKeyProperty());
                 if (node != null) {
-                    result.add(node);
+                    key.setNode(node);
+                    result.add(key);
                 } else {
                     LOG.warn("Not found node with label " + key.getType() + " and keyProperty " + key.getKeyProperty());
                 }
@@ -201,10 +205,13 @@ public class ElasticSearchProcedure {
 
         private String type;
         private String keyProperty;
+        private double score;
+        private Node node;
 
-        public KeySearchResult(String type, String keyProperty) {
+        public KeySearchResult(String type, String keyProperty, double score) {
             this.type = type;
             this.keyProperty = keyProperty;
+            this.score = score;
         }
 
         public String getType() {
@@ -223,5 +230,20 @@ public class ElasticSearchProcedure {
             this.keyProperty = keyProperty;
         }
 
+        public double getScore() {
+            return score;
+        }
+
+        public void setScore(double score) {
+            this.score = score;
+        }
+
+        public Node getNode() {
+            return node;
+        }
+
+        public void setNode(Node node) {
+            this.node = node;
+        }
     }
 }
