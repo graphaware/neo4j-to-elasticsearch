@@ -80,7 +80,7 @@ public class ElasticSearchModuleEndToEndProcTest extends GraphAwareIntegrationTe
         }
         
         try( Transaction tx = getDatabase().beginTx()) {
-            Result result = getDatabase().execute("CALL ga.es.query({query: '{\"query\":{\"match\":{\"name\":\"alessandro\"}}}'}) YIELD node return node");
+            Result result = getDatabase().execute("CALL ga.es.query({query: '{\"query\":{\"match\":{\"name\":\"alessandro\"}}}'}) YIELD node, score return node, score");
             ResourceIterator<Node> resIterator = result.columnAs("node");
             assertEquals(0, resIterator.stream().count());
             tx.success();
