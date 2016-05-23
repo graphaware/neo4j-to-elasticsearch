@@ -52,7 +52,7 @@ public class ElasticSearchModuleEndToEndTest extends GraphAwareIntegrationTest {
     @Test
     public void testWorkflow() throws JSONException {
         String uuid = writeSomeStuffToNeo4j();
-        waitFor(200);
+        waitFor(500);
         ElasticSearchClient esClient = new JestElasticSearchClient("localhost", "9201");
         Get get = new Get.Builder("neo4j-index", uuid).type("Person").build();
         JestResult result = esClient.execute(get);
