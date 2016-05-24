@@ -200,6 +200,24 @@ Alternatively:
 Apart from the configuration described above, the GraphAware Elasticsearch Integration Module requires nothing else to function.
 It will replicate transactions asynchronously to Elasticsearch.
 
+#### Cypher Procedures
+
+This module provides also a procedure that allows to perform queries on indexed documents
+on elasticsearch and getting back nodes for further use in the cypher query.
+
+Here an example of the usage:
+
+```
+CALL ga.es.query({query: '{\"query\":{\"match\":{\"name\":\"alessandro\"}}}'}) YIELD node, score return node, score"
+```
+
+Together with the nodes also the related score is returned.
+
+Any query can be submitted through the procedure, it will be perfomed on the index configured 
+for replication on elasticsearch. 
+
+The `keyProperty` field in `_source` is mandatory since it is used to get the value for querying neo4j.
+
 #### Version of Elasticsearch
 
 This module has been tested with Elasticsearch 2.3.0+.

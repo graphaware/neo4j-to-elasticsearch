@@ -12,22 +12,25 @@
  * You should have received a copy of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.graphaware.module.es;
+package com.graphaware.module.es.proc;
 
-import com.graphaware.integration.es.test.ElasticSearchClient;
 import com.graphaware.integration.es.test.ElasticSearchServer;
 import com.graphaware.integration.es.test.EmbeddedElasticSearchServer;
-import com.graphaware.integration.es.test.JestElasticSearchClient;
 import com.graphaware.test.integration.GraphAwareIntegrationTest;
-import io.searchbox.client.JestResult;
-import io.searchbox.core.Get;
 import org.json.JSONException;
 import org.junit.Test;
-import org.skyscreamer.jsonassert.JSONAssert;
 
 import static com.graphaware.module.es.util.TestUtil.waitFor;
+import java.util.List;
+import java.util.Map;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.ResourceIterator;
+import org.neo4j.graphdb.Result;
+import org.neo4j.graphdb.Transaction;
 
-public class ElasticSearchModuleEndToEndTest extends GraphAwareIntegrationTest {
+public class ElasticSearchModuleEndToEndProcTest extends GraphAwareIntegrationTest {
 
     protected ElasticSearchServer esServer;
 
@@ -52,22 +55,50 @@ public class ElasticSearchModuleEndToEndTest extends GraphAwareIntegrationTest {
     @Test
     public void testWorkflow() throws JSONException {
         String uuid = writeSomeStuffToNeo4j();
-        waitFor(500);
-        ElasticSearchClient esClient = new JestElasticSearchClient("localhost", "9201");
-        Get get = new Get.Builder("neo4j-index", uuid).type("Person").build();
-        JestResult result = esClient.execute(get);
-        System.out.println(result.getJsonString());
-        JSONAssert.assertEquals("{\"_index\":\"neo4j-index\",\"_type\":\"Person\",\"_id\":\"" + uuid + "\",\"_version\":2,\"found\":true,\"_source\":{\"age\":\"31\",\"name\":\"Michal\",\"uuid\":\"" + uuid + "\"}}", result.getJsonString(), false);
+        waitFor(2000);
+        try( Transaction tx = getDatabase().beginTx()) {
+            Result result = getDatabase().execute("CALL ga.es.query({query: '{\"query\":{\"match_all\":{}}}'}) YIELD node return node");
+            ResourceIterator<Node> resIterator = result.columnAs("node");
+            assertEquals(4, resIterator.stream().count());
+            tx.success();
+        }
+        
+        try( Transaction tx = getDatabase().beginTx()) {
+            Result result = getDatabase().execute("CALL ga.es.query({query: '{\"query\":{\"match\":{\"name\":\"michal\"}}}'}) YIELD node, score return node, score");
+            List<String> columns = result.columns();
+            assertEquals(2, columns.size());
+            
+            int count = 0;
+            while (result.hasNext()) {
+                count++;
+                Map<String, Object> next = result.next();
+                assertTrue(next.get("node") instanceof Node);
+                assertTrue(next.get("score") instanceof Float);
+            }
+            assertEquals(2, count);
+            tx.success();
+        }
+        
+        try( Transaction tx = getDatabase().beginTx()) {
+            Result result = getDatabase().execute("CALL ga.es.query({query: '{\"query\":{\"match\":{\"name\":\"alessandro\"}}}'}) YIELD node, score return node, score");
+            ResourceIterator<Node> resIterator = result.columnAs("node");
+            assertEquals(0, resIterator.stream().count());
+            tx.success();
+        }
     }
 
     protected String writeSomeStuffToNeo4j() {
         //tx1
-        httpClient.executeCypher(baseNeoUrl(), "CREATE (p:Person {name:'Michal', age:30})-[:WORKS_FOR {since:2013, role:'MD'}]->(c:Company {name:'GraphAware', est: 2013})");
-
+        httpClient.executeCypher(baseNeoUrl(), "CREATE (p:Person {name:'Michal Bachman', age:30})-[:WORKS_FOR {since:2013, role:'MD'}]->(c:Company {name:'GraphAware', est: 2013})");
+        
         //tx2
         httpClient.executeCypher(baseNeoUrl(), "MATCH (ga:Company {name:'GraphAware'}) CREATE (p:Person {name:'Adam'})-[:WORKS_FOR {since:2014}]->(ga)");
-
+        
         //tx3
+        httpClient.executeCypher(baseNeoUrl(), "MATCH (ga:Company {name:'GraphAware'}) CREATE (p:Person {name:'Michal Teck', age:33})-[:WORKS_FOR {since:2014, role:'Senior Consultant'}]->(ga)");
+
+
+        //tx4
         httpClient.executeCypher(baseNeoUrl(),
                 "MATCH (ga:Company {name:'GraphAware'}) CREATE (p:Person {name:'Daniela'})-[:WORKS_FOR]->(ga)",
                 "MATCH (p:Person {name:'Michal'}) SET p.age=31",

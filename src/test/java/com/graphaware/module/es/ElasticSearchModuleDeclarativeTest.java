@@ -55,7 +55,7 @@ public class ElasticSearchModuleDeclarativeTest extends ElasticSearchModuleInteg
         database = new TestGraphDatabaseFactory().newImpermanentDatabase();
 
         writeSomeStuffToNeo4j();
-        TestUtil.waitFor(200);
+        TestUtil.waitFor(500);
         verifyNoEsReplication();
         verifyEsEmpty();
     }
@@ -71,7 +71,7 @@ public class ElasticSearchModuleDeclarativeTest extends ElasticSearchModuleInteg
 
         //Actual test:
         writeSomeStuffToNeo4j();
-        TestUtil.waitFor(400);
+        TestUtil.waitFor(500);
         verifyEsReplication();
     }
 
@@ -86,7 +86,7 @@ public class ElasticSearchModuleDeclarativeTest extends ElasticSearchModuleInteg
 
         //Actual test:
         writeSomeStuffToNeo4j();
-        TestUtil.waitFor(200);
+        TestUtil.waitFor(500);
         verifyEsReplication("different-index-name");
     }
 
@@ -101,7 +101,7 @@ public class ElasticSearchModuleDeclarativeTest extends ElasticSearchModuleInteg
 
         //Actual test:
         writeSomeStuffToNeo4j();
-        TestUtil.waitFor(200);
+        TestUtil.waitFor(500);
         verifyEsReplication();
     }
 
