@@ -218,6 +218,19 @@ for replication on elasticsearch.
 
 The `keyProperty` field in `_source` is mandatory since it is used to get the value for querying neo4j.
 
+#### Monitoring the status of the reindexing process
+
+Depending on your configuration, the module can be in `initialization` mode when starting, processing a complete reindexing
+of the Neo4j graph database content (in accordance with your configuration settings)
+
+You can monitor the status of the `init` mode :
+
+```
+CALL ga.es.initialized() YIELD status RETURN status
+```
+
+Returns `true` or `false`
+
 #### Version of Elasticsearch
 
 This module has been tested with Elasticsearch 2.3.0+.
