@@ -94,7 +94,6 @@ public class ElasticSearchModuleEndToEndProcTest extends GraphAwareIntegrationTe
             Result result = getDatabase().execute("CALL ga.es.initialized() YIELD status RETURN status");
             while (result.hasNext()) {
                 Map<String, Object> record = result.next();
-                System.out.println(record.get("status"));
                 assertTrue((boolean) record.get("status"));
                 resultFound = true;
             }

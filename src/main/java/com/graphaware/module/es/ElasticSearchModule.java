@@ -47,7 +47,7 @@ public class ElasticSearchModule extends WriterBasedThirdPartyIntegrationModule 
 
     private final ElasticSearchConfiguration config;
     private boolean reindex = false; //this is checked in a single thread
-    private static boolean isReindexed = false;
+    private boolean isReindexed = false;
 
     /**
      * Create a new module.
@@ -107,7 +107,7 @@ public class ElasticSearchModule extends WriterBasedThirdPartyIntegrationModule 
         }
     }
 
-    public static boolean isReindexCompleted() {
+    public boolean isReindexCompleted() {
         return isReindexed;
     }
 
