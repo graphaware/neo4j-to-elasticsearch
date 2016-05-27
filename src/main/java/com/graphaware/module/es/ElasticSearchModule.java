@@ -47,6 +47,7 @@ public class ElasticSearchModule extends WriterBasedThirdPartyIntegrationModule 
 
     private final ElasticSearchConfiguration config;
     private boolean reindex = false; //this is checked in a single thread
+    private static boolean isReindexed = false;
 
     /**
      * Create a new module.
@@ -81,6 +82,7 @@ public class ElasticSearchModule extends WriterBasedThirdPartyIntegrationModule 
             reindex(database);
             reindex = false;
         }
+        isReindexed = true;
     }
 
     /**
@@ -90,6 +92,8 @@ public class ElasticSearchModule extends WriterBasedThirdPartyIntegrationModule 
     public void initialize(GraphDatabaseService database) {
         if (shouldReIndex("index")) {
             reindex = true;
+        } else {
+            isReindexed = true;
         }
     }
 
@@ -101,6 +105,10 @@ public class ElasticSearchModule extends WriterBasedThirdPartyIntegrationModule 
         if (shouldReIndex("re-index")) {
             reindex = true;
         }
+    }
+
+    public static boolean isReindexCompleted() {
+        return isReindexed;
     }
 
     private boolean shouldReIndex(String logMessage) {

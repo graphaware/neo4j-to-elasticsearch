@@ -56,6 +56,7 @@ public class ElasticSearchProcedure {
     private static final String PARAMETER_NAME_QUERY = "query";
     private static final String PARAMETER_NAME_OUTPUT = "node";
     private static final String PARAMETER_NAME_SCORE = "score";
+    private static final String PARAMETER_NAME_STATUS = "status";
     private final GraphDatabaseService database;
     private final String uri;
     private final String port;
@@ -95,6 +96,22 @@ public class ElasticSearchProcedure {
                 return Iterators.asRawIterator(getObjectArray(nodes).iterator());
             }
 
+        };
+    }
+
+    public CallableProcedure.BasicProcedure isReindexCompleted() {
+        return new CallableProcedure.BasicProcedure(procedureSignature(getProcedureName("initialized"))
+                .mode(ProcedureSignature.Mode.READ_ONLY)
+                .out(PARAMETER_NAME_STATUS, Neo4jTypes.NTBoolean).build()) {
+
+            @Override
+            public RawIterator<Object[], ProcedureException> apply(Context ctx, Object[] input) throws ProcedureException {
+                List<StatusResult> results = new ArrayList<>();
+                results.add(new StatusResult(((ElasticSearchModule) getStartedRuntime(database).getModule(ElasticSearchModule.class)).isReindexCompleted()));
+                List<Object[]> collector = results.stream().map((r) -> new Object[]{r.status}).collect(Collectors.toList());
+
+                return Iterators.asRawIterator(collector.iterator());
+            }
         };
     }
 
@@ -244,6 +261,14 @@ public class ElasticSearchProcedure {
 
         public void setNode(Node node) {
             this.node = node;
+        }
+    }
+
+    class StatusResult {
+        public final boolean status;
+
+        public StatusResult(boolean status) {
+            this.status = status;
         }
     }
 }

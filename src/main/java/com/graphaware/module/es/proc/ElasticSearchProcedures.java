@@ -42,6 +42,7 @@ public class ElasticSearchProcedures {
     public void init() throws ProcedureException, KernelException {
         ElasticSearchProcedure esProcedures = new ElasticSearchProcedure(database);
         procedures.register(esProcedures.query());
+        procedures.register(esProcedures.isReindexCompleted());
     }
     
     

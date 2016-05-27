@@ -31,6 +31,8 @@ import java.io.IOException;
 
 import static com.graphaware.runtime.RuntimeRegistry.getRuntime;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 
 
 public class ElasticSearchModuleDeclarativeTest extends ElasticSearchModuleIntegrationTest {
@@ -145,6 +147,7 @@ public class ElasticSearchModuleDeclarativeTest extends ElasticSearchModuleInteg
                 .newGraphDatabase();
 
         getRuntime(database).waitUntilStarted();
+        assertTrue(((ElasticSearchModule) getRuntime(database).getModule("ES", ElasticSearchModule.class)).isReindexCompleted());
         configuration = (ElasticSearchConfiguration) getRuntime(database).getModule("ES", ElasticSearchModule.class).getConfiguration();
 
         verifyEventualEsReplication();
