@@ -14,22 +14,16 @@
 
 package com.graphaware.module.es.executor;
 
-import com.graphaware.common.representation.NodeRepresentation;
-import com.graphaware.writer.thirdparty.NodeCreated;
-import com.graphaware.writer.thirdparty.NodeDeleted;
-import com.graphaware.writer.thirdparty.NodeUpdated;
 import com.graphaware.writer.thirdparty.WriteOperation;
+import io.searchbox.action.BulkableAction;
 import io.searchbox.client.JestClient;
 import io.searchbox.client.JestResult;
 import io.searchbox.core.Bulk;
-import io.searchbox.core.Delete;
-import io.searchbox.core.Index;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 /**
  * {@link OperationExecutor} that executes operations in bulk.
@@ -47,11 +41,9 @@ public class BulkOperationExecutor extends BaseOperationExecutor {
      * Construct a new executor.
      *
      * @param client      Jest client. Must not be <code>null</code>.
-     * @param index       Elasticsearch index name. Must not be <code>null</code> or empty.
-     * @param keyProperty name of the node property that serves as the key, under which the node will be indexed in Elasticsearch. Must not be <code>null</code> or empty.
      */
-    public BulkOperationExecutor(JestClient client, String index, String keyProperty) {
-        super(client, index, keyProperty);
+    public BulkOperationExecutor(JestClient client) {
+        super(client);
     }
 
     /**
@@ -60,7 +52,7 @@ public class BulkOperationExecutor extends BaseOperationExecutor {
     @Override
     public void start() {
         super.start();
-        bulkBuilder = new Bulk.Builder().defaultIndex(getIndex());
+        bulkBuilder = new Bulk.Builder();
     }
 
     /**
@@ -72,47 +64,13 @@ public class BulkOperationExecutor extends BaseOperationExecutor {
         return super.flush();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public void createNode(NodeCreated nodeCreated) {
-        createOrUpdateNode(nodeCreated.getDetails());
-        addFailed(nodeCreated); //temporary
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void updateNode(NodeUpdated nodeUpdated) {
-        createOrUpdateNode(nodeUpdated.getDetails().getCurrent());
-        addFailed(nodeUpdated); //temporary
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void deleteNode(NodeDeleted nodeDeleted) {
-        NodeRepresentation node = nodeDeleted.getDetails();
-        String id = getKey(node);
-
-        for (String label : node.getLabels()) {
-            bulkBuilder.addAction(new Delete.Builder(id).index(getIndex()).type(label).build());
+    public void execute(List<BulkableAction<? extends JestResult>> actions, WriteOperation<?> operation) {
+        for (BulkableAction<? extends JestResult> action : actions) {
+            bulkBuilder.addAction(action);
         }
-
-        addFailed(nodeDeleted); //temporary
-    }
-
-    private void createOrUpdateNode(NodeRepresentation node) {
-        String id = getKey(node);
-
-        Map<String, String> source = nodeToProps(node);
-
-        for (String label : node.getLabels()) {
-            bulkBuilder.addAction(new Index.Builder(source).index(getIndex()).type(label).id(id).build());
-        }
+        // Add all operations to the failed list.  They will be removed if "flush" succeeds.
+        addFailed(operation);
     }
 
     private void executeBulk(Bulk.Builder bulkBuilder) {
@@ -120,12 +78,13 @@ public class BulkOperationExecutor extends BaseOperationExecutor {
         try {
             JestResult execute = getClient().execute(bulkOperation);
             if (execute.isSucceeded()) {
+                // Removing all operation from the failed list if the bulk execution succeeded.
                 clearFailed();
             } else {
-                LOG.warn("Failed to execute an action against Elasticsearch. Details: " + execute.getErrorMessage());
+                LOG.warn("Failed to execute bulk action against ElasticSearch. Details: " + execute.getErrorMessage());
             }
         } catch (IOException e) {
-            LOG.warn("Failed to execute an action against Elasticsearch. ", e);
+            LOG.warn("Failed to execute bulk action against ElasticSearch. ", e);
         }
     }
 }

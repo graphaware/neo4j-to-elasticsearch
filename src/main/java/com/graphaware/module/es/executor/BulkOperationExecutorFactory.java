@@ -25,7 +25,7 @@ public class BulkOperationExecutorFactory implements OperationExecutorFactory {
      * {@inheritDoc}
      */
     @Override
-    public OperationExecutor newExecutor(JestClient client, String index, String keyProperty) {
-        return new BulkOperationExecutor(client, index, keyProperty);
+    public OperationExecutor newExecutor(JestClient client) {
+        return new BulkOperationExecutor(client);
     }
 }

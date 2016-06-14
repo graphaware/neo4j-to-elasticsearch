@@ -14,10 +14,9 @@
 
 package com.graphaware.module.es.executor;
 
-import com.graphaware.writer.thirdparty.NodeCreated;
-import com.graphaware.writer.thirdparty.NodeDeleted;
-import com.graphaware.writer.thirdparty.NodeUpdated;
 import com.graphaware.writer.thirdparty.WriteOperation;
+import io.searchbox.action.BulkableAction;
+import io.searchbox.client.JestResult;
 
 import java.util.List;
 
@@ -32,28 +31,15 @@ public interface OperationExecutor {
     void start();
 
     /**
-     * Tell Elasticsearch a node has been created.
+     * Execute some actions in ElasticsSearch.
      *
-     * @param nodeCreated operation.
+     * @param actions actions to execute on ElasticSearch
+     * @param operation the original Neo4j operation
      */
-    void createNode(NodeCreated nodeCreated);
+    void execute(List<BulkableAction<? extends JestResult>> actions, WriteOperation<?> operation);
 
     /**
-     * Tell Elasticsearch a node has been updated.
-     *
-     * @param nodeUpdated operation.
-     */
-    void updateNode(NodeUpdated nodeUpdated);
-
-    /**
-     * Tell Elasticsearch a node has been deleted.
-     *
-     * @param nodeDeleted operation.
-     */
-    void deleteNode(NodeDeleted nodeDeleted);
-
-    /**
-     * Finish executing operations. Guranteed to be called as the last method.
+     * Finish executing operations. Guaranteed to be called as the last method.
      *
      * @return write operations that have not been successful. Never <code>null</code>.
      */

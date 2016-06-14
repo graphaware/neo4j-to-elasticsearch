@@ -25,9 +25,7 @@ public interface OperationExecutorFactory {
      * Produce a new executor.
      *
      * @param client      Jest client. Must not be <code>null</code>.
-     * @param index       Elasticsearch index name. Must not be <code>null</code> or empty.
-     * @param keyProperty name of the node property that serves as the key, under which the node will be indexed in Elasticsearch. Must not be <code>null</code> or empty.
      * @return executor.
      */
-    OperationExecutor newExecutor(JestClient client, String index, String keyProperty);
+    OperationExecutor newExecutor(JestClient client);
 }
