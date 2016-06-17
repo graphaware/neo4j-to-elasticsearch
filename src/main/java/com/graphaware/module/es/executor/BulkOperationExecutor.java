@@ -14,13 +14,13 @@
 
 package com.graphaware.module.es.executor;
 
+import com.graphaware.common.log.LoggerFactory;
 import com.graphaware.writer.thirdparty.WriteOperation;
 import io.searchbox.action.BulkableAction;
 import io.searchbox.client.JestClient;
 import io.searchbox.client.JestResult;
 import io.searchbox.core.Bulk;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.neo4j.logging.Log;
 
 import java.io.IOException;
 import java.util.List;
@@ -33,7 +33,7 @@ import java.util.List;
  */
 public class BulkOperationExecutor extends BaseOperationExecutor {
 
-    private static final Logger LOG = LoggerFactory.getLogger(BulkOperationExecutor.class);
+    private static final Log LOG = LoggerFactory.getLogger(BulkOperationExecutor.class);
 
     private Bulk.Builder bulkBuilder;
 

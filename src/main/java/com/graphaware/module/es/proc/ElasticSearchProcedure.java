@@ -17,6 +17,7 @@ package com.graphaware.module.es.proc;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.graphaware.common.log.LoggerFactory;
 import com.graphaware.module.es.ElasticSearchConfiguration;
 import com.graphaware.module.es.ElasticSearchModule;
 import static com.graphaware.runtime.RuntimeRegistry.getStartedRuntime;
@@ -44,13 +45,14 @@ import org.neo4j.kernel.api.exceptions.ProcedureException;
 import org.neo4j.kernel.api.proc.CallableProcedure;
 import org.neo4j.kernel.api.proc.Neo4jTypes;
 import org.neo4j.kernel.api.proc.ProcedureSignature;
+import org.neo4j.logging.Log;
+
 import static org.neo4j.kernel.api.proc.ProcedureSignature.procedureName;
 import static org.neo4j.kernel.api.proc.ProcedureSignature.procedureSignature;
-import org.slf4j.LoggerFactory;
 
 public class ElasticSearchProcedure {
 
-    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(ElasticSearchProcedure.class);
+    private static final Log LOG = LoggerFactory.getLogger(ElasticSearchProcedure.class);
 
     private static final String PARAMETER_NAME_INPUT = "input";
     private static final String PARAMETER_NAME_QUERY = "query";
