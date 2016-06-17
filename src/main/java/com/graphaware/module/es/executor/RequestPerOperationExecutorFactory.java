@@ -25,7 +25,7 @@ public class RequestPerOperationExecutorFactory implements OperationExecutorFact
      * {@inheritDoc}
      */
     @Override
-    public OperationExecutor newExecutor(JestClient client, String index, String keyProperty) {
-        return new RequestPerOperationExecutor(client, index, keyProperty);
+    public OperationExecutor newExecutor(JestClient client) {
+        return new RequestPerOperationExecutor(client);
     }
 }

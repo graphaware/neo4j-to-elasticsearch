@@ -14,16 +14,12 @@
 
 package com.graphaware.module.es.executor;
 
-import com.graphaware.common.representation.NodeRepresentation;
 import com.graphaware.writer.thirdparty.WriteOperation;
 import io.searchbox.client.JestClient;
 
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
-import static org.springframework.util.Assert.hasLength;
 import static org.springframework.util.Assert.notNull;
 
 /**
@@ -34,24 +30,16 @@ public abstract class BaseOperationExecutor implements OperationExecutor {
     private List<WriteOperation<?>> allFailed;
 
     private final JestClient client;
-    private final String index;
-    private final String keyProperty;
 
     /**
      * Construct a new executor.
      *
      * @param client      Jest client. Must not be <code>null</code>.
-     * @param index       Elasticsearch index name. Must not be <code>null</code> or empty.
-     * @param keyProperty name of the node property that serves as the key, under which the node will be indexed in Elasticsearch. Must not be <code>null</code> or empty.
      */
-    public BaseOperationExecutor(JestClient client, String index, String keyProperty) {
+    public BaseOperationExecutor(JestClient client) {
         notNull(client);
-        hasLength(index);
-        hasLength(keyProperty);
 
         this.client = client;
-        this.index = index;
-        this.keyProperty = keyProperty;
     }
 
     /**
@@ -68,30 +56,6 @@ public abstract class BaseOperationExecutor implements OperationExecutor {
     @Override
     public List<WriteOperation<?>> flush() {
         return allFailed;
-    }
-
-    /**
-     * Get the key under which the given {@link NodeRepresentation} will be indexed in Elasticsearch.
-     *
-     * @param node to be indexed.
-     * @return key of the node.
-     */
-    protected String getKey(NodeRepresentation node) {
-        return String.valueOf(node.getProperties().get(keyProperty));
-    }
-
-    /**
-     * Convert a {@link NodeRepresentation} to a map of properties.
-     *
-     * @param node to convert.
-     * @return map of properties.
-     */
-    protected Map<String, String> nodeToProps(NodeRepresentation node) {
-        Map<String, String> source = new LinkedHashMap<>();
-        for (String key : node.getProperties().keySet()) {
-            source.put(key, String.valueOf(node.getProperties().get(key)));
-        }
-        return source;
     }
 
     /**
@@ -117,10 +81,4 @@ public abstract class BaseOperationExecutor implements OperationExecutor {
         return client;
     }
 
-    /**
-     * @return name of the Elasticsearch index to use for indexing.
-     */
-    protected String getIndex() {
-        return index;
-    }
 }

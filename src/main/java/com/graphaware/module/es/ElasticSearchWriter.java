@@ -18,27 +18,24 @@ import com.graphaware.module.es.executor.BulkOperationExecutorFactory;
 import com.graphaware.module.es.executor.OperationExecutor;
 import com.graphaware.module.es.executor.OperationExecutorFactory;
 import com.graphaware.module.es.executor.RequestPerOperationExecutorFactory;
-import com.graphaware.writer.thirdparty.*;
+import com.graphaware.module.es.mapping.Mapping;
+import com.graphaware.writer.thirdparty.BaseThirdPartyWriter;
+import com.graphaware.writer.thirdparty.ThirdPartyWriter;
+import com.graphaware.writer.thirdparty.WriteOperation;
 import io.searchbox.client.JestClient;
 import io.searchbox.client.JestClientFactory;
-import io.searchbox.client.JestResult;
 import io.searchbox.client.config.HttpClientConfig;
-import io.searchbox.indices.CreateIndex;
-import io.searchbox.indices.IndicesExists;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.impl.client.BasicCredentialsProvider;
 
-import static org.springframework.util.Assert.hasLength;
-import static org.springframework.util.Assert.notNull;
 import static org.springframework.util.Assert.hasLength;
 import static org.springframework.util.Assert.notNull;
 
@@ -56,9 +53,10 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
     private final String index;
     private final boolean retryOnError;
     private final OperationExecutorFactory executorFactory;
-    private AtomicBoolean indexExists = new AtomicBoolean(false); //this must be thread-safe
+    private final AtomicBoolean indexExists = new AtomicBoolean(false); //this must be thread-safe
     private final String authUser;
     private final String authPassword;
+    private final Mapping mapping;
 
     public ElasticSearchWriter(ElasticSearchConfiguration configuration) {
         super(configuration.getQueueCapacity());
@@ -73,6 +71,7 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
         this.executorFactory = configuration.isExecuteBulk() ? new BulkOperationExecutorFactory() : new RequestPerOperationExecutorFactory();
         this.authUser = configuration.getAuthUser();
         this.authPassword = configuration.getAuthPassword();
+        this.mapping = Mapping.getMapping(index, keyProperty, configuration.getMapping());
     }
 
     /**
@@ -86,8 +85,9 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
      * @param executorFactory factory that produces executors of operations against Elasticsearch. Must not be <code>null</code>.
      * @param authUser        User value for Authentication on Shield
      * @param authPassword    Password value for Authentication on Shield
+     * @param mapping         name of the mapping class to use to convert Neo4j node/relationships to ElasticSearch documents.
      */
-    public ElasticSearchWriter(String uri, String port, String keyProperty, String index, boolean retryOnError, OperationExecutorFactory executorFactory, String authUser, String authPassword) {
+    public ElasticSearchWriter(String uri, String port, String keyProperty, String index, boolean retryOnError, OperationExecutorFactory executorFactory, String authUser, String authPassword, String mapping) {
         super();
 
         notNull(uri);
@@ -104,6 +104,7 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
         this.executorFactory = executorFactory;
         this.authUser = authUser;
         this.authPassword = authPassword;
+        this.mapping = Mapping.getMapping(index, keyProperty, mapping);
     }
 
     /**
@@ -117,8 +118,9 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
      * @param executorFactory factory that produces executors of operations against Elasticsearch. Must not be <code>null</code>.
      * @param authUser        User value for Authentication on Shield
      * @param authPassword    Password value for Authentication on Shield
+     * @param mapping         name of the mapping class to use to convert Neo4j node/relationships to ElasticSearch documents.
      */
-    public ElasticSearchWriter(int queueCapacity, String uri, String port, String keyProperty, String index, boolean retryOnError, OperationExecutorFactory executorFactory, String authUser, String authPassword) {
+    public ElasticSearchWriter(int queueCapacity, String uri, String port, String keyProperty, String index, boolean retryOnError, OperationExecutorFactory executorFactory, String authUser, String authPassword, String mapping) {
         super(queueCapacity);
 
         notNull(uri);
@@ -135,6 +137,7 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
         this.executorFactory = executorFactory;
         this.authUser = authUser;
         this.authPassword = authPassword;
+        this.mapping = Mapping.getMapping(index, keyProperty, mapping);
     }
 
     /**
@@ -171,25 +174,13 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
     protected void processOperations(List<Collection<WriteOperation<?>>> list) {
         createIndexIfNotExist();
 
-        OperationExecutor executor = executorFactory.newExecutor(client, index, keyProperty);
+        OperationExecutor executor = executorFactory.newExecutor(client);
 
         executor.start();
 
         for (Collection<WriteOperation<?>> collection : list) {
             for (WriteOperation<?> operation : collection) {
-                switch (operation.getType()) {
-                    case NODE_CREATED:
-                        executor.createNode((NodeCreated) operation);
-                        break;
-                    case NODE_UPDATED:
-                        executor.updateNode((NodeUpdated) operation);
-                        break;
-                    case NODE_DELETED:
-                        executor.deleteNode((NodeDeleted) operation);
-                        break;
-                    default:
-                        LOG.warn("Unsupported operation " + operation.getType());
-                }
+                executor.execute(mapping.getActions(operation), operation);
             }
         }
 
@@ -198,7 +189,7 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
         if (!allFailed.isEmpty()) {
             if (retryOnError) {
                 LOG.warn("There were " + allFailed.size() + " failures in replicating to Elasticsearch. Will retry...");
-                retry(Collections.<Collection<WriteOperation<?>>>singletonList(allFailed));
+                retry(Collections.singletonList(allFailed));
                 try {
                     LOG.info("Backing off for 2 seconds...");
                     Thread.sleep(2000);
@@ -254,23 +245,9 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
             }
 
             try {
-                if (client.execute(new IndicesExists.Builder(index).build()).isSucceeded()) {
-                    LOG.info("Index " + index + " already exists in Elasticsearch.");
-                    indexExists.set(true);
-                    return;
-                }
-
-                LOG.info("Index " + index + " does not exist in Elasticsearch, creating...");
-
-                final JestResult execute = client.execute(new CreateIndex.Builder(index).build());
-
-                if (execute.isSucceeded()) {
-                    LOG.info("Created Elasticsearch index.");
-                    indexExists.set(true);
-                } else {
-                    LOG.error("Failed to create Elasticsearch index. Details: " + execute.getErrorMessage());
-                }
-            } catch (IOException e) {
+                mapping.createIndexAndMapping(client, index);
+                indexExists.set(true);
+            } catch (Exception e) {
                 LOG.error("Failed to create Elasticsearch index.", e);
             }
         }

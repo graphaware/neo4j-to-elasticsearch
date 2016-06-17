@@ -14,20 +14,16 @@
 
 package com.graphaware.module.es.executor;
 
-import com.graphaware.common.representation.NodeRepresentation;
-import com.graphaware.writer.thirdparty.NodeCreated;
-import com.graphaware.writer.thirdparty.NodeDeleted;
-import com.graphaware.writer.thirdparty.NodeUpdated;
+import com.graphaware.writer.thirdparty.WriteOperation;
 import io.searchbox.action.Action;
+import io.searchbox.action.BulkableAction;
 import io.searchbox.client.JestClient;
 import io.searchbox.client.JestResult;
-import io.searchbox.core.Delete;
-import io.searchbox.core.Index;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Map;
+import java.util.List;
 
 /**
  * {@link OperationExecutor} that executes each operation in a separate call.
@@ -39,63 +35,27 @@ public class RequestPerOperationExecutor extends BaseOperationExecutor {
 
     private static final Logger LOG = LoggerFactory.getLogger(RequestPerOperationExecutor.class);
 
-    public RequestPerOperationExecutor(JestClient client, String index, String keyProperty) {
-        super(client, index, keyProperty);
+    public RequestPerOperationExecutor(JestClient client) {
+        super(client);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public void createNode(NodeCreated nodeCreated) throws RuntimeException {
-        if (!createOrUpdateNode(nodeCreated.getDetails())) {
-            addFailed(nodeCreated);
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void updateNode(NodeUpdated nodeUpdated) {
-        if (!createOrUpdateNode(nodeUpdated.getDetails().getCurrent())) {
-            addFailed(nodeUpdated);
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void deleteNode(NodeDeleted nodeDeleted) {
-        NodeRepresentation node = nodeDeleted.getDetails();
-        String id = getKey(node);
-
-        for (String label : node.getLabels()) {
-            if (!execute(new Delete.Builder(id).index(getIndex()).type(label).build(), id)) {
-                addFailed(nodeDeleted);
-            }
-        }
-    }
-
-    private boolean createOrUpdateNode(NodeRepresentation node) {
-        String id = getKey(node);
-
-        Map<String, String> source = nodeToProps(node);
-
+    public void execute(List<BulkableAction<? extends JestResult>> actions, WriteOperation<?> operation) {
         boolean success = true;
-        for (String label : node.getLabels()) {
-            if (!execute(new Index.Builder(source).index(getIndex()).type(label).id(id).build(), id)) {
+        for (BulkableAction<? extends JestResult> action : actions) {
+            if (!execute(action)) {
                 success = false;
+                break;
             }
         }
-
-        return success;
+        if (!success) {
+            addFailed(operation);
+        }
     }
 
-    private boolean execute(Action<? extends JestResult> insert, String nodeId) {
+    private boolean execute(Action<? extends JestResult> action) {
         try {
-            final JestResult execute = getClient().execute(insert);
+            final JestResult execute = getClient().execute(action);
 
             if (!execute.isSucceeded()) {
                 LOG.warn("Failed to execute an action against Elasticsearch. Details: " + execute.getErrorMessage());

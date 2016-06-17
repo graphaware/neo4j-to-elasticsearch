@@ -39,6 +39,7 @@ public class ElasticSearchModuleBootstrapper extends BaseRuntimeModuleBootstrapp
     private static final String BULK = "bulk";
     private static final String AUTH_USER = "authUser";
     private static final String AUTH_PASSWORD = "authPassword";
+    private static final String MAPPING = "mapping";
 
     @Override
     protected ElasticSearchConfiguration defaultConfiguration() {
@@ -87,10 +88,15 @@ public class ElasticSearchModuleBootstrapper extends BaseRuntimeModuleBootstrapp
             configuration = configuration.withExecuteBulk(Boolean.valueOf(config.get(BULK)));
             LOG.info("Elasticsearch bulk execution set to {}", configuration.isExecuteBulk());
         }
-        
+
         if (configExists(config, AUTH_USER) && configExists(config, AUTH_PASSWORD)) {
             configuration = configuration.withAuthCredentials(config.get(AUTH_USER), config.get(AUTH_PASSWORD));
             LOG.info("Elasticsearch Auth Credentials bulk execution set to {}", configuration.isExecuteBulk());
+        }
+
+        if (configExists(config, MAPPING)) {
+            configuration = configuration.withMapping(config.get(MAPPING));
+            LOG.info("Elasticsearch mapping set to {}", configuration.getMapping());
         }
 
         return new ElasticSearchModule(moduleId, produceWriter(configuration), configuration);
