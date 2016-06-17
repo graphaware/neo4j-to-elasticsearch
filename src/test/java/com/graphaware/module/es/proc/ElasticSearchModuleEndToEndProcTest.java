@@ -87,6 +87,22 @@ public class ElasticSearchModuleEndToEndProcTest extends GraphAwareIntegrationTe
         }
     }
 
+    @Test
+    public void testIsReindexedProcedure() {
+        boolean resultFound = false;
+        try (Transaction tx = getDatabase().beginTx()) {
+            Result result = getDatabase().execute("CALL ga.es.initialized() YIELD status RETURN status");
+            while (result.hasNext()) {
+                Map<String, Object> record = result.next();
+                assertTrue((boolean) record.get("status"));
+                resultFound = true;
+            }
+
+            tx.success();
+        }
+        assertTrue(resultFound);
+    }
+
     protected String writeSomeStuffToNeo4j() {
         //tx1
         httpClient.executeCypher(baseNeoUrl(), "CREATE (p:Person {name:'Michal Bachman', age:30})-[:WORKS_FOR {since:2013, role:'MD'}]->(c:Company {name:'GraphAware', est: 2013})");
