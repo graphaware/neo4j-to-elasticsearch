@@ -14,21 +14,12 @@
 
 package com.graphaware.module.es;
 
-import com.graphaware.module.es.executor.OperationExecutorFactory;
 import io.searchbox.client.JestClient;
 
 public class SometimesFailingElasticSearchWriter extends ElasticSearchWriter {
 
     public SometimesFailingElasticSearchWriter(ElasticSearchConfiguration configuration) {
         super(configuration);
-    }
-
-    public SometimesFailingElasticSearchWriter(String uri, String port, String keyProperty, String index, boolean retryOnError, String mapping, OperationExecutorFactory executorFactory) {
-        super(uri, port, keyProperty, index, retryOnError, executorFactory, null, null, mapping);
-    }
-
-    public SometimesFailingElasticSearchWriter(int queueCapacity, String uri, String port, String keyProperty, String index, boolean retryOnError, String mapping, OperationExecutorFactory executorFactory) {
-        super(queueCapacity, uri, port, keyProperty, index, retryOnError, executorFactory, null, null, mapping);
     }
 
     @Override

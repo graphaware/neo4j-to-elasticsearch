@@ -36,7 +36,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.springframework.util.Assert.hasLength;
 import static org.springframework.util.Assert.notNull;
 
 /**
@@ -75,72 +74,6 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
     }
 
     /**
-     * Create an Elasticsearch writer with default queue capacity ({@link #DEFAULT_QUEUE_CAPACITY}).
-     *
-     * @param uri             Elasticsearch URI. Must not be <code>null</code>.
-     * @param port            Elasticsearch port. Must not be <code>null</code>.
-     * @param keyProperty     name of the node property that serves as the key, under which the node will be indexed in Elasticsearch. Must not be <code>null</code> or empty.
-     * @param index           name of the Elasticsearch index. Must not be <code>null</code> or empty.
-     * @param retryOnError    whether to retry an index update after a failure (<code>true</code>) or throw the update away (<code>false</code>).
-     * @param executorFactory factory that produces executors of operations against Elasticsearch. Must not be <code>null</code>.
-     * @param authUser        User value for Authentication on Shield
-     * @param authPassword    Password value for Authentication on Shield
-     * @param mapping         name of the mapping class to use to convert Neo4j node/relationships to ElasticSearch documents.
-     */
-    public ElasticSearchWriter(String uri, String port, String keyProperty, String index, boolean retryOnError, OperationExecutorFactory executorFactory, String authUser, String authPassword, String mapping) {
-        super();
-
-        notNull(uri);
-        notNull(port);
-        hasLength(index);
-        hasLength(keyProperty);
-        notNull(executorFactory);
-
-        this.uri = uri;
-        this.port = port;
-        this.keyProperty = keyProperty;
-        this.index = index;
-        this.retryOnError = retryOnError;
-        this.executorFactory = executorFactory;
-        this.authUser = authUser;
-        this.authPassword = authPassword;
-        this.mapping = Mapping.getMapping(index, keyProperty, mapping);
-    }
-
-    /**
-     * Create an Elasticsearch writer with default queue capacity ({@link #DEFAULT_QUEUE_CAPACITY}).
-     *
-     * @param uri             Elasticsearch URI. Must not be <code>null</code>.
-     * @param port            Elasticsearch port. Must not be <code>null</code>.
-     * @param keyProperty     name of the node property that serves as the key, under which the node will be indexed in Elasticsearch. Must not be <code>null</code> or empty.
-     * @param index           name of the Elasticsearch index. Must not be <code>null</code> or empty.
-     * @param retryOnError    whether to retry an index update after a failure (<code>true</code>) or throw the update away (<code>false</code>).
-     * @param executorFactory factory that produces executors of operations against Elasticsearch. Must not be <code>null</code>.
-     * @param authUser        User value for Authentication on Shield
-     * @param authPassword    Password value for Authentication on Shield
-     * @param mapping         name of the mapping class to use to convert Neo4j node/relationships to ElasticSearch documents.
-     */
-    public ElasticSearchWriter(int queueCapacity, String uri, String port, String keyProperty, String index, boolean retryOnError, OperationExecutorFactory executorFactory, String authUser, String authPassword, String mapping) {
-        super(queueCapacity);
-
-        notNull(uri);
-        notNull(port);
-        hasLength(index);
-        hasLength(keyProperty);
-        notNull(executorFactory);
-
-        this.uri = uri;
-        this.port = port;
-        this.keyProperty = keyProperty;
-        this.index = index;
-        this.retryOnError = retryOnError;
-        this.executorFactory = executorFactory;
-        this.authUser = authUser;
-        this.authPassword = authPassword;
-        this.mapping = Mapping.getMapping(index, keyProperty, mapping);
-    }
-
-    /**
      * {@inheritDoc}
      */
     @Override
@@ -171,15 +104,15 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
      * {@inheritDoc}
      */
     @Override
-    protected void processOperations(List<Collection<WriteOperation<?>>> list) {
+    protected void processOperations(List<Collection<WriteOperation<?>>> operationGroups) {
         createIndexIfNotExist();
 
         OperationExecutor executor = executorFactory.newExecutor(client);
 
         executor.start();
 
-        for (Collection<WriteOperation<?>> collection : list) {
-            for (WriteOperation<?> operation : collection) {
+        for (Collection<WriteOperation<?>> operationGroup : operationGroups) {
+            for (WriteOperation<?> operation : operationGroup) {
                 executor.execute(mapping.getActions(operation), operation);
             }
         }
