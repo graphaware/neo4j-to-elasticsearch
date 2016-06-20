@@ -1,7 +1,7 @@
 GraphAware Neo4j Elasticsearch Integration (Neo4j Module)
 =========================================================
 
-[![Build Status](https://travis-ci.org/graphaware/neo4j-to-elasticsearch.png)](https://travis-ci.org/graphaware/neo4j-to-elasticsearch) | <a href="http://graphaware.com/products/" target="_blank">Downloads</a> | <a href="http://graphaware.com/site/neo4j-to-elasticsearch/latest/apidocs/" target="_blank">Javadoc</a> | Latest Release: 3.0.1.38.4
+[![Build Status](https://travis-ci.org/graphaware/neo4j-to-elasticsearch.png)](https://travis-ci.org/graphaware/neo4j-to-elasticsearch) | <a href="http://graphaware.com/products/" target="_blank">Downloads</a> | <a href="http://graphaware.com/site/neo4j-to-elasticsearch/latest/apidocs/" target="_blank">Javadoc</a> | Latest Release: 3.0.3.39.4
 
 GraphAware Elasticsearch Integration is an enterprise-grade bi-directional integration between Neo4j and Elasticsearch.
 It consists of two independent modules plus a test suite. Both modules can be used independently or together to achieve
@@ -47,7 +47,7 @@ Releases are synced to <a href="http://search.maven.org/#search%7Cga%7C1%7Ca%3A%
             <groupId>com.graphaware.integration.es</groupId>
             <!-- this will be com.graphaware.neo4j in the next release -->
             <artifactId>neo4j-to-elasticsearch</artifactId>
-            <version>3.0.1.38.4</version>
+            <version>3.0.3.39.4</version>
         </dependency>
         ...
     </dependencies>
@@ -55,7 +55,7 @@ Releases are synced to <a href="http://search.maven.org/#search%7Cga%7C1%7Ca%3A%
 #### Snapshots
 
 To use the latest development version, just clone this repository, run `mvn clean install` and change the version in the
-dependency above to 3.0.1.38.5-SNAPSHOT.
+dependency above to 3.0.3.39.5-SNAPSHOT.
 
 #### Note on Versioning Scheme
 
@@ -217,6 +217,19 @@ Any query can be submitted through the procedure, it will be perfomed on the ind
 for replication on elasticsearch. 
 
 The `keyProperty` field in `_source` is mandatory since it is used to get the value for querying neo4j.
+
+#### Monitoring the status of the reindexing process
+
+Depending on your configuration, the module can be in `initialization` mode when starting, processing a complete reindexing
+of the Neo4j graph database content (in accordance with your configuration settings)
+
+You can monitor the status of the `init` mode :
+
+```
+CALL ga.es.initialized() YIELD status RETURN status
+```
+
+Returns `true` or `false`
 
 #### Version of Elasticsearch
 

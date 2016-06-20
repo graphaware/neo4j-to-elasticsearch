@@ -17,6 +17,7 @@ package com.graphaware.module.es.proc;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.graphaware.common.log.LoggerFactory;
 import com.graphaware.module.es.ElasticSearchConfiguration;
 import com.graphaware.module.es.ElasticSearchModule;
 import static com.graphaware.runtime.RuntimeRegistry.getStartedRuntime;
@@ -44,18 +45,20 @@ import org.neo4j.kernel.api.exceptions.ProcedureException;
 import org.neo4j.kernel.api.proc.CallableProcedure;
 import org.neo4j.kernel.api.proc.Neo4jTypes;
 import org.neo4j.kernel.api.proc.ProcedureSignature;
+import org.neo4j.logging.Log;
+
 import static org.neo4j.kernel.api.proc.ProcedureSignature.procedureName;
 import static org.neo4j.kernel.api.proc.ProcedureSignature.procedureSignature;
-import org.slf4j.LoggerFactory;
 
 public class ElasticSearchProcedure {
 
-    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(ElasticSearchProcedure.class);
+    private static final Log LOG = LoggerFactory.getLogger(ElasticSearchProcedure.class);
 
     private static final String PARAMETER_NAME_INPUT = "input";
     private static final String PARAMETER_NAME_QUERY = "query";
     private static final String PARAMETER_NAME_OUTPUT = "node";
     private static final String PARAMETER_NAME_SCORE = "score";
+    private static final String PARAMETER_NAME_STATUS = "status";
     private final GraphDatabaseService database;
     private final String uri;
     private final String port;
@@ -95,6 +98,22 @@ public class ElasticSearchProcedure {
                 return Iterators.asRawIterator(getObjectArray(nodes).iterator());
             }
 
+        };
+    }
+
+    public CallableProcedure.BasicProcedure isReindexCompleted() {
+        return new CallableProcedure.BasicProcedure(procedureSignature(getProcedureName("initialized"))
+                .mode(ProcedureSignature.Mode.READ_ONLY)
+                .out(PARAMETER_NAME_STATUS, Neo4jTypes.NTBoolean).build()) {
+
+            @Override
+            public RawIterator<Object[], ProcedureException> apply(Context ctx, Object[] input) throws ProcedureException {
+                List<StatusResult> results = new ArrayList<>();
+                results.add(new StatusResult(((ElasticSearchModule) getStartedRuntime(database).getModule(ElasticSearchModule.class)).isReindexCompleted()));
+                List<Object[]> collector = results.stream().map((r) -> new Object[]{r.status}).collect(Collectors.toList());
+
+                return Iterators.asRawIterator(collector.iterator());
+            }
         };
     }
 
@@ -244,6 +263,14 @@ public class ElasticSearchProcedure {
 
         public void setNode(Node node) {
             this.node = node;
+        }
+    }
+
+    class StatusResult {
+        public final boolean status;
+
+        public StatusResult(boolean status) {
+            this.status = status;
         }
     }
 }

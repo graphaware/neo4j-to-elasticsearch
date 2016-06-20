@@ -1,3 +1,14 @@
+3.0.3.39.4:
+    - updated to Neo4j 3.0.3
+    - configurable mapping
+    - reindexing status in a stored procedure
+
+3.0.1.38.4:
+    - support for "read-through" queries
+
+3.0.1.38.3:
+    - support for Shield
+
 3.0.1.38.2:
     - updated to Neo4j 3.0.1
 

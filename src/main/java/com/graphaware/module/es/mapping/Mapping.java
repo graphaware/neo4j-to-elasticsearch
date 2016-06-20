@@ -14,6 +14,7 @@
 
 package com.graphaware.module.es.mapping;
 
+import com.graphaware.common.log.LoggerFactory;
 import com.graphaware.common.representation.NodeRepresentation;
 import com.graphaware.common.representation.PropertyContainerRepresentation;
 import com.graphaware.common.representation.RelationshipRepresentation;
@@ -21,8 +22,7 @@ import com.graphaware.writer.thirdparty.*;
 import io.searchbox.action.BulkableAction;
 import io.searchbox.client.JestClient;
 import io.searchbox.client.JestResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.neo4j.logging.Log;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -33,7 +33,7 @@ import static org.springframework.util.Assert.hasLength;
 import static org.springframework.util.Assert.notNull;
 
 public abstract class Mapping {
-    private static final Logger LOG = LoggerFactory.getLogger(Mapping.class);
+    private static final Log LOG = LoggerFactory.getLogger(Mapping.class);
 
     private final String keyProperty;
     private final String index;

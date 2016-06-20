@@ -14,6 +14,7 @@
 
 package com.graphaware.module.es.mapping;
 
+import com.graphaware.common.log.LoggerFactory;
 import com.graphaware.common.representation.NodeRepresentation;
 import com.graphaware.common.representation.RelationshipRepresentation;
 import io.searchbox.action.BulkableAction;
@@ -23,8 +24,7 @@ import io.searchbox.core.Delete;
 import io.searchbox.core.Index;
 import io.searchbox.indices.CreateIndex;
 import io.searchbox.indices.IndicesExists;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.neo4j.logging.Log;
 
 import java.util.*;
 
@@ -37,7 +37,7 @@ import java.util.*;
  * Relationships are not indexed.
  */
 public class DefaultMapping extends Mapping {
-    private static final Logger LOG = LoggerFactory.getLogger(DefaultMapping.class);
+    private static final Log LOG = LoggerFactory.getLogger(DefaultMapping.class);
 
     public DefaultMapping(String index, String keyProperty) {
         super(index, keyProperty);

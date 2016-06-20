@@ -14,12 +14,12 @@
 
 package com.graphaware.module.es;
 
+import com.graphaware.common.log.LoggerFactory;
 import com.graphaware.runtime.module.BaseRuntimeModuleBootstrapper;
 import com.graphaware.runtime.module.RuntimeModule;
 import com.graphaware.runtime.module.RuntimeModuleBootstrapper;
 import org.neo4j.graphdb.GraphDatabaseService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.neo4j.logging.Log;
 
 import java.util.Map;
 
@@ -28,7 +28,7 @@ import java.util.Map;
  */
 public class ElasticSearchModuleBootstrapper extends BaseRuntimeModuleBootstrapper<ElasticSearchConfiguration> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ElasticSearchModuleBootstrapper.class);
+    private static final Log LOG = LoggerFactory.getLogger(ElasticSearchModuleBootstrapper.class);
 
     private static final String URI = "uri";
     private static final String PORT = "port";
@@ -50,7 +50,7 @@ public class ElasticSearchModuleBootstrapper extends BaseRuntimeModuleBootstrapp
     protected RuntimeModule doBootstrapModule(String moduleId, Map<String, String> config, GraphDatabaseService database, ElasticSearchConfiguration configuration) {
         if (configExists(config, URI)) {
             configuration = configuration.withUri(config.get(URI));
-            LOG.info("Elasticsearch URI set to {}", configuration.getUri());
+            LOG.info("Elasticsearch URI set to %s", configuration.getUri());
         } else {
             LOG.error("Elasticsearch URI must be specified!");
             throw new IllegalStateException("Elasticsearch URI must be specified!");
@@ -58,7 +58,7 @@ public class ElasticSearchModuleBootstrapper extends BaseRuntimeModuleBootstrapp
 
         if (configExists(config, PORT)) {
             configuration = configuration.withPort(config.get(PORT));
-            LOG.info("Elasticsearch port set to {}", configuration.getPort());
+            LOG.info("Elasticsearch port set to %s", configuration.getPort());
         } else {
             LOG.error("Elasticsearch port must be specified!");
             throw new IllegalStateException("Elasticsearch port must be specified!");
@@ -66,37 +66,37 @@ public class ElasticSearchModuleBootstrapper extends BaseRuntimeModuleBootstrapp
 
         if (configExists(config, INDEX)) {
             configuration = configuration.withIndexName(config.get(INDEX));
-            LOG.info("Elasticsearch index set to {}", configuration.getIndex());
+            LOG.info("Elasticsearch index set to %s", configuration.getIndex());
         }
 
         if (configExists(config, KEY_PROPERTY)) {
             configuration = configuration.withKeyProperty(config.get(KEY_PROPERTY));
-            LOG.info("Elasticsearch key property set to {}", configuration.getKeyProperty());
+            LOG.info("Elasticsearch key property set to %s", configuration.getKeyProperty());
         }
 
         if (configExists(config, RETRY_ON_ERROR)) {
             configuration = configuration.withRetryOnError(Boolean.valueOf(config.get(RETRY_ON_ERROR)));
-            LOG.info("Elasticsearch retry-on-error set to {}", configuration.isRetryOnError());
+            LOG.info("Elasticsearch retry-on-error set to %s", configuration.isRetryOnError());
         }
 
         if (configExists(config, QUEUE_CAPACITY)) {
             configuration = configuration.withQueueCapacity(Integer.valueOf(config.get(QUEUE_CAPACITY)));
-            LOG.info("Elasticsearch module queue capacity set to {}", configuration.getQueueCapacity());
+            LOG.info("Elasticsearch module queue capacity set to %s", configuration.getQueueCapacity());
         }
 
         if (configExists(config, BULK)) {
             configuration = configuration.withExecuteBulk(Boolean.valueOf(config.get(BULK)));
-            LOG.info("Elasticsearch bulk execution set to {}", configuration.isExecuteBulk());
+            LOG.info("Elasticsearch bulk execution set to %s", configuration.isExecuteBulk());
         }
 
         if (configExists(config, AUTH_USER) && configExists(config, AUTH_PASSWORD)) {
             configuration = configuration.withAuthCredentials(config.get(AUTH_USER), config.get(AUTH_PASSWORD));
-            LOG.info("Elasticsearch Auth Credentials bulk execution set to {}", configuration.isExecuteBulk());
+            LOG.info("Elasticsearch Auth Credentials bulk execution set to %s", configuration.isExecuteBulk());
         }
 
         if (configExists(config, MAPPING)) {
             configuration = configuration.withMapping(config.get(MAPPING));
-            LOG.info("Elasticsearch mapping set to {}", configuration.getMapping());
+            LOG.info("Elasticsearch mapping set to %s", configuration.getMapping());
         }
 
         return new ElasticSearchModule(moduleId, produceWriter(configuration), configuration);

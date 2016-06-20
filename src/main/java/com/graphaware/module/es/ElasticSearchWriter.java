@@ -14,6 +14,7 @@
 
 package com.graphaware.module.es;
 
+import com.graphaware.common.log.LoggerFactory;
 import com.graphaware.module.es.executor.BulkOperationExecutorFactory;
 import com.graphaware.module.es.executor.OperationExecutor;
 import com.graphaware.module.es.executor.OperationExecutorFactory;
@@ -28,8 +29,7 @@ import io.searchbox.client.config.HttpClientConfig;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.neo4j.logging.Log;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -43,7 +43,7 @@ import static org.springframework.util.Assert.notNull;
  */
 public class ElasticSearchWriter extends BaseThirdPartyWriter {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ElasticSearchWriter.class);
+    private static final Log LOG = LoggerFactory.getLogger(ElasticSearchWriter.class);
 
     private JestClient client;
     private final String uri;

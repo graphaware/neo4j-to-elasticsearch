@@ -14,6 +14,7 @@
 
 package com.graphaware.module.es;
 
+import com.graphaware.common.log.LoggerFactory;
 import com.graphaware.common.policy.NodeInclusionPolicy;
 import com.graphaware.common.policy.NodePropertyInclusionPolicy;
 import com.graphaware.common.representation.NodeRepresentation;
@@ -28,8 +29,7 @@ import com.graphaware.writer.thirdparty.ThirdPartyWriter;
 import com.graphaware.writer.thirdparty.WriteOperation;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.neo4j.logging.Log;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -42,11 +42,12 @@ import static org.springframework.util.Assert.notNull;
  */
 public class ElasticSearchModule extends WriterBasedThirdPartyIntegrationModule {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ElasticSearchModuleBootstrapper.class);
+    private static final Log LOG = LoggerFactory.getLogger(ElasticSearchModuleBootstrapper.class);
     private static final int REINDEX_BATCH_SIZE = 1000;
 
     private final ElasticSearchConfiguration config;
     private boolean reindex = false; //this is checked in a single thread
+    private boolean isReindexed = false;
 
     /**
      * Create a new module.
@@ -81,6 +82,7 @@ public class ElasticSearchModule extends WriterBasedThirdPartyIntegrationModule 
             reindex(database);
             reindex = false;
         }
+        isReindexed = true;
     }
 
     /**
@@ -90,6 +92,8 @@ public class ElasticSearchModule extends WriterBasedThirdPartyIntegrationModule 
     public void initialize(GraphDatabaseService database) {
         if (shouldReIndex("index")) {
             reindex = true;
+        } else {
+            isReindexed = true;
         }
     }
 
@@ -101,6 +105,10 @@ public class ElasticSearchModule extends WriterBasedThirdPartyIntegrationModule 
         if (shouldReIndex("re-index")) {
             reindex = true;
         }
+    }
+
+    public boolean isReindexCompleted() {
+        return isReindexed;
     }
 
     private boolean shouldReIndex(String logMessage) {
