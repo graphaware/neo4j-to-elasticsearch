@@ -15,6 +15,7 @@
 package com.graphaware.module.es;
 
 import com.graphaware.common.policy.InclusionPolicies;
+import com.graphaware.common.policy.none.IncludeNoRelationships;
 import com.graphaware.runtime.config.BaseTxDrivenModuleConfiguration;
 import com.graphaware.runtime.policy.InclusionPoliciesFactory;
 
@@ -26,7 +27,7 @@ public class ElasticSearchConfiguration extends BaseTxDrivenModuleConfiguration<
     private static final String DEFAULT_KEY_PROPERTY = "uuid";
     private static final boolean DEFAULT_RETRY_ON_ERROR = false;
     private static final boolean DEFAULT_EXECUTE_BULK = true;
-    private static final InclusionPolicies DEFAULT_INCLUSION_POLICIES = InclusionPoliciesFactory.allBusiness();
+    private static final InclusionPolicies DEFAULT_INCLUSION_POLICIES = InclusionPoliciesFactory.allBusiness().with(IncludeNoRelationships.getInstance());
     private static final String DEFAULT_INDEX_NAME = "neo4j-index";
     private static final int DEFAULT_QUEUE_CAPACITY = 10000;
     private static final String DEFAULT_AUTH_USER = null;
