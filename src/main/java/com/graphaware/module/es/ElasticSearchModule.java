@@ -15,20 +15,26 @@
 package com.graphaware.module.es;
 
 import com.graphaware.common.log.LoggerFactory;
-import com.graphaware.common.policy.NodeInclusionPolicy;
-import com.graphaware.common.policy.NodePropertyInclusionPolicy;
+import com.graphaware.common.policy.*;
+import com.graphaware.common.policy.none.IncludeNoNodes;
+import com.graphaware.common.policy.none.IncludeNoRelationships;
 import com.graphaware.common.representation.NodeRepresentation;
+import com.graphaware.common.representation.RelationshipRepresentation;
 import com.graphaware.runtime.config.TxDrivenModuleConfiguration;
 import com.graphaware.runtime.metadata.TxDrivenModuleMetadata;
 import com.graphaware.runtime.module.thirdparty.WriterBasedThirdPartyIntegrationModule;
 import com.graphaware.tx.executor.batch.IterableInputBatchTransactionExecutor;
 import com.graphaware.tx.executor.batch.UnitOfWork;
 import com.graphaware.tx.executor.input.AllNodes;
+import com.graphaware.tx.executor.input.AllRelationships;
 import com.graphaware.writer.thirdparty.NodeCreated;
+import com.graphaware.writer.thirdparty.RelationshipCreated;
 import com.graphaware.writer.thirdparty.ThirdPartyWriter;
 import com.graphaware.writer.thirdparty.WriteOperation;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.PropertyContainer;
+import org.neo4j.graphdb.Relationship;
 import org.neo4j.logging.Log;
 
 import java.util.Collection;
@@ -125,10 +131,29 @@ public class ElasticSearchModule extends WriterBasedThirdPartyIntegrationModule 
     }
 
     private void reindex(GraphDatabaseService database) {
-        LOG.info("Re-indexing the entire database...");
+        final InclusionPolicies policies = getConfiguration().getInclusionPolicies();
 
-        final NodePropertyInclusionPolicy propertyInclusionPolicy = getConfiguration().getInclusionPolicies().getNodePropertyInclusionPolicy();
-        final NodeInclusionPolicy nodeInclusionPolicy = getConfiguration().getInclusionPolicies().getNodeInclusionPolicy();
+        if (!(policies.getNodeInclusionPolicy() instanceof IncludeNoNodes)) {
+            LOG.info("Re-indexing nodes...");
+            reindexNodes(database);
+        } else {
+            LOG.info("Skipping nodes indexation.");
+        }
+
+        if (!(policies.getRelationshipInclusionPolicy() instanceof IncludeNoRelationships)) {
+            LOG.info("Re-indexing relationships...");
+            reindexRelationships(database);
+        } else {
+            LOG.info("Skipping relationships indexation.");
+        }
+
+        LOG.info("Finished re-indexing database.");
+    }
+
+    private void reindexNodes(GraphDatabaseService database) {
+        final InclusionPolicies policies = getConfiguration().getInclusionPolicies();
+        final NodeInclusionPolicy nodePolicy = policies.getNodeInclusionPolicy();
+        final NodePropertyInclusionPolicy nodePropertyPolicy = policies.getNodePropertyInclusionPolicy();
 
         final Collection<WriteOperation<?>> operations = new HashSet<>();
 
@@ -139,14 +164,18 @@ public class ElasticSearchModule extends WriterBasedThirdPartyIntegrationModule 
                 new UnitOfWork<Node>() {
                     @Override
                     public void execute(GraphDatabaseService database, Node node, int batchNumber, int stepNumber) {
-                        if (nodeInclusionPolicy.include(node)) {
-                            operations.add(new NodeCreated(new NodeRepresentation(node, propertiesToInclude(node, propertyInclusionPolicy))));
+                        if (!nodePolicy.include(node)) {
+                            return;
+                        }
 
-                            if (operations.size() >= REINDEX_BATCH_SIZE) {
-                                LOG.info("Done " + REINDEX_BATCH_SIZE);
-                                afterCommit(new HashSet<>(operations));
-                                operations.clear();
-                            }
+                        operations.add(new NodeCreated(
+                                new NodeRepresentation(node, propertiesToInclude(node, nodePropertyPolicy))
+                        ));
+
+                        if (operations.size() >= REINDEX_BATCH_SIZE) {
+                            LOG.info("Done " + REINDEX_BATCH_SIZE);
+                            afterCommit(new HashSet<>(operations));
+                            operations.clear();
                         }
                     }
                 }
@@ -156,14 +185,49 @@ public class ElasticSearchModule extends WriterBasedThirdPartyIntegrationModule 
             afterCommit(new HashSet<>(operations));
             operations.clear();
         }
-
-        LOG.info("Finished re-indexing database.");
     }
 
-    private String[] propertiesToInclude(Node node, NodePropertyInclusionPolicy propertyInclusionPolicy) {
+    private void reindexRelationships(GraphDatabaseService database) {
+        final InclusionPolicies policies = getConfiguration().getInclusionPolicies();
+        final RelationshipInclusionPolicy relPolicy = policies.getRelationshipInclusionPolicy();
+        final RelationshipPropertyInclusionPolicy relPropertyPolicy = policies.getRelationshipPropertyInclusionPolicy();
+
+        final Collection<WriteOperation<?>> operations = new HashSet<>();
+
+        new IterableInputBatchTransactionExecutor<>(
+                database,
+                REINDEX_BATCH_SIZE,
+                new AllRelationships(database, REINDEX_BATCH_SIZE),
+                new UnitOfWork<Relationship>() {
+                    @Override
+                    public void execute(GraphDatabaseService database, Relationship rel, int batchNumber, int stepNumber) {
+                        if (!relPolicy.include(rel)) {
+                            return;
+                        }
+
+                        operations.add(new RelationshipCreated(
+                                new RelationshipRepresentation(rel, propertiesToInclude(rel, relPropertyPolicy))
+                        ));
+
+                        if (operations.size() >= REINDEX_BATCH_SIZE) {
+                            LOG.info("Done " + REINDEX_BATCH_SIZE);
+                            afterCommit(new HashSet<>(operations));
+                            operations.clear();
+                        }
+                    }
+                }
+        ).execute();
+
+        if (operations.size() > 0) {
+            afterCommit(new HashSet<>(operations));
+            operations.clear();
+        }
+    }
+
+    private <T extends PropertyContainer> String[] propertiesToInclude(T item, PropertyInclusionPolicy<T> propertyInclusionPolicy) {
         Set<String> includedProps = new HashSet<>();
-        for (String key : node.getPropertyKeys()) {
-            if (propertyInclusionPolicy.include(key, node)) {
+        for (String key : item.getPropertyKeys()) {
+            if (propertyInclusionPolicy.include(key, item)) {
                 includedProps.add(key);
             }
         }
