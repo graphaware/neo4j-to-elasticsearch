@@ -87,8 +87,8 @@ public abstract class ElasticSearchModuleIntegrationTest {
         new Neo4jElasticVerifier(database, configuration, esClient).verifyEsReplication();
     }
 
-    protected void verifyEsReplication(String index) {
-        new Neo4jElasticVerifier(database, configuration, esClient).verifyEsReplication(index);
+    protected void verifyEsReplication(String indexprefix) {
+        new Neo4jElasticVerifier(database, configuration, esClient).verifyEsReplication(indexprefix);
     }
 
     protected void verifyNoEsReplication() {
@@ -99,8 +99,8 @@ public abstract class ElasticSearchModuleIntegrationTest {
         new Neo4jElasticVerifier(database, configuration, esClient).verifyEsReplication(node);
     }
 
-    protected void verifyEsReplication(Node node, String index) {
-        new Neo4jElasticVerifier(database, configuration, esClient).verifyEsReplication(node, index);
+    protected void verifyEsReplication(Node node, String indexPrefix) {
+        new Neo4jElasticVerifier(database, configuration, esClient).verifyEsReplication(node, indexPrefix);
     }
 
     protected void verifyNoEsReplication(Node node) {

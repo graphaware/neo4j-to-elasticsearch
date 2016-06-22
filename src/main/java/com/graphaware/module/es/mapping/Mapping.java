@@ -22,12 +22,18 @@ import com.graphaware.writer.thirdparty.*;
 import io.searchbox.action.BulkableAction;
 import io.searchbox.client.JestClient;
 import io.searchbox.client.JestResult;
+import io.searchbox.indices.CreateIndex;
+import io.searchbox.indices.IndicesExists;
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.PropertyContainer;
+import org.neo4j.graphdb.Relationship;
 import org.neo4j.logging.Log;
 
 import java.util.Collections;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Arrays;
 
 import static org.springframework.util.Assert.hasLength;
 import static org.springframework.util.Assert.notNull;
@@ -86,9 +92,9 @@ public abstract class Mapping {
     }
 
     /**
-     * @return name of the Elasticsearch index to use for indexing.
+     * @return name of the ElasticSearch index name prefix to use for indexing.
      */
-    protected String getIndex() {
+    protected String getIndexPrefix() {
         return index;
     }
 
@@ -99,7 +105,7 @@ public abstract class Mapping {
      * @return a map of fields to store in ElasticSearch
      */
     protected Map<String, String> map(NodeRepresentation node) {
-        Map<String, String> source = new LinkedHashMap<>();
+        Map<String, String> source = new HashMap<>();
         for (String key : node.getProperties().keySet()) {
               source.put(key, String.valueOf(node.getProperties().get(key)));
         }
@@ -113,7 +119,7 @@ public abstract class Mapping {
      * @return a map of fields to store in ElasticSearch
      */
     protected Map<String, String> map(RelationshipRepresentation relationship) {
-        Map<String, String> source = new LinkedHashMap<>();
+        Map<String, String> source = new HashMap<>();
         for (String key : relationship.getProperties().keySet()) {
             source.put(key, String.valueOf(relationship.getProperties().get(key)));
         }
@@ -124,10 +130,37 @@ public abstract class Mapping {
      * Create the ElasticSearch index(es) and initialize the mapping
      *
      * @param client The ElasticSearch client to use.
-     * @param index Name/prefix of the ElasticSearch index to create and initialize
      * @throws Exception
      */
-    public abstract void createIndexAndMapping(JestClient client, String index) throws Exception;
+    public void createIndexAndMapping(JestClient client) throws Exception {
+        List<String> indexes = Arrays.asList(
+                getIndexFor(Node.class),
+                getIndexFor(Relationship.class)
+        );
+        indexes.stream().distinct().forEach(index -> {
+            try {
+                createIndexAndMapping(client, index);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    private void createIndexAndMapping(JestClient client, String index) throws Exception {
+        if (client.execute(new IndicesExists.Builder(index).build()).isSucceeded()) {
+            LOG.info("Index " + index + " already exists in ElasticSearch.");
+        }
+
+        LOG.info("Index " + index + " does not exist in ElasticSearch, creating...");
+
+        final JestResult execute = client.execute(new CreateIndex.Builder(index).build());
+
+        if (execute.isSucceeded()) {
+            LOG.info("Created ElasticSearch index.");
+        } else {
+            LOG.error("Failed to create ElasticSearch index. Details: " + execute.getErrorMessage());
+        }
+    }
 
     public final List<BulkableAction<? extends JestResult>> getActions(WriteOperation operation) {
         switch (operation.getType()) {
@@ -168,4 +201,6 @@ public abstract class Mapping {
     protected abstract List<BulkableAction<? extends JestResult>> updateRelationship(RelationshipRepresentation before, RelationshipRepresentation after);
 
     protected abstract List<BulkableAction<? extends JestResult>> deleteRelationship(RelationshipRepresentation relationship);
+
+    public abstract <T extends PropertyContainer> String getIndexFor(Class<T> searchedType);
 }

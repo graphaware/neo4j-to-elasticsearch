@@ -20,6 +20,7 @@ import com.graphaware.module.es.executor.OperationExecutor;
 import com.graphaware.module.es.executor.OperationExecutorFactory;
 import com.graphaware.module.es.executor.RequestPerOperationExecutorFactory;
 import com.graphaware.module.es.mapping.Mapping;
+import com.graphaware.module.es.search.Searcher;
 import com.graphaware.writer.thirdparty.BaseThirdPartyWriter;
 import com.graphaware.writer.thirdparty.ThirdPartyWriter;
 import com.graphaware.writer.thirdparty.WriteOperation;
@@ -136,26 +137,7 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
     }
 
     protected JestClient createClient() {
-        LOG.info("Creating Jest Client...");
-
-        JestClientFactory factory = new JestClientFactory();
-        String esHost = String.format("http://%s:%s", uri, port);
-        HttpClientConfig.Builder clientConfigBuilder = 
-                new HttpClientConfig.Builder(esHost).multiThreaded(true);
-        if (authUser != null && authPassword != null) {
-            BasicCredentialsProvider customCredentialsProvider = new BasicCredentialsProvider();
-            customCredentialsProvider.setCredentials(
-                new AuthScope(uri, Integer.parseInt(port)),
-                new UsernamePasswordCredentials(authUser, authPassword));
-            LOG.info("Enabling Auth for elasticsearch: " + authUser);
-            clientConfigBuilder.credentialsProvider(customCredentialsProvider);
-        }
-        factory.setHttpClientConfig(clientConfigBuilder
-                .build());
-
-        LOG.info("Created Jest Client.");
-
-        return factory.getObject();
+        return Searcher.createClient(uri, port, authUser, authPassword);
     }
 
     protected void shutdownClient() {
@@ -178,7 +160,7 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
             }
 
             try {
-                mapping.createIndexAndMapping(client, index);
+                mapping.createIndexAndMapping(client);
                 indexExists.set(true);
             } catch (Exception e) {
                 LOG.error("Failed to create Elasticsearch index.", e);

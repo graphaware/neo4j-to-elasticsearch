@@ -32,7 +32,11 @@ import static org.junit.Assert.assertTrue;
 
 public class Neo4jElasticVerifier {
 
-    protected static final String ES_INDEX = "neo4j-index";
+    public static String DEFAULT_INDEX_PREFIX = "neo4j-index";
+
+    public static String INDEX(boolean node, String prefix) {
+        return prefix + (node ? "-node" : "-relationship");
+    }
 
     private final GraphDatabaseService database;
     private final ElasticSearchConfiguration configuration;
@@ -45,14 +49,17 @@ public class Neo4jElasticVerifier {
     }
 
     public void verifyEsReplication() {
-        verifyEsReplication(ES_INDEX);
+        verifyEsReplication(DEFAULT_INDEX_PREFIX);
     }
 
-    public void verifyEsReplication(String index) {
+    /**
+     * @param indexPrefix non-suffixed index name
+     */
+    public void verifyEsReplication(String indexPrefix) {
         try (Transaction tx = database.beginTx()) {
             for (Node node : database.getAllNodes()) {
                 if (configuration.getInclusionPolicies().getNodeInclusionPolicy().include(node)) {
-                    verifyEsReplication(node, index);
+                    verifyEsReplication(node, indexPrefix);
                 }
             }
             tx.success();
@@ -69,10 +76,15 @@ public class Neo4jElasticVerifier {
     }
 
     public void verifyEsReplication(Node node) {
-        verifyEsReplication(node, ES_INDEX);
+        verifyEsReplication(node, DEFAULT_INDEX_PREFIX);
     }
 
-    public void verifyEsReplication(Node node, String index) {
+    /**
+     * @param node a node
+     * @param indexPrefix non-suffixed index name
+     */
+    public void verifyEsReplication(Node node, String indexPrefix) {
+        String index = INDEX(true, indexPrefix);
         Map<String, Object> properties = new HashMap<>();
         Set<String> labels = new HashSet<>();
         String nodeKey;
@@ -97,7 +109,7 @@ public class Neo4jElasticVerifier {
             JestResult result = esClient.execute(get);
 
             assertTrue(result.getErrorMessage(), result.isSucceeded());
-            assertEquals(configuration.getIndex(), result.getValue("_index"));
+            assertEquals(index, result.getValue("_index"));
             assertEquals(label, result.getValue("_type"));
             assertEquals(nodeKey, result.getValue("_id"));
             assertTrue((Boolean) result.getValue("found"));
@@ -111,6 +123,7 @@ public class Neo4jElasticVerifier {
     }
 
     public void verifyNoEsReplication(Node node) {
+        String index = INDEX(true, DEFAULT_INDEX_PREFIX);
         Set<String> labels = new HashSet<>();
         String nodeKey;
         try (Transaction tx = database.beginTx()) {
@@ -128,7 +141,7 @@ public class Neo4jElasticVerifier {
         }
 
         for (String label : labels) {
-            Get get = new Get.Builder(ES_INDEX, nodeKey).type(label).build();
+            Get get = new Get.Builder(index, nodeKey).type(label).build();
             JestResult result = esClient.execute(get);
 
             assertTrue(!result.isSucceeded() || !((Boolean) result.getValue("found")));
@@ -153,6 +166,7 @@ public class Neo4jElasticVerifier {
     }
 
     public int countNodes(Label... labels) {
+        String index = INDEX(true, DEFAULT_INDEX_PREFIX);
         String query = "{"
                 + "   \"filter\": {"
                 + "      \"bool\": {"
@@ -168,7 +182,7 @@ public class Neo4jElasticVerifier {
         int count = 0;
 
         for (Label label : labels) {
-            Search search = new Search.Builder(query).addIndex(ES_INDEX)
+            Search search = new Search.Builder(query).addIndex(index)
                     .addType(label.name())
                     .setParameter("size", 10_000)
                     .build();

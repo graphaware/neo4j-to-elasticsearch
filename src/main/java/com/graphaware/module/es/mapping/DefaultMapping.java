@@ -18,15 +18,18 @@ import com.graphaware.common.log.LoggerFactory;
 import com.graphaware.common.representation.NodeRepresentation;
 import com.graphaware.common.representation.RelationshipRepresentation;
 import io.searchbox.action.BulkableAction;
-import io.searchbox.client.JestClient;
 import io.searchbox.client.JestResult;
 import io.searchbox.core.Delete;
 import io.searchbox.core.Index;
-import io.searchbox.indices.CreateIndex;
-import io.searchbox.indices.IndicesExists;
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.PropertyContainer;
+import org.neo4j.graphdb.Relationship;
 import org.neo4j.logging.Log;
 
-import java.util.*;
+import java.util.Map;
+import java.util.List;
+import java.util.Collections;
+import java.util.ArrayList;
 
 /**
  * This mapping indexes all documents in the same ElasticSearch index.
@@ -49,7 +52,7 @@ public class DefaultMapping extends Mapping {
         List<BulkableAction<? extends JestResult>> actions = new ArrayList<>();
 
         for (String label : node.getLabels()) {
-            actions.add(new Delete.Builder(id).index(getIndex()).type(label).build());
+            actions.add(new Delete.Builder(id).index(getIndexFor(Node.class)).type(label).build());
         }
 
         return actions;
@@ -71,7 +74,7 @@ public class DefaultMapping extends Mapping {
         List<BulkableAction<? extends JestResult>> actions = new ArrayList<>();
 
         for (String label : node.getLabels()) {
-            actions.add(new Index.Builder(source).index(getIndex()).type(label).id(id).build());
+            actions.add(new Index.Builder(source).index(getIndexFor(Node.class)).type(label).id(id).build());
         }
 
         return actions;
@@ -90,31 +93,18 @@ public class DefaultMapping extends Mapping {
     @Override
     protected List<BulkableAction<? extends JestResult>> deleteRelationship(RelationshipRepresentation r) {
         return Collections.singletonList(
-                new Index.Builder(map(r)).index(getIndex()).type(r.getType()).id(getKey(r)).build()
+                new Index.Builder(map(r)).index(getIndexFor(Relationship.class)).type(r.getType()).id(getKey(r)).build()
         );
     }
 
     private List<BulkableAction<? extends JestResult>> createOrUpdateRelationship(RelationshipRepresentation r) {
         return Collections.singletonList(
-                new Index.Builder(map(r)).index(getIndex()).type(r.getType()).id(getKey(r)).build()
+                new Index.Builder(map(r)).index(getIndexFor(Relationship.class)).type(r.getType()).id(getKey(r)).build()
         );
     }
 
     @Override
-    public void createIndexAndMapping(JestClient client, String index) throws Exception {
-        if (client.execute(new IndicesExists.Builder(index).build()).isSucceeded()) {
-            LOG.info("Index " + index + " already exists in ElasticSearch.");
-        }
-
-        LOG.info("Index " + index + " does not exist in ElasticSearch, creating...");
-
-        final JestResult execute = client.execute(new CreateIndex.Builder(index).build());
-
-        if (execute.isSucceeded()) {
-            LOG.info("Created ElasticSearch index.");
-        } else {
-            LOG.error("Failed to create ElasticSearch index. Details: " + execute.getErrorMessage());
-        }
+    public <T extends PropertyContainer> String getIndexFor(Class<T> searchedType) {
+        return getIndexPrefix() + (searchedType.equals(Node.class) ? "-node" : "-relationship");
     }
-
 }

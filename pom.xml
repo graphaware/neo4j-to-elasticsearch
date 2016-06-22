@@ -105,7 +105,7 @@
             <groupId>com.graphaware.neo4j</groupId>
             <artifactId>uuid</artifactId>
             <version>3.0.3.39.10</version>
-            <scope>test</scope>
+            <!--scope>test</scope-->
         </dependency>
 
         <dependency>

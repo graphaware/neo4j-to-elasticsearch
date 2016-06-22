@@ -25,10 +25,8 @@ import java.util.List;
 import java.util.Map;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.ResourceIterator;
-import org.neo4j.graphdb.Result;
-import org.neo4j.graphdb.Transaction;
+
+import org.neo4j.graphdb.*;
 
 public class ElasticSearchModuleEndToEndProcTest extends GraphAwareIntegrationTest {
 
@@ -53,18 +51,22 @@ public class ElasticSearchModuleEndToEndProcTest extends GraphAwareIntegrationTe
     }
 
     @Test
-    public void testWorkflow() throws JSONException {
-        String uuid = writeSomeStuffToNeo4j();
+    public void testNodeWorkflow() throws JSONException {
+        writeSomeStuffToNeo4j();
         waitFor(2000);
+
+        // match all nodes
         try( Transaction tx = getDatabase().beginTx()) {
-            Result result = getDatabase().execute("CALL ga.es.query({query: '{\"query\":{\"match_all\":{}}}'}) YIELD node return node");
+            Result result = getDatabase().execute("CALL ga.es.queryNode({query: '{\"query\":{\"match_all\":{}}}'}) YIELD node return node");
             ResourceIterator<Node> resIterator = result.columnAs("node");
             assertEquals(4, resIterator.stream().count());
+
             tx.success();
         }
-        
+
+        // match 2 nodes
         try( Transaction tx = getDatabase().beginTx()) {
-            Result result = getDatabase().execute("CALL ga.es.query({query: '{\"query\":{\"match\":{\"name\":\"michal\"}}}'}) YIELD node, score return node, score");
+            Result result = getDatabase().execute("CALL ga.es.queryNode({query: '{\"query\":{\"match\":{\"name\":\"michal\"}}}'}) YIELD node, score return node, score");
             List<String> columns = result.columns();
             assertEquals(2, columns.size());
             
@@ -74,14 +76,57 @@ public class ElasticSearchModuleEndToEndProcTest extends GraphAwareIntegrationTe
                 Map<String, Object> next = result.next();
                 assertTrue(next.get("node") instanceof Node);
                 assertTrue(next.get("score") instanceof Float);
+                assertTrue(((String) ((Node) next.get("node")).getProperty("name")).contains("Michal"));
             }
             assertEquals(2, count);
             tx.success();
         }
-        
+
+        // match no node
         try( Transaction tx = getDatabase().beginTx()) {
-            Result result = getDatabase().execute("CALL ga.es.query({query: '{\"query\":{\"match\":{\"name\":\"alessandro\"}}}'}) YIELD node, score return node, score");
+            Result result = getDatabase().execute("CALL ga.es.queryNode({query: '{\"query\":{\"match\":{\"name\":\"alessandro\"}}}'}) YIELD node, score return node, score");
             ResourceIterator<Node> resIterator = result.columnAs("node");
+            assertEquals(0, resIterator.stream().count());
+            tx.success();
+        }
+    }
+
+    @Test
+    public void testRelationshipWorkflow() throws JSONException {
+        writeSomeStuffToNeo4j();
+        waitFor(2000);
+
+        // match all relationships
+        try( Transaction tx = getDatabase().beginTx()) {
+            Result result = getDatabase().execute("CALL ga.es.queryRelationship({query: '{\"query\":{\"match_all\":{}}}'}) YIELD relationship return relationship");
+            ResourceIterator<Node> resIterator = result.columnAs("relationship");
+            assertEquals(3, resIterator.stream().count());
+
+            tx.success();
+        }
+
+        // match 1 relationship
+        try( Transaction tx = getDatabase().beginTx()) {
+            Result result = getDatabase().execute("CALL ga.es.queryRelationship({query: '{\"query\":{\"match\":{\"since\":\"2014\"}}}'}) YIELD relationship, score return relationship, score");
+            List<String> columns = result.columns();
+            assertEquals(2, columns.size());
+
+            int count = 0;
+            while (result.hasNext()) {
+                count++;
+                Map<String, Object> next = result.next();
+                assertTrue(next.get("relationship") instanceof Relationship);
+                assertTrue(next.get("score") instanceof Float);
+                assertEquals(((Relationship) next.get("relationship")).getProperty("since"), 2014L);
+            }
+            assertEquals(1, count);
+            tx.success();
+        }
+
+        // match no relationship
+        try( Transaction tx = getDatabase().beginTx()) {
+            Result result = getDatabase().execute("CALL ga.es.queryRelationship({query: '{\"query\":{\"match\":{\"since\":\"1942\"}}}'}) YIELD relationship, score return relationship, score");
+            ResourceIterator<Node> resIterator = result.columnAs("relationship");
             assertEquals(0, resIterator.stream().count());
             tx.success();
         }
