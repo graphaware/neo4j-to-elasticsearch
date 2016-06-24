@@ -149,6 +149,7 @@ public abstract class Mapping {
     private void createIndexAndMapping(JestClient client, String index) throws Exception {
         if (client.execute(new IndicesExists.Builder(index).build()).isSucceeded()) {
             LOG.info("Index " + index + " already exists in ElasticSearch.");
+            return;
         }
 
         LOG.info("Index " + index + " does not exist in ElasticSearch, creating...");
