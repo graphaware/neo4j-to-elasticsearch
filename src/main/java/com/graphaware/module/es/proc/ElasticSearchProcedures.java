@@ -23,6 +23,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+
 import org.neo4j.kernel.api.exceptions.KernelException;
 
 @Component
@@ -30,7 +32,7 @@ public class ElasticSearchProcedures {
 
     private final GraphDatabaseService database;
     private final Procedures procedures;
-
+    private ElasticSearchProcedure esProcedures;
 
     @Autowired
     public ElasticSearchProcedures(GraphDatabaseService database, Procedures procedures) {
@@ -40,10 +42,15 @@ public class ElasticSearchProcedures {
 
     @PostConstruct
     public void init() throws ProcedureException, KernelException {
-        ElasticSearchProcedure esProcedures = new ElasticSearchProcedure(database);
-        procedures.register(esProcedures.query());
+        esProcedures = new ElasticSearchProcedure(database);
+        procedures.register(esProcedures.queryNode());
+        procedures.register(esProcedures.queryRelationship());
         procedures.register(esProcedures.isReindexCompleted());
     }
     
-    
+    @PreDestroy
+    public void destroy() {
+        if (esProcedures == null) { return; }
+        esProcedures.destroy();
+    }
 }

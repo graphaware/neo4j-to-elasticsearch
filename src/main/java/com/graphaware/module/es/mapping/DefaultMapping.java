@@ -16,19 +16,20 @@ package com.graphaware.module.es.mapping;
 
 import com.graphaware.common.log.LoggerFactory;
 import com.graphaware.common.representation.NodeRepresentation;
-import com.graphaware.writer.thirdparty.NodeCreated;
-import com.graphaware.writer.thirdparty.NodeDeleted;
-import com.graphaware.writer.thirdparty.NodeUpdated;
+import com.graphaware.common.representation.RelationshipRepresentation;
 import io.searchbox.action.BulkableAction;
-import io.searchbox.client.JestClient;
 import io.searchbox.client.JestResult;
 import io.searchbox.core.Delete;
 import io.searchbox.core.Index;
-import io.searchbox.indices.CreateIndex;
-import io.searchbox.indices.IndicesExists;
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.PropertyContainer;
+import org.neo4j.graphdb.Relationship;
 import org.neo4j.logging.Log;
 
-import java.util.*;
+import java.util.Map;
+import java.util.List;
+import java.util.Collections;
+import java.util.ArrayList;
 
 /**
  * This mapping indexes all documents in the same ElasticSearch index.
@@ -46,35 +47,25 @@ public class DefaultMapping extends Mapping {
     }
 
     @Override
-    public Map<String, String> map(NodeRepresentation node) {
-        Map<String, String> source = new LinkedHashMap<>();
-        for (String key : node.getProperties().keySet()) {
-            source.put(key, String.valueOf(node.getProperties().get(key)));
-        }
-        return source;
-    }
-
-    @Override
-    protected List<BulkableAction<? extends JestResult>> deleteNode(NodeDeleted operation) {
-        NodeRepresentation node = operation.getDetails();
+    protected List<BulkableAction<? extends JestResult>> deleteNode(NodeRepresentation node) {
         String id = getKey(node);
         List<BulkableAction<? extends JestResult>> actions = new ArrayList<>();
 
         for (String label : node.getLabels()) {
-            actions.add(new Delete.Builder(id).index(getIndex()).type(label).build());
+            actions.add(new Delete.Builder(id).index(getIndexFor(Node.class)).type(label).build());
         }
 
         return actions;
     }
 
     @Override
-    protected List<BulkableAction<? extends JestResult>> updateNode(NodeUpdated operation) {
-        return createOrUpdateNode(operation.getDetails().getCurrent());
+    protected List<BulkableAction<? extends JestResult>> updateNode(NodeRepresentation before, NodeRepresentation after) {
+        return createOrUpdateNode(after);
     }
 
     @Override
-    protected List<BulkableAction<? extends JestResult>> createNode(NodeCreated operation) {
-        return createOrUpdateNode(operation.getDetails());
+    protected List<BulkableAction<? extends JestResult>> createNode(NodeRepresentation node) {
+        return createOrUpdateNode(node);
     }
 
     private List<BulkableAction<? extends JestResult>> createOrUpdateNode(NodeRepresentation node) {
@@ -83,27 +74,37 @@ public class DefaultMapping extends Mapping {
         List<BulkableAction<? extends JestResult>> actions = new ArrayList<>();
 
         for (String label : node.getLabels()) {
-            actions.add(new Index.Builder(source).index(getIndex()).type(label).id(id).build());
+            actions.add(new Index.Builder(source).index(getIndexFor(Node.class)).type(label).id(id).build());
         }
 
         return actions;
     }
 
     @Override
-    public void createIndexAndMapping(JestClient client, String index) throws Exception {
-        if (client.execute(new IndicesExists.Builder(index).build()).isSucceeded()) {
-            LOG.info("Index " + index + " already exists in ElasticSearch.");
-        }
-
-        LOG.info("Index " + index + " does not exist in ElasticSearch, creating...");
-
-        final JestResult execute = client.execute(new CreateIndex.Builder(index).build());
-
-        if (execute.isSucceeded()) {
-            LOG.info("Created ElasticSearch index.");
-        } else {
-            LOG.error("Failed to create ElasticSearch index. Details: " + execute.getErrorMessage());
-        }
+    protected List<BulkableAction<? extends JestResult>> createRelationship(RelationshipRepresentation relationship) {
+        return createOrUpdateRelationship(relationship);
     }
 
+    @Override
+    protected List<BulkableAction<? extends JestResult>> updateRelationship(RelationshipRepresentation before, RelationshipRepresentation after) {
+        return createOrUpdateRelationship(after);
+    }
+
+    @Override
+    protected List<BulkableAction<? extends JestResult>> deleteRelationship(RelationshipRepresentation r) {
+        return Collections.singletonList(
+                new Index.Builder(map(r)).index(getIndexFor(Relationship.class)).type(r.getType()).id(getKey(r)).build()
+        );
+    }
+
+    private List<BulkableAction<? extends JestResult>> createOrUpdateRelationship(RelationshipRepresentation r) {
+        return Collections.singletonList(
+                new Index.Builder(map(r)).index(getIndexFor(Relationship.class)).type(r.getType()).id(getKey(r)).build()
+        );
+    }
+
+    @Override
+    public <T extends PropertyContainer> String getIndexFor(Class<T> searchedType) {
+        return getIndexPrefix() + (searchedType.equals(Node.class) ? "-node" : "-relationship");
+    }
 }

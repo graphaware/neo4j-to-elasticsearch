@@ -15,78 +15,61 @@
  */
 package com.graphaware.module.es.proc;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.graphaware.common.log.LoggerFactory;
-import com.graphaware.module.es.ElasticSearchConfiguration;
 import com.graphaware.module.es.ElasticSearchModule;
 import static com.graphaware.runtime.RuntimeRegistry.getStartedRuntime;
-import io.searchbox.client.JestClient;
-import io.searchbox.client.JestClientFactory;
-import io.searchbox.client.config.HttpClientConfig;
-import io.searchbox.core.Search;
-import io.searchbox.core.SearchResult;
-import java.io.IOException;
+
+import com.graphaware.module.es.search.SearchMatch;
+import com.graphaware.module.es.search.Searcher;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.impl.client.BasicCredentialsProvider;
+
 import org.neo4j.collection.RawIterator;
 import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Transaction;
+import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.PropertyContainer;
 import org.neo4j.helpers.collection.Iterators;
 import org.neo4j.kernel.api.exceptions.ProcedureException;
 import org.neo4j.kernel.api.proc.CallableProcedure;
 import org.neo4j.kernel.api.proc.Neo4jTypes;
 import org.neo4j.kernel.api.proc.ProcedureSignature;
-import org.neo4j.logging.Log;
 
 import static org.neo4j.kernel.api.proc.ProcedureSignature.procedureName;
 import static org.neo4j.kernel.api.proc.ProcedureSignature.procedureSignature;
 
 public class ElasticSearchProcedure {
 
-    private static final Log LOG = LoggerFactory.getLogger(ElasticSearchProcedure.class);
-
     private static final String PARAMETER_NAME_INPUT = "input";
     private static final String PARAMETER_NAME_QUERY = "query";
-    private static final String PARAMETER_NAME_OUTPUT = "node";
+    private static final String PARAMETER_NAME_OUTPUT_NODE = "node";
+    private static final String PARAMETER_NAME_OUTPUT_RELATIONSHIP = "relationship";
     private static final String PARAMETER_NAME_SCORE = "score";
     private static final String PARAMETER_NAME_STATUS = "status";
-    private final GraphDatabaseService database;
-    private final String uri;
-    private final String port;
-    private final String keyProperty;
-    private final String index;
-    private final String authUser;
-    private final String authPassword;
 
-    private final ElasticSearchConfiguration configuration;
-    private final JestClient client;
+    private final GraphDatabaseService database;
+    private final Searcher searcher;
 
     public ElasticSearchProcedure(GraphDatabaseService database) {
         this.database = database;
-        configuration = (ElasticSearchConfiguration) getStartedRuntime(database).getModule(ElasticSearchModule.class).getConfiguration();
-        this.uri = configuration.getUri();
-        this.port = configuration.getPort();
-        this.keyProperty = configuration.getKeyProperty();
-        this.index = configuration.getIndex();
-        this.authUser = configuration.getAuthUser();
-        this.authPassword = configuration.getAuthPassword();
-        this.client = createClient();
+        this.searcher = new Searcher(database);
     }
 
-    public CallableProcedure.BasicProcedure query() {
-        return new CallableProcedure.BasicProcedure(procedureSignature(getProcedureName("query"))
+    public CallableProcedure.BasicProcedure queryNode() {
+        return query("queryNode", Node.class, PARAMETER_NAME_OUTPUT_NODE, Neo4jTypes.NTNode);
+    }
+
+    public CallableProcedure.BasicProcedure queryRelationship() {
+        return query("queryRelationship", Relationship.class, PARAMETER_NAME_OUTPUT_RELATIONSHIP, Neo4jTypes.NTRelationship);
+    }
+
+    private <T extends PropertyContainer> CallableProcedure.BasicProcedure query(final String procedureName, final Class<T> clazz, final String outputName, Neo4jTypes.MapType outputType) {
+        return new CallableProcedure.BasicProcedure(procedureSignature(getProcedureName(procedureName))
                 .mode(ProcedureSignature.Mode.READ_WRITE)
                 .in(PARAMETER_NAME_INPUT, Neo4jTypes.NTMap)
-                .out(PARAMETER_NAME_OUTPUT, Neo4jTypes.NTNode)
+                .out(outputName, outputType)
                 .out(PARAMETER_NAME_SCORE, Neo4jTypes.NTFloat).build()) {
 
             @Override
@@ -94,10 +77,9 @@ public class ElasticSearchProcedure {
                 checkIsMap(input[0]);
                 Map<String, Object> inputParams = (Map) input[0];
                 String query = (String) inputParams.get(PARAMETER_NAME_QUERY);
-                List<KeySearchResult> nodes = performQuery(query);
-                return Iterators.asRawIterator(getObjectArray(nodes).iterator());
+                List<SearchMatch<T>> results = searcher.search(query, clazz);
+                return Iterators.asRawIterator(getObjectArray(results).iterator());
             }
-
         };
     }
 
@@ -109,7 +91,7 @@ public class ElasticSearchProcedure {
             @Override
             public RawIterator<Object[], ProcedureException> apply(Context ctx, Object[] input) throws ProcedureException {
                 List<StatusResult> results = new ArrayList<>();
-                results.add(new StatusResult(((ElasticSearchModule) getStartedRuntime(database).getModule(ElasticSearchModule.class)).isReindexCompleted()));
+                results.add(new StatusResult(getStartedRuntime(database).getModule(ElasticSearchModule.class).isReindexCompleted()));
                 List<Object[]> collector = results.stream().map((r) -> new Object[]{r.status}).collect(Collectors.toList());
 
                 return Iterators.asRawIterator(collector.iterator());
@@ -117,153 +99,24 @@ public class ElasticSearchProcedure {
         };
     }
 
-    private List<KeySearchResult> performQuery(String query) {
-        Search search = new Search.Builder(query)
-                .addIndex(index)
-                .build();
-
-        SearchResult result;
-        try {
-            result = client.execute(search);
-        } catch (IOException ex) {
-            throw new RuntimeException("Error while performing query on es", ex);
-        }
-        List<KeySearchResult> keys = extractKeys(result);
-        List<KeySearchResult> nodes = extractNodesFromKeys(keys);
-        return nodes;
-
-    }
-
-    private List<Object[]> getObjectArray(List<KeySearchResult> nodes) {
-        List<Object[]> collector = nodes.stream()
-                .map((node) -> new Object[]{node.getNode(), Double.valueOf(node.getScore()).floatValue()})
+    private <T extends PropertyContainer> List<Object[]> getObjectArray(List<SearchMatch<T>> results) {
+        return results.stream()
+                .map((result) -> new Object[]{result.getItem(), result.score.floatValue()})
                 .collect(Collectors.toList());
-        return collector;
     }
 
-    protected final JestClient createClient() {
-        LOG.info("Creating Jest Client...");
-
-        JestClientFactory factory = new JestClientFactory();
-        String esHost = String.format("http://%s:%s", uri, port);
-        HttpClientConfig.Builder clientConfigBuilder
-                = new HttpClientConfig.Builder(esHost).multiThreaded(true);
-        if (authUser != null && authPassword != null) {
-            BasicCredentialsProvider customCredentialsProvider = new BasicCredentialsProvider();
-            customCredentialsProvider.setCredentials(
-                    new AuthScope(uri, Integer.parseInt(port)),
-                    new UsernamePasswordCredentials(authUser, authPassword));
-            LOG.info("Enabling Auth for elasticsearch: " + authUser);
-            clientConfigBuilder.credentialsProvider(customCredentialsProvider);
-        }
-        factory.setHttpClientConfig(clientConfigBuilder
-                .build());
-
-        LOG.info("Created Jest Client.");
-
-        return factory.getObject();
-    }
-
-    protected void checkIsMap(Object object) throws RuntimeException {
+    private static void checkIsMap(Object object) throws RuntimeException {
         if (!(object instanceof Map)) {
             throw new RuntimeException("Input parameter is not a map");
         }
     }
 
-    protected static ProcedureSignature.ProcedureName getProcedureName(String procedureName) {
+    private static ProcedureSignature.ProcedureName getProcedureName(String procedureName) {
         return procedureName("ga", "es", procedureName);
     }
 
-    private List<KeySearchResult> extractKeys(SearchResult searchResult) {
-        List<KeySearchResult> result = new ArrayList<>();
-        Set<Map.Entry<String, JsonElement>> entrySet = searchResult.getJsonObject().entrySet();
-        entrySet.stream()
-                .filter((item) -> (item.getKey().equalsIgnoreCase("hits")))
-                .map((item) -> (JsonObject) item.getValue())
-                .filter((hits) -> (hits != null))
-                .map((hits) -> hits.getAsJsonArray("hits"))
-                .filter((hitsArray) -> (hitsArray != null))
-                .forEach((hitsArray) -> {
-                    for (JsonElement element : hitsArray) {
-                        JsonObject obj = (JsonObject) element;
-                        String type = obj.get("_type").getAsString();
-                        double score = obj.get("_score").getAsDouble();
-                        if (obj.get("_source") == null) {
-                            throw new RuntimeException("No _source in the elasticsearch response");
-                        }
-                        JsonObject source = obj.get("_source").getAsJsonObject();
-                        String keyField = source.get(keyProperty) != null ? source.get(keyProperty).getAsString() : null;
-                        if (keyField == null) {
-                            LOG.warn("No keyProperty " + keyProperty + " found in document: " + source);
-                        } else {
-                            result.add(new KeySearchResult(type, keyField, score));
-                        }
-                    }
-                });
-        return result;
-    }
-
-    private List<KeySearchResult> extractNodesFromKeys(List<KeySearchResult> keys) {
-        List<KeySearchResult> result = new ArrayList<>();
-        try (Transaction tx = database.beginTx()) {
-            keys.stream().forEach((key) -> {
-                Node node = database.findNode(Label.label(key.getType()), keyProperty, key.getKeyProperty());
-                if (node != null) {
-                    key.setNode(node);
-                    result.add(key);
-                } else {
-                    LOG.warn("Not found node with label " + key.getType() + " and keyProperty " + key.getKeyProperty());
-                }
-            });
-            tx.success();
-        }
-        return result;
-    }
-
-    class KeySearchResult {
-
-        private String type;
-        private String keyProperty;
-        private double score;
-        private Node node;
-
-        public KeySearchResult(String type, String keyProperty, double score) {
-            this.type = type;
-            this.keyProperty = keyProperty;
-            this.score = score;
-        }
-
-        public String getType() {
-            return type;
-        }
-
-        public void setType(String type) {
-            this.type = type;
-        }
-
-        public String getKeyProperty() {
-            return keyProperty;
-        }
-
-        public void setKeyProperty(String keyProperty) {
-            this.keyProperty = keyProperty;
-        }
-
-        public double getScore() {
-            return score;
-        }
-
-        public void setScore(double score) {
-            this.score = score;
-        }
-
-        public Node getNode() {
-            return node;
-        }
-
-        public void setNode(Node node) {
-            this.node = node;
-        }
+    public void destroy() {
+        searcher.destroy();
     }
 
     class StatusResult {
