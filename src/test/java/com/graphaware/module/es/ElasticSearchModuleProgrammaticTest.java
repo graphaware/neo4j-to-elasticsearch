@@ -200,7 +200,7 @@ public class ElasticSearchModuleProgrammaticTest extends ElasticSearchModuleInte
         verifyEventualEsReplication();
     }
 
-    @Test(timeout = 30_000)
+    @Test(timeout = 40_000)
     @RepeatRule.Repeat(times = 5)
     public void dataShouldBeCorrectlyReplicatedWithRetryAfterFailurePerRequest() {
         //Framework & Modules setup:
