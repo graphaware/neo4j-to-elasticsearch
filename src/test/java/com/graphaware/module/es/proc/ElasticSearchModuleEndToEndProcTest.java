@@ -99,7 +99,7 @@ public class ElasticSearchModuleEndToEndProcTest extends GraphAwareIntegrationTe
         // match all relationships
         try( Transaction tx = getDatabase().beginTx()) {
             Result result = getDatabase().execute("CALL ga.es.queryRelationship({query: '{\"query\":{\"match_all\":{}}}'}) YIELD relationship return relationship");
-            ResourceIterator<Node> resIterator = result.columnAs("relationship");
+            ResourceIterator<Relationship> resIterator = result.columnAs("relationship");
             assertEquals(3, resIterator.stream().count());
 
             tx.success();

@@ -16,41 +16,65 @@
 
 package com.graphaware.module.es.proc;
 
+import com.graphaware.module.es.ElasticSearchModule;
+import com.graphaware.module.es.proc.result.NodeSearchResult;
+import com.graphaware.module.es.proc.result.RelationshipSearchResult;
+import com.graphaware.module.es.proc.result.StatusResult;
+import com.graphaware.module.es.search.Searcher;
 import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.kernel.api.exceptions.ProcedureException;
-import org.neo4j.kernel.impl.proc.Procedures;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Relationship;
+import org.neo4j.procedure.Context;
+import org.neo4j.procedure.Name;
+import org.neo4j.procedure.PerformsWrites;
+import org.neo4j.procedure.Procedure;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+import java.util.stream.Stream;
 
-import org.neo4j.kernel.api.exceptions.KernelException;
+import static com.graphaware.runtime.RuntimeRegistry.getStartedRuntime;
 
-@Component
 public class ElasticSearchProcedures {
 
-    private final GraphDatabaseService database;
-    private final Procedures procedures;
-    private ElasticSearchProcedure esProcedures;
+    @Context
+    public GraphDatabaseService database;
 
-    @Autowired
-    public ElasticSearchProcedures(GraphDatabaseService database, Procedures procedures) {
-        this.database = database;
-        this.procedures = procedures;
+    private static ElasticSearchModule module;
+
+    private ElasticSearchModule getModule(GraphDatabaseService database) {
+        if (module == null) {
+            module = getStartedRuntime(database).getModule(ElasticSearchModule.class);
+        }
+        return module;
     }
 
-    @PostConstruct
-    public void init() throws ProcedureException, KernelException {
-        esProcedures = new ElasticSearchProcedure(database);
-        procedures.register(esProcedures.queryNode());
-        procedures.register(esProcedures.queryRelationship());
-        procedures.register(esProcedures.isReindexCompleted());
+    private static Searcher searcher;
+
+    private static Searcher getSearcher(GraphDatabaseService database) {
+        if (searcher == null) {
+            searcher = new Searcher(database);
+        }
+        return searcher;
     }
-    
-    @PreDestroy
-    public void destroy() {
-        if (esProcedures == null) { return; }
-        esProcedures.destroy();
+
+    @Procedure("ga.es.queryRelationship")
+    @PerformsWrites
+    public Stream<RelationshipSearchResult> queryRelationship(@Name("query") String query) {
+        return getSearcher(database).search(query, Relationship.class).stream().map(match -> {
+            return new RelationshipSearchResult(match.getItem(), match.score);
+        });
+    }
+
+    @Procedure("ga.es.queryNode")
+    @PerformsWrites
+    public Stream<NodeSearchResult> queryNode(@Name("query") String query) {
+        return getSearcher(database).search(query, Node.class).stream().map(match -> {
+            return new NodeSearchResult(match.getItem(), match.score);
+        });
+    }
+
+    @Procedure("ga.es.initialized")
+    public Stream<StatusResult> initialized() {
+        return Stream.of(new StatusResult(getModule(database).isReindexCompleted()));
     }
 }
+

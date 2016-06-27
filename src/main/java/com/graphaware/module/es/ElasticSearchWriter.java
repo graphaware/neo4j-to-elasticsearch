@@ -143,8 +143,10 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
     protected void shutdownClient() {
         LOG.info("Shutting down Jest Client...");
 
-        client.shutdownClient();
-        client = null;
+        if (client != null) {
+            client.shutdownClient();
+            client = null;
+        }
 
         LOG.info("Shut down Jest Client.");
     }
