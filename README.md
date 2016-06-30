@@ -174,7 +174,7 @@ Both of them MUST be specified to enabling Authentication. The user must be able
 
 ##### Embedded Mode / Java Development
 
-To use the Elasticsearch Integration Module programmatically, register the module like this
+To use the ElasticSearch Integration Module programmatically, register the module like this
 
 ```java
 GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database); //where database is an instance of GraphDatabaseService
@@ -197,26 +197,24 @@ Alternatively:
 
 #### Usage
 
-Apart from the configuration described above, the GraphAware Elasticsearch Integration Module requires nothing else to function.
-It will replicate transactions asynchronously to Elasticsearch.
+Apart from the configuration described above, the GraphAware ElasticSearch Integration Module requires nothing else to function.
+It will replicate transactions asynchronously to ElasticSearch.
 
 #### Cypher Procedures
 
 This module provides also a procedure that allows to perform queries on indexed documents
-on elasticsearch and getting back nodes for further use in the cypher query.
+on ElasticSearch and getting back nodes for further use in the cypher query.
 
 Here an example of the usage:
 
 ```
-CALL ga.es.query({query: '{\"query\":{\"match\":{\"name\":\"alessandro\"}}}'}) YIELD node, score return node, score"
+CALL ga.es.queryNode('{\"query\":{\"match\":{\"name\":\"alessandro\"}}}') YIELD node, score return node, score"
 ```
 
 Together with the nodes also the related score is returned.
 
-Any query can be submitted through the procedure, it will be perfomed on the index configured 
-for replication on elasticsearch. 
-
-The `keyProperty` field in `_source` is mandatory since it is used to get the value for querying neo4j.
+Any query can be submitted through the procedure, it will be performed on the index configured
+for replication on ElasticSearch.
 
 #### Monitoring the status of the reindexing process
 
@@ -231,9 +229,9 @@ CALL ga.es.initialized() YIELD status RETURN status
 
 Returns `true` or `false`
 
-#### Version of Elasticsearch
+#### Version of ElasticSearch
 
-This module has been tested with Elasticsearch 2.3.0+.
+This module has been tested with ElasticSearch 2.3.0+.
 
 License
 -------

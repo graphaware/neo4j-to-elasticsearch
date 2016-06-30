@@ -17,6 +17,7 @@
 package com.graphaware.module.es.proc;
 
 import com.graphaware.module.es.ElasticSearchModule;
+import com.graphaware.module.es.proc.result.JsonSearchResult;
 import com.graphaware.module.es.proc.result.NodeSearchResult;
 import com.graphaware.module.es.proc.result.RelationshipSearchResult;
 import com.graphaware.module.es.proc.result.StatusResult;
@@ -38,22 +39,20 @@ public class ElasticSearchProcedures {
     @Context
     public GraphDatabaseService database;
 
-    private static ElasticSearchModule module;
-
     private ElasticSearchModule getModule(GraphDatabaseService database) {
-        if (module == null) {
-            module = getStartedRuntime(database).getModule(ElasticSearchModule.class);
-        }
-        return module;
+        return getStartedRuntime(database).getModule(ElasticSearchModule.class);
     }
 
-    private static Searcher searcher;
-
     private static Searcher getSearcher(GraphDatabaseService database) {
-        if (searcher == null) {
-            searcher = new Searcher(database);
-        }
-        return searcher;
+        return new Searcher(database);
+    }
+
+    @Procedure("ga.es.queryNode")
+    @PerformsWrites
+    public Stream<NodeSearchResult> queryNode(@Name("query") String query) {
+        return getSearcher(database).search(query, Node.class).stream().map(match -> {
+            return new NodeSearchResult(match.getItem(), match.score);
+        });
     }
 
     @Procedure("ga.es.queryRelationship")
@@ -64,12 +63,16 @@ public class ElasticSearchProcedures {
         });
     }
 
-    @Procedure("ga.es.queryNode")
+    @Procedure("ga.es.rawQueryNode")
     @PerformsWrites
-    public Stream<NodeSearchResult> queryNode(@Name("query") String query) {
-        return getSearcher(database).search(query, Node.class).stream().map(match -> {
-            return new NodeSearchResult(match.getItem(), match.score);
-        });
+    public Stream<JsonSearchResult> rawQueryNode(@Name("query") String query) {
+        return Stream.of(new JsonSearchResult(getSearcher(database).rawSearch(query, Node.class)));
+    }
+
+    @Procedure("ga.es.rawQueryRelationship")
+    @PerformsWrites
+    public Stream<JsonSearchResult> rawQueryRelationship(@Name("query") String query) {
+        return Stream.of(new JsonSearchResult(getSearcher(database).rawSearch(query, Relationship.class)));
     }
 
     @Procedure("ga.es.initialized")

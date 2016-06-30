@@ -16,13 +16,13 @@
 
 package com.graphaware.module.es.proc.result;
 
-public class StatusResult {
-    public Boolean status;
+public class JsonSearchResult {
+    public String json;
 
-    public StatusResult() {
+    public JsonSearchResult() {
     }
 
-    public StatusResult(Boolean status) {
-        this.status = status;
+    public JsonSearchResult(String json) {
+        this.json = json;
     }
 }
