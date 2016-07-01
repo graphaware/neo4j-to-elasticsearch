@@ -93,7 +93,7 @@ public class DefaultMapping extends Mapping {
     @Override
     protected List<BulkableAction<? extends JestResult>> deleteRelationship(RelationshipRepresentation r) {
         return Collections.singletonList(
-                new Index.Builder(map(r)).index(getIndexFor(Relationship.class)).type(r.getType()).id(getKey(r)).build()
+                new Delete.Builder(getKey(r)).index(getIndexFor(Relationship.class)).type(r.getType()).build()
         );
     }
 
