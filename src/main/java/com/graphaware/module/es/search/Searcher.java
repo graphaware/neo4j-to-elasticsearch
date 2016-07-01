@@ -103,15 +103,15 @@ public class Searcher {
         };
     }
 
-    private <T extends PropertyContainer> List<SearchMatch<T>> resolveMatchItems(List<SearchMatch<T>> keys, Function<SearchMatch, T> resolver) {
+    private <T extends PropertyContainer> List<SearchMatch<T>> resolveMatchItems(List<SearchMatch<T>> searchMatches, Function<SearchMatch, T> resolver) {
         List<SearchMatch<T>> resolvedResults = new ArrayList<>();
 
         try (Transaction tx = database.beginTx()) {
-            keys.stream().forEach((searchResult) -> {
-                T item = resolver.apply(searchResult);
+            searchMatches.stream().forEach(match -> {
+                T item = resolver.apply(match);
                 if (item != null) {
-                    searchResult.setItem(item);
-                    resolvedResults.add(searchResult);
+                    match.setItem(item);
+                    resolvedResults.add(match);
                 }
             });
             tx.success();
@@ -173,14 +173,13 @@ public class Searcher {
     }
 
     /**
-     * Search for nodes or relationships
      *
-     * @param query An ElasticSearch query in JSON format (serialized as a string)
-     * @param clazz {@link Node} or {@link Relationship}
+     * @param query The query to send to the index
+     * @param clazz {@link Node} or {@link Relationship}, to decide which index to send the query to.
      * @param <T> {@link Node} or {@link Relationship}
-     * @return a list of matches (with node or a relationship)
+     * @return the query response
      */
-    public <T extends PropertyContainer> List<SearchMatch<T>> search(String query, Class<T> clazz) {
+    private <T extends PropertyContainer> SearchResult doQuery(String query, Class<T> clazz) {
         Search search = new Search.Builder(query).addIndex(mapping.getIndexFor(clazz)).build();
 
         SearchResult result;
@@ -189,6 +188,19 @@ public class Searcher {
         } catch (IOException ex) {
             throw new RuntimeException("Error while performing query on ElasticSearch", ex);
         }
+        return result;
+    }
+
+    /**
+     * Search for nodes or relationships
+     *
+     * @param query An ElasticSearch query in JSON format (serialized as a string)
+     * @param clazz {@link Node} or {@link Relationship}
+     * @param <T> {@link Node} or {@link Relationship}
+     * @return a list of matches (with node or a relationship)
+     */
+    public <T extends PropertyContainer> List<SearchMatch<T>> search(String query, Class<T> clazz) {
+        SearchResult result = doQuery(query, clazz);
 
         List<SearchMatch<T>> matches = buildSearchMatches(result);
         @SuppressWarnings("unchecked")
@@ -198,7 +210,22 @@ public class Searcher {
         return resolveMatchItems(matches, resolver);
     }
 
-    public void destroy() {
+    /**
+     *
+     * @param query The search query
+     * @param clazz The index key ({@link Node} or {@link Relationship})
+     * @param <T> {@link Node} or {@link Relationship}
+     * @return a JSON string
+     */
+    public <T extends PropertyContainer> String rawSearch(String query, Class<T> clazz) {
+        SearchResult r = doQuery(query, clazz);
+        return r.getJsonString();
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+        if (client == null) { return; }
         client.shutdownClient();
     }
 }

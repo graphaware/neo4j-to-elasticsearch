@@ -14,50 +14,33 @@
 
 package com.graphaware.module.es.proc;
 
-import com.graphaware.integration.es.test.ElasticSearchServer;
-import com.graphaware.integration.es.test.EmbeddedElasticSearchServer;
-import com.graphaware.test.integration.GraphAwareIntegrationTest;
-import org.json.JSONException;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.junit.Test;
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.Transaction;
+import org.neo4j.graphdb.Result;
+import org.neo4j.graphdb.ResourceIterator;
 
-import static com.graphaware.module.es.util.TestUtil.waitFor;
 import java.util.List;
 import java.util.Map;
+
+import static com.graphaware.module.es.util.TestUtil.waitFor;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import org.neo4j.graphdb.*;
-
-public class ElasticSearchModuleEndToEndProcTest extends GraphAwareIntegrationTest {
-
-    protected ElasticSearchServer esServer;
-
-    @Override
-    protected String configFile() {
-        return "integration/int-test-default.conf";
-    }
-
-    @Override
-    public void setUp() throws Exception {
-        esServer = new EmbeddedElasticSearchServer();
-        esServer.start();
-        super.setUp();
-    }
-
-    @Override
-    public void tearDown() throws Exception {
-        esServer.stop();
-        super.tearDown();
-    }
+public class ElasticSearchModuleEndToEndProcTest extends ESProcedureIntegrationTest {
 
     @Test
-    public void testNodeWorkflow() throws JSONException {
+    public void testNodeWorkflow() {
         writeSomeStuffToNeo4j();
         waitFor(2000);
 
         // match all nodes
-        try( Transaction tx = getDatabase().beginTx()) {
-            Result result = getDatabase().execute("CALL ga.es.queryNode({query: '{\"query\":{\"match_all\":{}}}'}) YIELD node return node");
+        try (Transaction tx = getDatabase().beginTx()) {
+            Result result = getDatabase().execute("CALL ga.es.queryNode('{\"query\":{\"match_all\":{}}}') YIELD node return node");
             ResourceIterator<Node> resIterator = result.columnAs("node");
             assertEquals(4, resIterator.stream().count());
 
@@ -65,17 +48,17 @@ public class ElasticSearchModuleEndToEndProcTest extends GraphAwareIntegrationTe
         }
 
         // match 2 nodes
-        try( Transaction tx = getDatabase().beginTx()) {
-            Result result = getDatabase().execute("CALL ga.es.queryNode({query: '{\"query\":{\"match\":{\"name\":\"michal\"}}}'}) YIELD node, score return node, score");
+        try (Transaction tx = getDatabase().beginTx()) {
+            Result result = getDatabase().execute("CALL ga.es.queryNode('{\"query\":{\"match\":{\"name\":\"michal\"}}}') YIELD node, score return node, score");
             List<String> columns = result.columns();
             assertEquals(2, columns.size());
-            
+
             int count = 0;
             while (result.hasNext()) {
                 count++;
                 Map<String, Object> next = result.next();
                 assertTrue(next.get("node") instanceof Node);
-                assertTrue(next.get("score") instanceof Float);
+                assertTrue(next.get("score") instanceof Double);
                 assertTrue(((String) ((Node) next.get("node")).getProperty("name")).contains("Michal"));
             }
             assertEquals(2, count);
@@ -83,8 +66,8 @@ public class ElasticSearchModuleEndToEndProcTest extends GraphAwareIntegrationTe
         }
 
         // match no node
-        try( Transaction tx = getDatabase().beginTx()) {
-            Result result = getDatabase().execute("CALL ga.es.queryNode({query: '{\"query\":{\"match\":{\"name\":\"alessandro\"}}}'}) YIELD node, score return node, score");
+        try (Transaction tx = getDatabase().beginTx()) {
+            Result result = getDatabase().execute("CALL ga.es.queryNode('{\"query\":{\"match\":{\"name\":\"alessandro\"}}}') YIELD node, score return node, score");
             ResourceIterator<Node> resIterator = result.columnAs("node");
             assertEquals(0, resIterator.stream().count());
             tx.success();
@@ -92,22 +75,41 @@ public class ElasticSearchModuleEndToEndProcTest extends GraphAwareIntegrationTe
     }
 
     @Test
-    public void testRelationshipWorkflow() throws JSONException {
+    public void testQueryNodeRawWorkflow() {
+        writeSomeStuffToNeo4j();
+        waitFor(2000);
+
+        // count all nodes
+        try(Transaction tx = getDatabase().beginTx()) {
+            Result result = getDatabase().execute("CALL ga.es.queryNodeRaw('{\"query\":{\"match_all\":{}}, \"size\":0}') YIELD json return json");
+            ResourceIterator<String> resIterator = result.columnAs("json");
+
+            JsonElement e = new JsonParser().parse(resIterator.next());
+            JsonObject hits = e.getAsJsonObject().get("hits").getAsJsonObject();
+            assertEquals(4, hits.get("total").getAsInt());
+            assertEquals(0, hits.get("hits").getAsJsonArray().size());
+
+            tx.success();
+        }
+    }
+
+    @Test
+    public void testRelationshipWorkflow() {
         writeSomeStuffToNeo4j();
         waitFor(2000);
 
         // match all relationships
-        try( Transaction tx = getDatabase().beginTx()) {
-            Result result = getDatabase().execute("CALL ga.es.queryRelationship({query: '{\"query\":{\"match_all\":{}}}'}) YIELD relationship return relationship");
-            ResourceIterator<Node> resIterator = result.columnAs("relationship");
+        try (Transaction tx = getDatabase().beginTx()) {
+            Result result = getDatabase().execute("CALL ga.es.queryRelationship('{\"query\":{\"match_all\":{}}}') YIELD relationship return relationship");
+            ResourceIterator<Relationship> resIterator = result.columnAs("relationship");
             assertEquals(3, resIterator.stream().count());
 
             tx.success();
         }
 
         // match 1 relationship
-        try( Transaction tx = getDatabase().beginTx()) {
-            Result result = getDatabase().execute("CALL ga.es.queryRelationship({query: '{\"query\":{\"match\":{\"since\":\"2014\"}}}'}) YIELD relationship, score return relationship, score");
+        try (Transaction tx = getDatabase().beginTx()) {
+            Result result = getDatabase().execute("CALL ga.es.queryRelationship('{\"query\":{\"match\":{\"since\":\"2014\"}}}') YIELD relationship, score return relationship, score");
             List<String> columns = result.columns();
             assertEquals(2, columns.size());
 
@@ -116,7 +118,7 @@ public class ElasticSearchModuleEndToEndProcTest extends GraphAwareIntegrationTe
                 count++;
                 Map<String, Object> next = result.next();
                 assertTrue(next.get("relationship") instanceof Relationship);
-                assertTrue(next.get("score") instanceof Float);
+                assertTrue(next.get("score") instanceof Double);
                 assertEquals(((Relationship) next.get("relationship")).getProperty("since"), 2014L);
             }
             assertEquals(1, count);
@@ -124,10 +126,29 @@ public class ElasticSearchModuleEndToEndProcTest extends GraphAwareIntegrationTe
         }
 
         // match no relationship
-        try( Transaction tx = getDatabase().beginTx()) {
-            Result result = getDatabase().execute("CALL ga.es.queryRelationship({query: '{\"query\":{\"match\":{\"since\":\"1942\"}}}'}) YIELD relationship, score return relationship, score");
+        try (Transaction tx = getDatabase().beginTx()) {
+            Result result = getDatabase().execute("CALL ga.es.queryRelationship('{\"query\":{\"match\":{\"since\":\"1942\"}}}') YIELD relationship, score return relationship, score");
             ResourceIterator<Node> resIterator = result.columnAs("relationship");
             assertEquals(0, resIterator.stream().count());
+            tx.success();
+        }
+    }
+
+    @Test
+    public void testQueryRelationshipRawWorkflow() {
+        writeSomeStuffToNeo4j();
+        waitFor(2000);
+
+        // count all nodes
+        try(Transaction tx = getDatabase().beginTx()) {
+            Result result = getDatabase().execute("CALL ga.es.queryRelationshipRaw('{\"query\":{\"match_all\":{}}, \"size\":0}') YIELD json return json");
+            ResourceIterator<String> resIterator = result.columnAs("json");
+
+            JsonElement e = new JsonParser().parse(resIterator.next());
+            JsonObject hits = e.getAsJsonObject().get("hits").getAsJsonObject();
+            assertEquals(3, hits.get("total").getAsInt());
+            assertEquals(0, hits.get("hits").getAsJsonArray().size());
+
             tx.success();
         }
     }
@@ -148,7 +169,7 @@ public class ElasticSearchModuleEndToEndProcTest extends GraphAwareIntegrationTe
         assertTrue(resultFound);
     }
 
-    protected String writeSomeStuffToNeo4j() {
+    private String writeSomeStuffToNeo4j() {
         //tx1
         httpClient.executeCypher(baseNeoUrl(), "CREATE (p:Person {name:'Michal Bachman', age:30})-[:WORKS_FOR {since:2013, role:'MD'}]->(c:Company {name:'GraphAware', est: 2013})");
         
