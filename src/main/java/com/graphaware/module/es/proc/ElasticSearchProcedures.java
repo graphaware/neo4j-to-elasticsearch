@@ -63,15 +63,15 @@ public class ElasticSearchProcedures {
         });
     }
 
-    @Procedure("ga.es.rawQueryNode")
+    @Procedure("ga.es.queryNodeRaw")
     @PerformsWrites
-    public Stream<JsonSearchResult> rawQueryNode(@Name("query") String query) {
+    public Stream<JsonSearchResult> queryNodeRaw(@Name("query") String query) {
         return Stream.of(new JsonSearchResult(getSearcher(database).rawSearch(query, Node.class)));
     }
 
-    @Procedure("ga.es.rawQueryRelationship")
+    @Procedure("ga.es.queryRelationshipRaw")
     @PerformsWrites
-    public Stream<JsonSearchResult> rawQueryRelationship(@Name("query") String query) {
+    public Stream<JsonSearchResult> queryRelationshipRaw(@Name("query") String query) {
         return Stream.of(new JsonSearchResult(getSearcher(database).rawSearch(query, Relationship.class)));
     }
 
