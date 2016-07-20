@@ -45,11 +45,6 @@ public class AdvancedMapping extends DefaultMapping {
     public static final String LABELS_FIELD = "_labels";
     public static final String RELATIONSHIPS_FIELD = "_relationships";
 
-
-    public AdvancedMapping(String index, String keyProperty) {
-        super(index, keyProperty);
-    }
-
     @Override
     protected List<BulkableAction<? extends JestResult>> createOrUpdateNode(NodeRepresentation node) {
         String id = getKey(node);

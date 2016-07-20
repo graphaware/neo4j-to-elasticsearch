@@ -45,7 +45,7 @@ public abstract class Mapping implements MappingDefinition {
 
     protected String keyProperty;
     protected String index;
-    
+
     protected final ObjectMapper mapper = new ObjectMapper();
 
     /**
@@ -57,8 +57,8 @@ public abstract class Mapping implements MappingDefinition {
         hasLength(keyProperty);
         notNull(keyProperty);
 
-        this.index = index;
-        this.keyProperty = keyProperty;
+        //this.index = index;
+        //this.keyProperty = keyProperty;
     }
 
     public Mapping() {
@@ -105,7 +105,8 @@ public abstract class Mapping implements MappingDefinition {
         }
         addExtra(data, node);
         try {
-            return mapper.writeValueAsString(data);
+            String json = mapper.writeValueAsString(data);
+            return json;
         } catch (JsonProcessingException ex) {
             LOG.error("Error while creating json from node: " + node.toString(), ex);
             throw new RuntimeException("Error while creating json from node: " + node.toString(), ex);

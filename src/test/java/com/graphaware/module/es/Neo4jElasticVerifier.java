@@ -107,7 +107,7 @@ public class Neo4jElasticVerifier {
         Set<String> labels = new HashSet<>();
         String nodeKey;
         try (Transaction tx = database.beginTx()) {
-            nodeKey = node.getProperty(configuration.getKeyProperty()).toString();
+            nodeKey = node.getProperty(configuration.getMapping().getKeyProperty()).toString();
 
             for (String key : node.getPropertyKeys()) {
                 if (configuration.getInclusionPolicies().getNodePropertyInclusionPolicy().include(key, node)) {

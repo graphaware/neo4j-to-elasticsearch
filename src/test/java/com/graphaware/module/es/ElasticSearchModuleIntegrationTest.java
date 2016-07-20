@@ -17,10 +17,16 @@ import com.graphaware.integration.es.test.ElasticSearchClient;
 import com.graphaware.integration.es.test.ElasticSearchServer;
 import com.graphaware.integration.es.test.EmbeddedElasticSearchServer;
 import com.graphaware.integration.es.test.JestElasticSearchClient;
+import com.graphaware.module.es.mapping.DefaultMapping;
+import com.graphaware.module.es.mapping.MappingDefinition;
+import com.graphaware.module.es.util.ServiceLoader;
 import org.junit.After;
 import org.junit.Before;
 import org.neo4j.graphdb.*;
 import org.neo4j.test.TestGraphDatabaseFactory;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.graphaware.module.es.util.TestUtil.waitFor;
 
@@ -122,5 +128,15 @@ public abstract class ElasticSearchModuleIntegrationTest {
             tx.success();
         }
         return result;
+    }
+
+    protected MappingDefinition getDefaultMapping(String index, String keyProperty) {
+        MappingDefinition mappingDefinition = new DefaultMapping();
+        Map<String, String> params = new HashMap<>();
+        params.put("index", index);
+        params.put("keyProperty", keyProperty);
+        mappingDefinition.configure(params);
+
+        return mappingDefinition;
     }
 }

@@ -16,6 +16,9 @@ package com.graphaware.module.es;
 import com.graphaware.integration.es.test.EmbeddedElasticSearchServer;
 import com.graphaware.integration.es.test.JestElasticSearchClient;
 import static com.graphaware.module.es.ElasticSearchModuleIntegrationTest.HOST;
+
+import com.graphaware.module.es.mapping.MappingDefinition;
+import com.graphaware.module.es.util.ServiceLoader;
 import com.graphaware.module.es.util.TestUtil;
 import com.graphaware.module.uuid.UuidConfiguration;
 import com.graphaware.module.uuid.UuidModule;
@@ -28,6 +31,9 @@ import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.test.TestGraphDatabaseFactory;
+
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class ElasticSearchModuleAdvancedMappingTest extends ElasticSearchModuleIntegrationTest {
@@ -54,10 +60,14 @@ public class ElasticSearchModuleAdvancedMappingTest extends ElasticSearchModuleI
         GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database);
         runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration(), database));
 
+        MappingDefinition mapping = ServiceLoader.loadMapping("com.graphaware.module.es.mapping.AdvancedMapping");
+        Map<String, String> config = new HashMap<>();
+        mapping.configure(config);
+
         configuration = ElasticSearchConfiguration.defaultConfiguration()
+                .withMapping(mapping)
                 .withUri(HOST)
-                .withPort(PORT)
-                .withMapping("advanced");
+                .withPort(PORT);
         runtime.registerModule(new ElasticSearchModule("ES", new ElasticSearchWriter(configuration), configuration));
 
         runtime.start();

@@ -42,10 +42,6 @@ import java.util.Map;
 public class SimpleMapping extends DefaultMapping {
     private static final Log LOG = LoggerFactory.getLogger(SimpleMapping.class);
 
-    public SimpleMapping(String index, String keyProperty) {
-        super(index, keyProperty);
-    }
-
     @Override
     protected List<BulkableAction<? extends JestResult>> createOrUpdateNode(NodeRepresentation node) {
         String id = getKey(node);

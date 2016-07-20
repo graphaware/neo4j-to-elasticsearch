@@ -85,7 +85,7 @@ public class ElasticSearchModuleProgrammaticTest extends ElasticSearchModuleInte
         runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration().withUuidProperty("id"), database));
 
         configuration = ElasticSearchConfiguration.defaultConfiguration().withUri(HOST).withPort(PORT)
-                .withKeyProperty("id")
+                .withMapping(getDefaultMapping("different-index-name", "id"))
                 .withQueueCapacity(1000)
                 .withRetryOnError(false)
                 .with(new BaseNodeInclusionPolicy() {
@@ -107,7 +107,7 @@ public class ElasticSearchModuleProgrammaticTest extends ElasticSearchModuleInte
 
         //Actual test:
         writeSomeStuffToNeo4j();
-        waitFor(200);
+        waitFor(300);
         verifyEsReplication("different-index-name");
     }
 
