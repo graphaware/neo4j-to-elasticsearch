@@ -27,6 +27,10 @@
     {
       "condition": "getLabels().length == 0",
       "type": "nodes-without-labels"
+    },
+    {
+      "condition": "hasLabel('Node')",
+      "type": "nodes"
     }
   ]
 }

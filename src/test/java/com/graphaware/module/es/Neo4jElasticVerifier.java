@@ -160,7 +160,7 @@ public class Neo4jElasticVerifier {
         }
     }
 
-    public void verifyEsReplication(Node node, String index, String type, String keyProperty) {
+    public JestResult verifyEsReplication(Node node, String index, String type, String keyProperty) {
         String nodeKey;
         try (Transaction tx = database.beginTx()) {
             nodeKey = node.getProperty(keyProperty).toString();
@@ -173,6 +173,8 @@ public class Neo4jElasticVerifier {
 
         assertTrue(result.getErrorMessage(), result.isSucceeded());
         assertEquals(nodeKey, result.getValue("_id"));
+
+        return result;
     }
     
     public void verifyEsAdvancedReplication(Node node, String indexPrefix) {

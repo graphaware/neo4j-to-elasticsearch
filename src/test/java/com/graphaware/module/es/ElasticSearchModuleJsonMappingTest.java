@@ -10,6 +10,7 @@ import com.graphaware.module.uuid.UuidConfiguration;
 import com.graphaware.module.uuid.UuidModule;
 import com.graphaware.runtime.GraphAwareRuntime;
 import com.graphaware.runtime.GraphAwareRuntimeFactory;
+import io.searchbox.client.JestResult;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -151,7 +152,8 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         writeSomePersons();
         TestUtil.waitFor(1000);
         try (Transaction tx = database.beginTx()) {
-            database.getAllNodes().stream().filter(n -> {
+            database.getAllNodes().stream()
+                    .filter(n -> {
                 return labelsToStrings(n).size() == 0;
             })
                     .forEach(n -> {
@@ -161,10 +163,45 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         }
     }
 
+    @Test
+    public void testNodesWithArrayPropertyValuesShouldBeReplicatedCorrectly() {
+        database = new TestGraphDatabaseFactory().newImpermanentDatabase();
+
+        GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database);
+        runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration().withUuidProperty("uuid"), database));
+
+        JsonFileMapping mapping = (JsonFileMapping) ServiceLoader.loadMapping("com.graphaware.module.es.mapping.JsonFileMapping");
+        Map<String, String> config = new HashMap<>();
+        config.put("file", "integration/mapping-advanced.json");
+        mapping.configure(config);
+
+        configuration = ElasticSearchConfiguration.defaultConfiguration()
+                .withMapping(mapping)
+                .withUri(HOST)
+                .withPort(PORT);
+
+        runtime.registerModule(new ElasticSearchModule("ES", new ElasticSearchWriter(configuration), configuration));
+
+        runtime.start();
+        runtime.waitUntilStarted();
+        database.execute("CREATE (n:Node {types:['a','b','c']})");
+        TestUtil.waitFor(1000);
+        try (Transaction tx = database.beginTx()) {
+            database.findNodes(Label.label("Node")).stream().forEach(n -> {
+                JestResult result = new Neo4jElasticVerifier(database, configuration, esClient).verifyEsReplication(n, mapping.getDefinition().getDefaults().getIndex(), "nodes", mapping.getKeyProperty());
+                Map<String, Object> source = new HashMap<>();
+                List<String> types = (List<String>) result.getSourceAsObject(source.getClass()).get("types");
+                assertEquals(3, types.size());
+                assertEquals("a", types.get(0));
+                assertEquals("c", types.get(2));
+            });
+            tx.success();
+        }
+    }
+
     protected void verifyEsReplicationForNodeWithLabels(String label, String index, String type, String keyProperty) {
         try (Transaction tx = database.beginTx()) {
             database.findNodes(Label.label(label)).stream().forEach(n -> {
-
                 new Neo4jElasticVerifier(database, configuration, esClient).verifyEsReplication(n, index, type, keyProperty);
             });
             tx.success();
