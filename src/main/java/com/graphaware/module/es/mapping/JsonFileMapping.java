@@ -9,6 +9,7 @@ import io.searchbox.client.JestResult;
 import org.neo4j.graphdb.PropertyContainer;
 import org.springframework.core.io.ClassPathResource;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -32,11 +33,7 @@ public class JsonFileMapping implements Mapping {
         }
         try {
             String file = new ClassPathResource(config.get("file")).getFile().getAbsolutePath();
-            byte[] encoded = Files.readAllBytes(Paths.get(file));
-            String json = new String(encoded, DEFAULT_ENCODING);
-            definition = new ObjectMapper().readValue(json, Definition.class);
-            System.out.println(json);
-            System.out.println(definition);
+            definition = new ObjectMapper().readValue(new File(file), Definition.class);
         } catch (IOException e) {
             throw new RuntimeException("Unable to read json mapping file", e);
         }
