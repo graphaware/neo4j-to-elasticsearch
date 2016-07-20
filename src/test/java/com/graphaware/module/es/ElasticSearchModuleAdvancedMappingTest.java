@@ -34,8 +34,7 @@ import org.neo4j.test.TestGraphDatabaseFactory;
 import java.util.HashMap;
 import java.util.Map;
 
-
-public class ElasticSearchModuleAdvancedBaseMappingTest extends ElasticSearchModuleIntegrationTest {
+public class ElasticSearchModuleAdvancedMappingTest extends ElasticSearchModuleIntegrationTest {
 
     @Before
     public void setUp() {

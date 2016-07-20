@@ -1,0 +1,18 @@
+{
+  "defaults": {
+    "index": "default-index",
+    "node_index": "node-index",
+    "relationship_index": "relationship-index",
+    "include_remaining_properties": true,
+    "blacklisted_node_properties": ["password", "uuid"]
+  },
+  "mappings": [
+    {
+      "condition": "hasLabel('Person')",
+      "properties": {
+        "name": "getProperty('first_name')"
+
+      }
+    }
+  ]
+}
