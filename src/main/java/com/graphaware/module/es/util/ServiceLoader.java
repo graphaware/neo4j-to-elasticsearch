@@ -1,17 +1,16 @@
 package com.graphaware.module.es.util;
 
 import com.graphaware.module.es.mapping.Mapping;
-import com.graphaware.module.es.mapping.MappingDefinition;
 
 public class ServiceLoader {
 
     public static Mapping loadMapping(String mappingClazz) {
         Mapping mapping;
         try {
-            Class<? extends Mapping> clazz = (Class<? extends Mapping>) Class
+            Class<?> clazz = Class
                     .forName(mappingClazz);
-            Mapping definition = clazz.newInstance();
-            if (definition instanceof Mapping && definition instanceof MappingDefinition) {
+            Mapping definition = (Mapping) clazz.newInstance();
+            if (definition instanceof Mapping) {
                 mapping = (Mapping) definition;
             } else {
                 throw new IllegalArgumentException(mappingClazz + " is not a Mapping class");

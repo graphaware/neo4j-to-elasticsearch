@@ -15,9 +15,8 @@ package com.graphaware.module.es;
 
 import com.graphaware.integration.es.test.EmbeddedElasticSearchServer;
 import com.graphaware.integration.es.test.JestElasticSearchClient;
-import static com.graphaware.module.es.ElasticSearchModuleIntegrationTest.HOST;
 
-import com.graphaware.module.es.mapping.MappingDefinition;
+import com.graphaware.module.es.mapping.Mapping;
 import com.graphaware.module.es.util.ServiceLoader;
 import com.graphaware.module.es.util.TestUtil;
 import com.graphaware.module.uuid.UuidConfiguration;
@@ -36,7 +35,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 
-public class ElasticSearchModuleAdvancedMappingTest extends ElasticSearchModuleIntegrationTest {
+public class ElasticSearchModuleAdvancedBaseMappingTest extends ElasticSearchModuleIntegrationTest {
 
     @Before
     public void setUp() {
@@ -60,7 +59,7 @@ public class ElasticSearchModuleAdvancedMappingTest extends ElasticSearchModuleI
         GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database);
         runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration(), database));
 
-        MappingDefinition mapping = ServiceLoader.loadMapping("com.graphaware.module.es.mapping.AdvancedMapping");
+        Mapping mapping = ServiceLoader.loadMapping("com.graphaware.module.es.mapping.AdvancedMapping");
         Map<String, String> config = new HashMap<>();
         mapping.configure(config);
 

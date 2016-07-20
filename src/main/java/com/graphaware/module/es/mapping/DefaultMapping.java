@@ -39,21 +39,12 @@ import java.util.Map;
  *
  * Relationships are not indexed.
  */
-public class DefaultMapping extends Mapping implements MappingDefinition {
+public class DefaultMapping extends BaseMapping implements Mapping {
 
     private static final String DEFAULT_INDEX = "neo4j-index";
     private static final String DEFAULT_KEY_PROPERTY = "uuid";
 
     private static final Log LOG = LoggerFactory.getLogger(DefaultMapping.class);
-
-    private String index;
-    private String keyProperty;
-
-    private DefaultMapping(String index, String keyProperty) {
-        super(index, keyProperty);
-        this.index = index;
-        this.keyProperty = keyProperty;
-    }
 
     public DefaultMapping() {
 
@@ -72,7 +63,7 @@ public class DefaultMapping extends Mapping implements MappingDefinition {
     }
 
     public static DefaultMapping getNewInstance() {
-        return new DefaultMapping(DEFAULT_INDEX, DEFAULT_KEY_PROPERTY);
+        return new DefaultMapping();
     }
 
     @Override
@@ -127,17 +118,17 @@ public class DefaultMapping extends Mapping implements MappingDefinition {
 
     @Override
     public void configure(Map<String, String> config) {
-        this.index = config.getOrDefault("index", DEFAULT_INDEX).trim();
-        this.keyProperty = config.getOrDefault("keyProperty", DEFAULT_KEY_PROPERTY).trim();
+        index = config.getOrDefault("index", DEFAULT_INDEX).trim();
+        keyProperty = config.getOrDefault("keyProperty", DEFAULT_KEY_PROPERTY).trim();
     }
 
     @Override
     protected String getIndexPrefix() {
-        return index;
+        return null != index ? index : DEFAULT_INDEX;
     }
 
     @Override
     public String getKeyProperty() {
-        return keyProperty;
+        return null != keyProperty ? keyProperty : DEFAULT_KEY_PROPERTY;
     }
 }

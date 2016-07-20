@@ -27,7 +27,7 @@ import org.skyscreamer.jsonassert.JSONAssert;
 
 import static com.graphaware.module.es.util.TestUtil.waitFor;
 
-public class ElasticSearchModuleEndToEndSimpleMappingTest extends GraphAwareIntegrationTest {
+public class ElasticSearchModuleEndToEndSimpleBaseMappingTest extends GraphAwareIntegrationTest {
 
     protected ElasticSearchServer esServer;
 

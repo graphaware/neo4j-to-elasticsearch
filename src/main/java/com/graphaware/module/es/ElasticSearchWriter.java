@@ -20,17 +20,11 @@ import com.graphaware.module.es.executor.OperationExecutor;
 import com.graphaware.module.es.executor.OperationExecutorFactory;
 import com.graphaware.module.es.executor.RequestPerOperationExecutorFactory;
 import com.graphaware.module.es.mapping.Mapping;
-import com.graphaware.module.es.mapping.MappingDefinition;
 import com.graphaware.module.es.search.Searcher;
 import com.graphaware.writer.thirdparty.BaseThirdPartyWriter;
 import com.graphaware.writer.thirdparty.ThirdPartyWriter;
 import com.graphaware.writer.thirdparty.WriteOperation;
 import io.searchbox.client.JestClient;
-import io.searchbox.client.JestClientFactory;
-import io.searchbox.client.config.HttpClientConfig;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.neo4j.logging.Log;
 
 import java.util.Collection;
@@ -56,7 +50,7 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
     private final AtomicBoolean indexExists = new AtomicBoolean(false); //this must be thread-safe
     private final String authUser;
     private final String authPassword;
-    private final MappingDefinition mapping;
+    private final Mapping mapping;
 
     public ElasticSearchWriter(ElasticSearchConfiguration configuration) {
         super(configuration.getQueueCapacity());

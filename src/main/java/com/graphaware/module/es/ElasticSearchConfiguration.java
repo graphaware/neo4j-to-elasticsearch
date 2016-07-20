@@ -17,7 +17,7 @@ package com.graphaware.module.es;
 import com.graphaware.common.policy.InclusionPolicies;
 import com.graphaware.common.policy.none.IncludeNoRelationships;
 import com.graphaware.module.es.mapping.DefaultMapping;
-import com.graphaware.module.es.mapping.MappingDefinition;
+import com.graphaware.module.es.mapping.Mapping;
 import com.graphaware.runtime.config.BaseTxDrivenModuleConfiguration;
 import com.graphaware.runtime.policy.InclusionPoliciesFactory;
 
@@ -30,7 +30,7 @@ public class ElasticSearchConfiguration extends BaseTxDrivenModuleConfiguration<
     private static final boolean DEFAULT_RETRY_ON_ERROR = false;
     private static final boolean DEFAULT_EXECUTE_BULK = true;
     private static final InclusionPolicies DEFAULT_INCLUSION_POLICIES = InclusionPoliciesFactory.allBusiness().with(IncludeNoRelationships.getInstance());
-    private static final MappingDefinition DEFAULT_MAPPING = DefaultMapping.getNewInstance();
+    private static final Mapping DEFAULT_MAPPING = DefaultMapping.getNewInstance();
     private static final int DEFAULT_QUEUE_CAPACITY = 10000;
     private static final String DEFAULT_AUTH_USER = null;
     private static final String DEFAULT_AUTH_PASSWORD = null;
@@ -43,7 +43,7 @@ public class ElasticSearchConfiguration extends BaseTxDrivenModuleConfiguration<
     private final boolean executeBulk;
     private final String authUser;
     private final String authPassword;
-    private final MappingDefinition mapping;
+    private final Mapping mapping;
 
 
     /**
@@ -61,7 +61,7 @@ public class ElasticSearchConfiguration extends BaseTxDrivenModuleConfiguration<
      * @param executeBulk       whether or not to execute updates against Elasticsearch in bulk. It is recommended to set this to <code>true</code>.*
      * @param mapping           name of the mapping class to use to convert Neo4j node/relationships to ElasticSearch documents.
      */
-    private ElasticSearchConfiguration(InclusionPolicies inclusionPolicies, long initializeUntil, String uri, String port, String keyProperty, boolean retryOnError, int queueCapacity, boolean executeBulk, String authUser, String authPassword, MappingDefinition mapping) {
+    private ElasticSearchConfiguration(InclusionPolicies inclusionPolicies, long initializeUntil, String uri, String port, String keyProperty, boolean retryOnError, int queueCapacity, boolean executeBulk, String authUser, String authPassword, Mapping mapping) {
         super(inclusionPolicies, initializeUntil);
         this.uri = uri;
         this.port = port;
@@ -114,7 +114,7 @@ public class ElasticSearchConfiguration extends BaseTxDrivenModuleConfiguration<
         return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), getUri(), getPort(), getKeyProperty(), isRetryOnError(), getQueueCapacity(), isExecuteBulk(), authUser, authPassword, getMapping());
     }
 
-    public ElasticSearchConfiguration withMapping(MappingDefinition mapping) {
+    public ElasticSearchConfiguration withMapping(Mapping mapping) {
         return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), getUri(), getPort(), getKeyProperty(), isRetryOnError(), getQueueCapacity(), isExecuteBulk(), getAuthUser(), getAuthPassword(), mapping);
     }
 
@@ -148,7 +148,7 @@ public class ElasticSearchConfiguration extends BaseTxDrivenModuleConfiguration<
     
     public String getAuthPassword() { return authPassword; }
 
-    public MappingDefinition getMapping() { return mapping; }
+    public Mapping getMapping() { return mapping; }
     
     /**
      * {@inheritDoc}

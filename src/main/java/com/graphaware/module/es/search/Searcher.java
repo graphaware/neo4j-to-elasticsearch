@@ -22,7 +22,6 @@ import com.graphaware.common.log.LoggerFactory;
 import com.graphaware.module.es.ElasticSearchConfiguration;
 import com.graphaware.module.es.ElasticSearchModule;
 import com.graphaware.module.es.mapping.Mapping;
-import com.graphaware.module.es.mapping.MappingDefinition;
 import com.graphaware.module.uuid.UuidModule;
 import com.graphaware.module.uuid.read.DefaultUuidReader;
 import com.graphaware.module.uuid.read.UuidReader;
@@ -54,7 +53,7 @@ public class Searcher {
     private final JestClient client;
 
     private final String keyProperty;
-    private final MappingDefinition mapping;
+    private final Mapping mapping;
     private final UuidReader uuidReader;
 
     public Searcher(GraphDatabaseService database) {
