@@ -85,7 +85,6 @@ public class ElasticSearchModuleProgrammaticTest extends ElasticSearchModuleInte
         runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration().withUuidProperty("id"), database));
 
         configuration = ElasticSearchConfiguration.defaultConfiguration().withUri(HOST).withPort(PORT)
-                .withIndexName("different-index-name")
                 .withKeyProperty("id")
                 .withQueueCapacity(1000)
                 .withRetryOnError(false)

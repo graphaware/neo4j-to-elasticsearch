@@ -20,6 +20,7 @@ import com.graphaware.module.es.executor.OperationExecutor;
 import com.graphaware.module.es.executor.OperationExecutorFactory;
 import com.graphaware.module.es.executor.RequestPerOperationExecutorFactory;
 import com.graphaware.module.es.mapping.Mapping;
+import com.graphaware.module.es.mapping.MappingDefinition;
 import com.graphaware.module.es.search.Searcher;
 import com.graphaware.writer.thirdparty.BaseThirdPartyWriter;
 import com.graphaware.writer.thirdparty.ThirdPartyWriter;
@@ -50,13 +51,12 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
     private final String uri;
     private final String port;
     private final String keyProperty;
-    private final String index;
     private final boolean retryOnError;
     private final OperationExecutorFactory executorFactory;
     private final AtomicBoolean indexExists = new AtomicBoolean(false); //this must be thread-safe
     private final String authUser;
     private final String authPassword;
-    private final Mapping mapping;
+    private final MappingDefinition mapping;
 
     public ElasticSearchWriter(ElasticSearchConfiguration configuration) {
         super(configuration.getQueueCapacity());
@@ -66,12 +66,11 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
         this.uri = configuration.getUri();
         this.port = configuration.getPort();
         this.keyProperty = configuration.getKeyProperty();
-        this.index = configuration.getIndex();
         this.retryOnError = configuration.isRetryOnError();
         this.executorFactory = configuration.isExecuteBulk() ? new BulkOperationExecutorFactory() : new RequestPerOperationExecutorFactory();
         this.authUser = configuration.getAuthUser();
         this.authPassword = configuration.getAuthPassword();
-        this.mapping = Mapping.getMapping(index, keyProperty, configuration.getMapping());
+        this.mapping = configuration.getMapping();
     }
 
     /**

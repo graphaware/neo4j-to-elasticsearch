@@ -88,7 +88,7 @@ public class ElasticSearchModuleDeclarativeTest extends ElasticSearchModuleInteg
 
         //Actual test:
         writeSomeStuffToNeo4j();
-        TestUtil.waitFor(500);
+        TestUtil.waitFor(1500);
         verifyEsReplication("different-index-name");
     }
 

@@ -29,6 +29,7 @@ import org.neo4j.logging.Log;
 import java.util.List;
 import java.util.Collections;
 import java.util.ArrayList;
+import java.util.Map;
 
 /**
  * This mapping indexes all documents in the same ElasticSearch index.
@@ -38,11 +39,24 @@ import java.util.ArrayList;
  *
  * Relationships are not indexed.
  */
-public class DefaultMapping extends Mapping {
+public class DefaultMapping extends Mapping implements MappingDefinition {
+
+    private static final String DEFAULT_INDEX = "neo4j-index";
+    private static final String DEFAULT_KEY_PROPERTY = "uuid";
+
     private static final Log LOG = LoggerFactory.getLogger(DefaultMapping.class);
 
-    public DefaultMapping(String index, String keyProperty) {
+    private String index;
+    private String keyProperty;
+
+    private DefaultMapping(String index, String keyProperty) {
         super(index, keyProperty);
+        this.index = index;
+        this.keyProperty = keyProperty;
+    }
+
+    public DefaultMapping() {
+
     }
 
     @Override
@@ -55,6 +69,10 @@ public class DefaultMapping extends Mapping {
         }
 
         return actions;
+    }
+
+    public static DefaultMapping getNewInstance() {
+        return new DefaultMapping(DEFAULT_INDEX, DEFAULT_KEY_PROPERTY);
     }
 
     @Override
@@ -105,5 +123,21 @@ public class DefaultMapping extends Mapping {
     @Override
     public <T extends PropertyContainer> String getIndexFor(Class<T> searchedType) {
         return getIndexPrefix() + (searchedType.equals(Node.class) ? "-node" : "-relationship");
+    }
+
+    @Override
+    public void configure(Map<String, String> config) {
+        this.index = config.getOrDefault("index", DEFAULT_INDEX).trim();
+        this.keyProperty = config.getOrDefault("keyProperty", DEFAULT_KEY_PROPERTY).trim();
+    }
+
+    @Override
+    protected String getIndexPrefix() {
+        return index;
+    }
+
+    @Override
+    public String getKeyProperty() {
+        return keyProperty;
     }
 }

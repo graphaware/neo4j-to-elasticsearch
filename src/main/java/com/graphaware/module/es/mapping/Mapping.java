@@ -40,40 +40,13 @@ import java.util.Arrays;
 import static org.springframework.util.Assert.hasLength;
 import static org.springframework.util.Assert.notNull;
 
-public abstract class Mapping {
+public abstract class Mapping implements MappingDefinition {
     private static final Log LOG = LoggerFactory.getLogger(Mapping.class);
 
-    private final String keyProperty;
-    private final String index;
+    protected String keyProperty;
+    protected String index;
+    
     protected final ObjectMapper mapper = new ObjectMapper();
-
-    /**
-     * @param index       ElasticSearch index name. Must not be <code>null</code> or empty.
-     * @param keyProperty name of the node property that serves as the key, under which the node will be indexed in Elasticsearch. Must not be <code>null</code> or empty.
-     * @param name        name of the mapping to use to convert Neo4j node/relationships to ElasticSearch documents.
-     * @return mapping instance
-     */
-    public static Mapping getMapping(String index, String keyProperty, String name) {
-        hasLength(index);
-        hasLength(keyProperty);
-
-        if (name.equals("default")) {
-            return new DefaultMapping(index, keyProperty);
-        } else if (name.equals("simple")) {
-            return new SimpleMapping(index, keyProperty);
-        } else if (name.equals("advanced")) {
-            return new AdvancedMapping(index, keyProperty);
-        }
-
-        try {
-            return (Mapping) Mapping.class.getClassLoader()
-                    .loadClass(Mapping.class.getPackage().getName() + "." + name)
-                    .getConstructor(String.class, String.class)
-                    .newInstance(index, keyProperty);
-        } catch (Exception e) {
-            throw new RuntimeException("Could not instantiate Mapping \"" + name + "\"", e);
-        }
-    }
 
     /**
      *
@@ -88,6 +61,9 @@ public abstract class Mapping {
         this.keyProperty = keyProperty;
     }
 
+    public Mapping() {
+    }
+
     /**
      * Get the key under which the given {@link NodeRepresentation} or {@link RelationshipRepresentation} will be indexed in Elasticsearch.
      *
@@ -95,7 +71,7 @@ public abstract class Mapping {
      * @return key of the node.
      */
     protected final String getKey(PropertyContainerRepresentation propertyContainer) {
-        return String.valueOf(propertyContainer.getProperties().get(keyProperty));
+        return String.valueOf(propertyContainer.getProperties().get(getKeyProperty()));
     }
 
     /**
