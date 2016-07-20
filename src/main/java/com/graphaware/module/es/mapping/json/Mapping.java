@@ -12,6 +12,8 @@ public class Mapping {
 
     private String condition;
 
+    private String index;
+
     private String type;
 
     private Map<String, String> properties;
@@ -20,6 +22,10 @@ public class Mapping {
 
     public String getCondition() {
         return condition;
+    }
+
+    public String getIndex() {
+        return index;
     }
 
     public String getType() {
@@ -41,7 +47,7 @@ public class Mapping {
 
     public Action getCreateAction(NodeRepresentation node, Defaults defaults) {
         NodeExpression nodeExpression = new NodeExpression(node);
-        String index = defaults.getIndex();
+        String i = index != null ? index : defaults.getIndex();
         String type = getType();
         String id = node.getProperties().get(defaults.getKeyProperty()).toString();
         Map<String, Object> source = new HashMap<>();
@@ -60,7 +66,7 @@ public class Mapping {
             }
         }
 
-        return new Action(index, type, id, source);
+        return new Action(i, type, id, source);
     }
 
     private SpelExpressionParser getExpressionParser() {

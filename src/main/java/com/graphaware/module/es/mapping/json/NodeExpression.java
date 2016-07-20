@@ -29,4 +29,9 @@ public class NodeExpression {
 
         return null;
     }
+
+    public String[] getLabels() {
+        return node.getLabels();
+    }
+
 }

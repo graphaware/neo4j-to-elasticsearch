@@ -89,6 +89,41 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         verifyEsReplicationForNodeWithLabels("Person", mapping.getDefinition().getDefaults().getIndex(), "persons", mapping.getDefinition().getDefaults().getKeyProperty());
     }
 
+    @Test
+    public void testJsonMappingWithMultipleMappingsAndMoreThanOneLabelAndIndex() {
+        database = new TestGraphDatabaseFactory().newImpermanentDatabase();
+
+        GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database);
+        runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration().withUuidProperty("uuid"), database));
+
+        JsonFileMapping mapping = (JsonFileMapping) ServiceLoader.loadMapping("com.graphaware.module.es.mapping.JsonFileMapping");
+        Map<String, String> config = new HashMap<>();
+        config.put("file", "integration/mapping-multi-labels.json");
+        mapping.configure(config);
+
+        configuration = ElasticSearchConfiguration.defaultConfiguration()
+                .withMapping(mapping)
+                .withUri(HOST)
+                .withPort(PORT);
+
+        runtime.registerModule(new ElasticSearchModule("ES", new ElasticSearchWriter(configuration), configuration));
+
+        runtime.start();
+        runtime.waitUntilStarted();
+
+        writeSomePersons();
+        TestUtil.waitFor(1000);
+        try (Transaction tx = database.beginTx()) {
+            database.findNodes(Label.label("Female")).stream().forEach(n -> {
+                new Neo4jElasticVerifier(database, configuration, esClient).verifyEsReplication(n, "females", "girls", mapping.getKeyProperty());
+            });
+            database.findNodes(Label.label("Person")).stream().forEach(n -> {
+                new Neo4jElasticVerifier(database, configuration, esClient).verifyEsReplication(n, mapping.getDefinition().getDefaults().getIndex(), "persons", mapping.getKeyProperty());
+            });
+            tx.success();
+        }
+    }
+
     protected void verifyEsReplicationForNodeWithLabels(String label, String index, String type, String keyProperty) {
         try (Transaction tx = database.beginTx()) {
             database.findNodes(Label.label(label)).stream().forEach(n -> {
@@ -101,14 +136,14 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
 
     protected void writeSomePersons() {
         //tx1
-        database.execute("CREATE (p:Person {firstName:'Michal', lastName:'Bachman', age:30})-[:WORKS_FOR {since:2013, role:'MD'}]->(c:Company {name:'GraphAware', est: 2013})");
+        database.execute("CREATE (p:Person:Male {firstName:'Michal', lastName:'Bachman', age:30})-[:WORKS_FOR {since:2013, role:'MD'}]->(c:Company {name:'GraphAware', est: 2013})");
 
         //tx2
-        database.execute("MATCH (ga:Company {name:'GraphAware'}) CREATE (p:Person {firstName:'Adam', lastName:'George'})-[:WORKS_FOR {since:2014}]->(ga)");
+        database.execute("MATCH (ga:Company {name:'GraphAware'}) CREATE (p:Person:Male {firstName:'Adam', lastName:'George'})-[:WORKS_FOR {since:2014}]->(ga)");
 
         //tx3
         try (Transaction tx = database.beginTx()) {
-            database.execute("MATCH (ga:Company {name:'GraphAware'}) CREATE (p:Person {firstName:'Daniela', lastName:'Daniela'})-[:WORKS_FOR]->(ga)");
+            database.execute("MATCH (ga:Company {name:'GraphAware'}) CREATE (p:Person:Female {firstName:'Daniela', lastName:'Daniela'})-[:WORKS_FOR]->(ga)");
             database.execute("MATCH (p:Person {name:'Michal'}) SET p.age=31");
             database.execute("MATCH (p:Person {name:'Adam'})-[r]-() DELETE p,r");
             database.execute("MATCH (p:Person {name:'Michal'})-[r:WORKS_FOR]->() REMOVE r.role");
