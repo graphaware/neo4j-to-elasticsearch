@@ -1,5 +1,6 @@
 {
   "defaults": {
+    "key_property": "uuid",
     "index": "default-index",
     "node_index": "node-index",
     "relationship_index": "relationship-index",
@@ -9,9 +10,9 @@
   "mappings": [
     {
       "condition": "hasLabel('Person')",
+      "type": "persons",
       "properties": {
-        "name": "getProperty('first_name')"
-
+        "name": "getProperty('firstName') + ' ' + getProperty('lastName')"
       }
     }
   ]

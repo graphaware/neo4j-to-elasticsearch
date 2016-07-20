@@ -1,8 +1,9 @@
 package com.graphaware.module.es.mapping;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.graphaware.common.representation.NodeRepresentation;
 import com.graphaware.module.es.mapping.json.Definition;
-import com.graphaware.writer.thirdparty.WriteOperation;
+import com.graphaware.writer.thirdparty.*;
 import io.searchbox.action.BulkableAction;
 import io.searchbox.client.JestClient;
 import io.searchbox.client.JestResult;
@@ -13,12 +14,13 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 public class JsonFileMapping implements Mapping {
 
-    private static final String DEFAULT_ENCODING = "UTF-8";
     private static final String DEFAULT_KEY_PROPERTY = "uuid";
 
     private static final String FILE_PATH_KEY = "file";
@@ -39,9 +41,43 @@ public class JsonFileMapping implements Mapping {
         }
     }
 
+    public Definition getDefinition() {
+        return definition;
+    }
+
     @Override
     public List<BulkableAction<? extends JestResult>> getActions(WriteOperation operation) {
-        return null;
+        switch (operation.getType()) {
+            case NODE_CREATED:
+                return createNode(((NodeCreated) operation).getDetails());
+            /*
+
+            case NODE_UPDATED:
+                NodeUpdated nodeUpdated = (NodeUpdated) operation;
+                return updateNode(nodeUpdated.getDetails().getPrevious(), nodeUpdated.getDetails().getCurrent());
+
+            case NODE_DELETED:
+                return deleteNode(((NodeDeleted) operation).getDetails());
+
+            case RELATIONSHIP_CREATED:
+                return createRelationship(((RelationshipCreated) operation).getDetails());
+
+            case RELATIONSHIP_UPDATED:
+                RelationshipUpdated relUpdated = (RelationshipUpdated) operation;
+                return updateRelationship(relUpdated.getDetails().getPrevious(), relUpdated.getDetails().getCurrent());
+
+            case RELATIONSHIP_DELETED:
+                return deleteRelationship(((RelationshipDeleted) operation).getDetails());
+                */
+
+            default:
+                //LOG.warn("Unsupported operation " + operation.getType());
+                return Collections.emptyList();
+        }
+    }
+
+    protected List<BulkableAction<? extends JestResult>> createNode(NodeRepresentation node) {
+        return definition.createOrUpdateNode(node);
     }
 
     @Override
@@ -56,6 +92,6 @@ public class JsonFileMapping implements Mapping {
 
     @Override
     public String getKeyProperty() {
-        return keyProperty != null ? keyProperty : DEFAULT_KEY_PROPERTY;
+        return definition.getDefaults().getKeyProperty() != null ? definition.getDefaults().getKeyProperty() : DEFAULT_KEY_PROPERTY;
     }
 }

@@ -6,6 +6,9 @@ import java.util.List;
 
 public class Defaults {
 
+    @JsonProperty("key_property")
+    private String keyProperty;
+
     private String index;
 
     @JsonProperty("node_index")
@@ -20,6 +23,9 @@ public class Defaults {
     @JsonProperty("blacklisted_node_properties")
     private List<String> blacklistedNodeProperties;
 
+    public String getKeyProperty() {
+        return keyProperty;
+    }
     public String getIndex() {
         return index;
     }

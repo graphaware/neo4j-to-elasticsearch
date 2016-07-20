@@ -159,6 +159,21 @@ public class Neo4jElasticVerifier {
             }
         }
     }
+
+    public void verifyEsReplication(Node node, String index, String type, String keyProperty) {
+        String nodeKey;
+        try (Transaction tx = database.beginTx()) {
+            nodeKey = node.getProperty(keyProperty).toString();
+            tx.success();
+        }
+
+        Get get = new Get.Builder(index, nodeKey).type(type).build();
+        JestResult result = esClient.execute(get);
+        System.out.println(result.getJsonString());
+
+        assertTrue(result.getErrorMessage(), result.isSucceeded());
+        assertEquals(nodeKey, result.getValue("_id"));
+    }
     
     public void verifyEsAdvancedReplication(Node node, String indexPrefix) {
         String index = INDEX(true, indexPrefix);
