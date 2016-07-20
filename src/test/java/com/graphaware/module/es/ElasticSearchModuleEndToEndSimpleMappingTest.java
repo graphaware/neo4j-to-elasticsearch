@@ -27,13 +27,13 @@ import org.skyscreamer.jsonassert.JSONAssert;
 
 import static com.graphaware.module.es.util.TestUtil.waitFor;
 
-public class ElasticSearchModuleEndToEndTest extends GraphAwareIntegrationTest {
+public class ElasticSearchModuleEndToEndSimpleMappingTest extends GraphAwareIntegrationTest {
 
     protected ElasticSearchServer esServer;
 
     @Override
     protected String configFile() {
-        return "integration/int-test-default.conf";
+        return "integration/int-test-simple.conf";
     }
 
     @Override
@@ -57,7 +57,7 @@ public class ElasticSearchModuleEndToEndTest extends GraphAwareIntegrationTest {
         Get get = new Get.Builder("neo4j-index-node", uuid).type("Person").build();
         JestResult result = esClient.execute(get);
         System.out.println(result.getJsonString());
-        JSONAssert.assertEquals("{\"_index\":\"neo4j-index-node\",\"_type\":\"Person\",\"_id\":\"" + uuid + "\",\"_version\":2,\"found\":true,\"_source\":{\"age\":31,\"name\":\"Michal\",\"uuid\":\"" + uuid + "\"}}", result.getJsonString(), false);
+        JSONAssert.assertEquals("{\"_index\":\"neo4j-index-node\",\"_type\":\"Person\",\"_id\":\"" + uuid + "\",\"_version\":2,\"found\":true,\"_source\":{\"age\":\"31\",\"name\":\"Michal\",\"uuid\":\"" + uuid + "\"}}", result.getJsonString(), false);
     }
 
     protected String writeSomeStuffToNeo4j() {

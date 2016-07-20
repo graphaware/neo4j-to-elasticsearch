@@ -14,6 +14,8 @@
 
 package com.graphaware.module.es.mapping;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphaware.common.log.LoggerFactory;
 import com.graphaware.common.representation.NodeRepresentation;
 import com.graphaware.common.representation.PropertyContainerRepresentation;
@@ -43,6 +45,7 @@ public abstract class Mapping {
 
     private final String keyProperty;
     private final String index;
+    protected final ObjectMapper mapper = new ObjectMapper();
 
     /**
      * @param index       ElasticSearch index name. Must not be <code>null</code> or empty.
@@ -56,6 +59,10 @@ public abstract class Mapping {
 
         if (name.equals("default")) {
             return new DefaultMapping(index, keyProperty);
+        } else if (name.equals("simple")) {
+            return new SimpleMapping(index, keyProperty);
+        } else if (name.equals("advanced")) {
+            return new AdvancedMapping(index, keyProperty);
         }
 
         try {
@@ -110,6 +117,46 @@ public abstract class Mapping {
               source.put(key, String.valueOf(node.getProperties().get(key)));
         }
         return source;
+    }
+    
+    
+    
+    protected String getJson(NodeRepresentation node) {
+        Map<String,Object> data = new HashMap<>();
+        
+        for (String key : node.getProperties().keySet()) {
+              data.put(key, node.getProperties().get(key));
+        }
+        addExtra(data, node);
+        try {
+            return mapper.writeValueAsString(data);
+        } catch (JsonProcessingException ex) {
+            LOG.error("Error while creating json from node: " + node.toString(), ex);
+            throw new RuntimeException("Error while creating json from node: " + node.toString(), ex);
+        }
+    }
+    
+    protected String getJson(RelationshipRepresentation relationship) {
+        Map<String,Object> data = new HashMap<>();
+        
+        for (String key : relationship.getProperties().keySet()) {
+              data.put(key, relationship.getProperties().get(key));
+        }
+        addExtra(data, relationship);
+        try {
+            return mapper.writeValueAsString(data);
+        } catch (JsonProcessingException ex) {
+            LOG.error("Error while creating json from node: " + relationship.toString(), ex);
+            throw new RuntimeException("Error while creating json from node: " + relationship.toString(), ex);
+        }
+    }
+    
+    protected void addExtra(Map<String, Object> data, NodeRepresentation node) {
+        
+    }
+    
+    protected void addExtra(Map<String, Object> data, RelationshipRepresentation relationship) {
+        
     }
 
     /**

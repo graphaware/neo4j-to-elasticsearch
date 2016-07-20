@@ -86,6 +86,10 @@ public abstract class ElasticSearchModuleIntegrationTest {
     protected void verifyEsReplication() {
         new Neo4jElasticVerifier(database, configuration, esClient).verifyEsReplication();
     }
+    
+    protected void verifyEsAdvancedReplication() {
+        new Neo4jElasticVerifier(database, configuration, esClient).verifyEsAdvancedReplication();
+    }
 
     protected void verifyEsReplication(String indexprefix) {
         new Neo4jElasticVerifier(database, configuration, esClient).verifyEsReplication(indexprefix);

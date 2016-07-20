@@ -14,8 +14,11 @@
 
 package com.graphaware.module.es;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.graphaware.integration.es.test.ElasticSearchClient;
+import com.graphaware.module.es.mapping.AdvancedMapping;
 import io.searchbox.client.JestResult;
 import io.searchbox.core.Get;
 import io.searchbox.core.Search;
@@ -51,6 +54,10 @@ public class Neo4jElasticVerifier {
     public void verifyEsReplication() {
         verifyEsReplication(DEFAULT_INDEX_PREFIX);
     }
+    
+    public void verifyEsAdvancedReplication() {
+        verifyEsAdvancedReplication(DEFAULT_INDEX_PREFIX);
+    }
 
     /**
      * @param indexPrefix non-suffixed index name
@@ -60,6 +67,17 @@ public class Neo4jElasticVerifier {
             for (Node node : database.getAllNodes()) {
                 if (configuration.getInclusionPolicies().getNodeInclusionPolicy().include(node)) {
                     verifyEsReplication(node, indexPrefix);
+                }
+            }
+            tx.success();
+        }
+    }
+    
+    public void verifyEsAdvancedReplication(String indexPrefix) {
+        try (Transaction tx = database.beginTx()) {
+            for (Node node : database.getAllNodes()) {
+                if (configuration.getInclusionPolicies().getNodeInclusionPolicy().include(node)) {
+                    verifyEsAdvancedReplication(node, indexPrefix);
                 }
             }
             tx.success();
@@ -117,9 +135,87 @@ public class Neo4jElasticVerifier {
             JsonObject source = result.getJsonObject().getAsJsonObject("_source");
             assertEquals(properties.size(), source.entrySet().size());
             for (String key : properties.keySet()) {
+                if (properties.get(key) instanceof String[]) {
+                    checkStringArray(source, key, properties);                
+                } else if (properties.get(key) instanceof int[]) {
+                    checkIntArray(source, key, properties);                
+                } else if (properties.get(key) instanceof char[]) {
+                    checkCharArray(source, key, properties);                
+                } else if (properties.get(key) instanceof byte[]) {
+                    checkByteArray(source, key, properties);                
+                } else if (properties.get(key) instanceof boolean[]) {
+                    checkBooleanArray(source, key, properties);                
+                } else if (properties.get(key) instanceof float[]) {
+                    checkFloatArray(source, key, properties);                
+                } else if (properties.get(key) instanceof double[]) {
+                    checkDoubleArray(source, key, properties);                
+                } else if (properties.get(key) instanceof short[]) {
+                    checkShortArray(source, key, properties);                
+                } else if (properties.get(key) instanceof long[]) {
+                    checkLongArray(source, key, properties);                
+                }
+                else 
+                    assertEquals(properties.get(key).toString(), source.get(key).getAsString());
+            }
+        }
+    }
+    
+    public void verifyEsAdvancedReplication(Node node, String indexPrefix) {
+        String index = INDEX(true, indexPrefix);
+        Map<String, Object> properties = new HashMap<>();
+        Set<String> labels = new TreeSet<>();
+        String nodeKey;
+        try (Transaction tx = database.beginTx()) {
+            nodeKey = node.getProperty(configuration.getKeyProperty()).toString();
+
+            for (String key : node.getPropertyKeys()) {
+                if (configuration.getInclusionPolicies().getNodePropertyInclusionPolicy().include(key, node)) {
+                    properties.put(key, node.getProperty(key));
+                }
+            }
+
+            for (Label label : node.getLabels()) {
+                labels.add(label.name());
+            }
+
+            tx.success();
+        }
+
+        Get get = new Get.Builder(index, nodeKey).type(AdvancedMapping.NODE_TYPE).build();
+        JestResult result = esClient.execute(get);
+
+        assertTrue(result.getErrorMessage(), result.isSucceeded());
+        assertEquals(index, result.getValue("_index"));
+        assertEquals(AdvancedMapping.NODE_TYPE, result.getValue("_type"));
+        assertEquals(nodeKey, result.getValue("_id"));
+        assertTrue((Boolean) result.getValue("found"));
+
+        JsonObject source = result.getJsonObject().getAsJsonObject("_source");
+        assertEquals(properties.size() + 1, source.entrySet().size());
+        for (String key : properties.keySet()) {
+            if (properties.get(key) instanceof String[]) {
+                checkStringArray(source, key, properties);
+            } else if (properties.get(key) instanceof int[]) {
+                checkIntArray(source, key, properties);
+            } else if (properties.get(key) instanceof char[]) {
+                checkCharArray(source, key, properties);
+            } else if (properties.get(key) instanceof byte[]) {
+                checkByteArray(source, key, properties);
+            } else if (properties.get(key) instanceof boolean[]) {
+                checkBooleanArray(source, key, properties);
+            } else if (properties.get(key) instanceof float[]) {
+                checkFloatArray(source, key, properties);
+            } else if (properties.get(key) instanceof double[]) {
+                checkDoubleArray(source, key, properties);
+            } else if (properties.get(key) instanceof short[]) {
+                checkShortArray(source, key, properties);
+            } else if (properties.get(key) instanceof long[]) {
+                checkLongArray(source, key, properties);
+            } else {
                 assertEquals(properties.get(key).toString(), source.get(key).getAsString());
             }
         }
+        checkLabels(source, labels);
     }
 
     public void verifyNoEsReplication(Node node) {
@@ -195,5 +291,146 @@ public class Neo4jElasticVerifier {
         }
 
         return count;
+    }
+    
+    private void checkStringArray(JsonObject source, String key, Map<String, Object> properties) {
+        assertTrue(source.get(key) instanceof JsonArray);
+        JsonArray jsonArray = source.get(key).getAsJsonArray();
+        TreeSet<String> esSet = new TreeSet();
+        for (JsonElement element : jsonArray) {
+          esSet.add(element.getAsString());
+        }
+        String[] propertyArray = (String[])properties.get(key);
+        TreeSet<String> nodeSet = new TreeSet<>(Arrays.asList(propertyArray));
+        assertEquals(esSet, nodeSet);
+    }
+    
+    private void checkIntArray(JsonObject source, String key, Map<String, Object> properties) {
+        assertTrue(source.get(key) instanceof JsonArray);
+        JsonArray jsonArray = source.get(key).getAsJsonArray();
+        TreeSet<Integer> esSet = new TreeSet();
+        for (JsonElement element : jsonArray) {
+          esSet.add(element.getAsInt());
+        }
+        TreeSet<Integer> nodeSet = new TreeSet();
+        int[] propertyArray = (int[])properties.get(key);
+        for (int element : propertyArray) {
+          nodeSet.add(element);
+        }
+        assertEquals(esSet, nodeSet);
+    }
+
+    private void checkCharArray(JsonObject source, String key, Map<String, Object> properties) {
+        assertTrue(source.get(key) instanceof JsonArray);
+        JsonArray jsonArray = source.get(key).getAsJsonArray();
+        TreeSet<String> esSet = new TreeSet();
+        for (JsonElement element : jsonArray) {
+          esSet.add(element.getAsString());
+        }
+        TreeSet<String> nodeSet = new TreeSet();
+        char[] propertyArray = (char[])properties.get(key);
+        for (char element : propertyArray) {
+          nodeSet.add(String.valueOf(element));
+        }
+        assertEquals(esSet, nodeSet);
+    }
+
+    private void checkByteArray(JsonObject source, String key, Map<String, Object> properties) {
+        assertTrue(source.get(key) instanceof JsonArray);
+        JsonArray jsonArray = source.get(key).getAsJsonArray();
+        TreeSet<Byte> esSet = new TreeSet();
+        for (JsonElement element : jsonArray) {
+          esSet.add(element.getAsByte());
+        }
+        TreeSet<Byte> nodeSet = new TreeSet();
+        byte[] propertyArray = (byte[])properties.get(key);
+        for (byte element : propertyArray) {
+          nodeSet.add(element);
+        }
+        assertEquals(esSet, nodeSet);
+    }
+
+    private void checkBooleanArray(JsonObject source, String key, Map<String, Object> properties) {
+        assertTrue(source.get(key) instanceof JsonArray);
+        JsonArray jsonArray = source.get(key).getAsJsonArray();
+        TreeSet<Boolean> esSet = new TreeSet();
+        for (JsonElement element : jsonArray) {
+          esSet.add(element.getAsBoolean());
+        }
+        TreeSet<Boolean> nodeSet = new TreeSet();
+        boolean[] propertyArray = (boolean[])properties.get(key);
+        for (boolean element : propertyArray) {
+          nodeSet.add(element);
+        }
+        assertEquals(esSet, nodeSet);
+    }
+
+    private void checkFloatArray(JsonObject source, String key, Map<String, Object> properties) {
+        assertTrue(source.get(key) instanceof JsonArray);
+        JsonArray jsonArray = source.get(key).getAsJsonArray();
+        TreeSet<Float> esSet = new TreeSet();
+        for (JsonElement element : jsonArray) {
+          esSet.add(element.getAsFloat());
+        }
+        TreeSet<Float> nodeSet = new TreeSet();
+        float[] propertyArray = (float[])properties.get(key);
+        for (float element : propertyArray) {
+          nodeSet.add(element);
+        }
+        assertEquals(esSet, nodeSet);
+    }
+
+    private void checkDoubleArray(JsonObject source, String key, Map<String, Object> properties) {
+        assertTrue(source.get(key) instanceof JsonArray);
+        JsonArray jsonArray = source.get(key).getAsJsonArray();
+        TreeSet<Double> esSet = new TreeSet();
+        for (JsonElement element : jsonArray) {
+          esSet.add(element.getAsDouble());
+        }
+        TreeSet<Double> nodeSet = new TreeSet();
+        double[] propertyArray = (double[])properties.get(key);
+        for (double element : propertyArray) {
+          nodeSet.add(element);
+        }
+        assertEquals(esSet, nodeSet);
+    }
+
+    private void checkShortArray(JsonObject source, String key, Map<String, Object> properties) {
+        assertTrue(source.get(key) instanceof JsonArray);
+        JsonArray jsonArray = source.get(key).getAsJsonArray();
+        TreeSet<Short> esSet = new TreeSet();
+        for (JsonElement element : jsonArray) {
+          esSet.add(element.getAsShort());
+        }
+        TreeSet<Short> nodeSet = new TreeSet();
+        short[] propertyArray = (short[])properties.get(key);
+        for (short element : propertyArray) {
+          nodeSet.add(element);
+        }
+        assertEquals(esSet, nodeSet);
+    }
+
+    private void checkLongArray(JsonObject source, String key, Map<String, Object> properties) {
+        assertTrue(source.get(key) instanceof JsonArray);
+        JsonArray jsonArray = source.get(key).getAsJsonArray();
+        TreeSet<Long> esSet = new TreeSet();
+        for (JsonElement element : jsonArray) {
+          esSet.add(element.getAsLong());
+        }
+        TreeSet<Long> nodeSet = new TreeSet();
+        long[] propertyArray = (long[])properties.get(key);
+        for (long element : propertyArray) {
+          nodeSet.add(element);
+        }
+        assertEquals(esSet, nodeSet);
+    }
+
+    private void checkLabels(JsonObject source, Set labels) {
+        JsonArray jsonArray = source.get(AdvancedMapping.LABELS_FIELD).getAsJsonArray();
+        TreeSet<String> esSet = new TreeSet();
+        for (JsonElement element : jsonArray) {
+          esSet.add(element.getAsString());
+        }
+        assertEquals(esSet, labels);
     }
 }
