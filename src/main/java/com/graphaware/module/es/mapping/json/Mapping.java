@@ -61,10 +61,7 @@ public class Mapping {
 
         if (defaults.includeRemainingProperties()) {
             for (String s : node.getProperties().keySet()) {
-                Object o = node.getProperties().get(s);
-                if (ClassUtils.isPrimitiveOrWrapper(o.getClass()) || o instanceof String) {
-                    source.put(s, node.getProperties().get(s));
-                }
+                source.put(s, node.getProperties().get(s));
             }
         }
 
