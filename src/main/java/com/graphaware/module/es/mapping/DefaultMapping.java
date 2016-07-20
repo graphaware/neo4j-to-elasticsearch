@@ -62,7 +62,7 @@ public class DefaultMapping extends BaseMapping implements Mapping {
         return actions;
     }
 
-    public static DefaultMapping getNewInstance() {
+    public static DefaultMapping newInstance() {
         return new DefaultMapping();
     }
 

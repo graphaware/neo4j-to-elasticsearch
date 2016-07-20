@@ -30,7 +30,7 @@ public class ElasticSearchConfiguration extends BaseTxDrivenModuleConfiguration<
     private static final boolean DEFAULT_RETRY_ON_ERROR = false;
     private static final boolean DEFAULT_EXECUTE_BULK = true;
     private static final InclusionPolicies DEFAULT_INCLUSION_POLICIES = InclusionPoliciesFactory.allBusiness().with(IncludeNoRelationships.getInstance());
-    private static final Mapping DEFAULT_MAPPING = DefaultMapping.getNewInstance();
+    private static final Mapping DEFAULT_MAPPING = DefaultMapping.newInstance();
     private static final int DEFAULT_QUEUE_CAPACITY = 10000;
     private static final String DEFAULT_AUTH_USER = null;
     private static final String DEFAULT_AUTH_PASSWORD = null;

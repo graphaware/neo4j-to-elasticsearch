@@ -19,6 +19,7 @@ import com.graphaware.integration.es.test.EmbeddedElasticSearchServer;
 import com.graphaware.integration.es.test.JestElasticSearchClient;
 import com.graphaware.module.es.mapping.DefaultMapping;
 import com.graphaware.module.es.mapping.Mapping;
+import com.graphaware.module.es.util.ServiceLoader;
 import org.junit.After;
 import org.junit.Before;
 import org.neo4j.graphdb.*;
@@ -130,7 +131,7 @@ public abstract class ElasticSearchModuleIntegrationTest {
     }
 
     protected Mapping getDefaultMapping(String index, String keyProperty) {
-        Mapping mapping = new DefaultMapping();
+        Mapping mapping = ServiceLoader.loadMapping("com.graphaware.module.es.mapping.DefaultMapping");
         Map<String, String> params = new HashMap<>();
         params.put("index", index);
         params.put("keyProperty", keyProperty);
