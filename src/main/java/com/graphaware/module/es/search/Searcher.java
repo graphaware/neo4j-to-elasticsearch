@@ -22,6 +22,7 @@ import com.graphaware.common.log.LoggerFactory;
 import com.graphaware.module.es.ElasticSearchConfiguration;
 import com.graphaware.module.es.ElasticSearchModule;
 import com.graphaware.module.es.mapping.Mapping;
+import com.graphaware.module.es.mapping.MappingDefinition;
 import com.graphaware.module.uuid.UuidModule;
 import com.graphaware.module.uuid.read.DefaultUuidReader;
 import com.graphaware.module.uuid.read.UuidReader;
@@ -53,7 +54,7 @@ public class Searcher {
     private final JestClient client;
 
     private final String keyProperty;
-    private final Mapping mapping;
+    private final MappingDefinition mapping;
     private final UuidReader uuidReader;
 
     public Searcher(GraphDatabaseService database) {
@@ -63,7 +64,7 @@ public class Searcher {
         this.database = database;
         this.uuidReader = createUuidReader(database);
         this.client = createClient(configuration.getUri(), configuration.getPort(), configuration.getAuthUser(), configuration.getAuthPassword());
-        this.mapping = Mapping.getMapping(configuration.getIndex(), keyProperty, configuration.getMapping());
+        this.mapping = configuration.getMapping();
     }
 
     private UuidReader createUuidReader(GraphDatabaseService database) {

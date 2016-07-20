@@ -38,7 +38,7 @@ import java.util.Arrays;
 import static org.springframework.util.Assert.hasLength;
 import static org.springframework.util.Assert.notNull;
 
-public abstract class Mapping {
+public abstract class Mapping implements MappingDefinition {
     private static final Log LOG = LoggerFactory.getLogger(Mapping.class);
 
     private final String keyProperty;
@@ -55,7 +55,7 @@ public abstract class Mapping {
         hasLength(keyProperty);
 
         if (name.equals("default")) {
-            return new DefaultMapping(index, keyProperty);
+            return DefaultMapping.getNewInstance();
         }
 
         try {
@@ -81,6 +81,11 @@ public abstract class Mapping {
         this.keyProperty = keyProperty;
     }
 
+    public Mapping() {
+        this.index = "neo4j-index";
+        this.keyProperty = "uuid";
+    }
+
     /**
      * Get the key under which the given {@link NodeRepresentation} or {@link RelationshipRepresentation} will be indexed in Elasticsearch.
      *
@@ -88,7 +93,7 @@ public abstract class Mapping {
      * @return key of the node.
      */
     protected final String getKey(PropertyContainerRepresentation propertyContainer) {
-        return String.valueOf(propertyContainer.getProperties().get(keyProperty));
+        return String.valueOf(propertyContainer.getProperties().get(getKeyProperty()));
     }
 
     /**
@@ -204,4 +209,6 @@ public abstract class Mapping {
     protected abstract List<BulkableAction<? extends JestResult>> deleteRelationship(RelationshipRepresentation relationship);
 
     public abstract <T extends PropertyContainer> String getIndexFor(Class<T> searchedType);
+
+    protected abstract String getKeyProperty();
 }
