@@ -43,7 +43,7 @@ public class AdvancedMapping extends DefaultMapping {
     public static final String NODE_TYPE = "node";
     public static final String RELATIONSHIP_TYPE = "relationship";
     public static final String LABELS_FIELD = "_labels";
-    public static final String RELATIONSHIPS_FIELD = "_relationships";
+    public static final String RELATIONSHIP_FIELD = "_relationship";
 
     @Override
     protected List<BulkableAction<? extends JestResult>> createOrUpdateNode(NodeRepresentation node) {
@@ -66,7 +66,7 @@ public class AdvancedMapping extends DefaultMapping {
     }
     
     protected void addExtra(Map<String, Object> data, RelationshipRepresentation relationship) {
-        data.put(RELATIONSHIPS_FIELD,  new ArrayList<>(Arrays.asList(relationship.getType())));
+        data.put(RELATIONSHIP_FIELD,  new ArrayList<>(Arrays.asList(relationship.getType())));
     }
 
 }
