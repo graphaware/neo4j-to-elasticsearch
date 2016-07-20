@@ -1,0 +1,32 @@
+{
+  "defaults": {
+    "key_property": "uuid",
+    "index": "default-index",
+    "node_index": "node-index",
+    "relationship_index": "relationship-index",
+    "include_remaining_properties": true,
+    "blacklisted_node_properties": ["password", "uuid"]
+  },
+  "mappings": [
+    {
+      "condition": "hasLabel('Person')",
+      "type": "persons",
+      "properties": {
+        "name": "getProperty('firstName') + ' ' + getProperty('lastName')",
+        "labels": "getLabels()"
+      }
+    },
+    {
+      "condition": "hasLabel('Female')",
+      "index": "females",
+      "type": "girls",
+      "properties": {
+        "name": "getProperty('firstName')"
+      }
+    },
+    {
+      "condition": "getLabels().length == 0",
+      "type": "nodes-without-labels"
+    }
+  ]
+}

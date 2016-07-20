@@ -25,7 +25,9 @@ import org.junit.Before;
 import org.neo4j.graphdb.*;
 import org.neo4j.test.TestGraphDatabaseFactory;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static com.graphaware.module.es.util.TestUtil.waitFor;
@@ -138,5 +140,18 @@ public abstract class ElasticSearchModuleIntegrationTest {
         mapping.configure(params);
 
         return mapping;
+    }
+
+    protected List<String> labelsToStrings(Node node) {
+        List<String> list = new ArrayList<>();
+        try (Transaction tx = database.beginTx()) {
+            for (Label l : node.getLabels()) {
+                list.add(l.name());
+            }
+
+            tx.success();
+        }
+
+        return list;
     }
 }

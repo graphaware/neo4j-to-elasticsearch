@@ -2,16 +2,14 @@ package com.graphaware.module.es.mapping.json;
 
 import com.graphaware.common.representation.NodeRepresentation;
 
-public class NodeExpression {
+public class NodeExpression extends PropertyContainerExpression {
 
-    private final NodeRepresentation node;
-
-    public NodeExpression(NodeRepresentation node) {
-        this.node = node;
+    public NodeExpression(NodeRepresentation nodeRepresentation) {
+        super(nodeRepresentation);
     }
 
     public boolean hasLabel(String label) {
-        for (String s : node.getLabels()) {
+        for (String s : ((NodeRepresentation) propertyContainer).getLabels()) {
             if (s.equals(label)) {
                 return true;
             }
@@ -20,18 +18,8 @@ public class NodeExpression {
         return false;
     }
 
-    public Object getProperty(String key) {
-        for (String s : node.getProperties().keySet()) {
-            if (s.equals(key)) {
-                return node.getProperties().get(s);
-            }
-        }
-
-        return null;
-    }
-
     public String[] getLabels() {
-        return node.getLabels();
+        return ((NodeRepresentation) propertyContainer).getLabels();
     }
 
 }

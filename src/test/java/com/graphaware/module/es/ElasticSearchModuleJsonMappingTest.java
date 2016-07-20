@@ -13,14 +13,16 @@ import com.graphaware.runtime.GraphAwareRuntimeFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.Label;
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Transaction;
+import org.neo4j.graphdb.*;
+import org.neo4j.helpers.collection.Iterators;
 import org.neo4j.test.TestGraphDatabaseFactory;
+import org.springframework.util.StreamUtils;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.StreamSupport;
 
 import static org.junit.Assert.assertEquals;
 
@@ -124,6 +126,41 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         }
     }
 
+    @Test
+    public void testShouldReplicateNodesWithoutLabels() {
+        database = new TestGraphDatabaseFactory().newImpermanentDatabase();
+
+        GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database);
+        runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration().withUuidProperty("uuid"), database));
+
+        JsonFileMapping mapping = (JsonFileMapping) ServiceLoader.loadMapping("com.graphaware.module.es.mapping.JsonFileMapping");
+        Map<String, String> config = new HashMap<>();
+        config.put("file", "integration/mapping-advanced.json");
+        mapping.configure(config);
+
+        configuration = ElasticSearchConfiguration.defaultConfiguration()
+                .withMapping(mapping)
+                .withUri(HOST)
+                .withPort(PORT);
+
+        runtime.registerModule(new ElasticSearchModule("ES", new ElasticSearchWriter(configuration), configuration));
+
+        runtime.start();
+        runtime.waitUntilStarted();
+
+        writeSomePersons();
+        TestUtil.waitFor(1000);
+        try (Transaction tx = database.beginTx()) {
+            database.getAllNodes().stream().filter(n -> {
+                return labelsToStrings(n).size() == 0;
+            })
+                    .forEach(n -> {
+                        new Neo4jElasticVerifier(database, configuration, esClient).verifyEsReplication(n, mapping.getDefinition().getDefaults().getIndex(), "nodes-without-labels", mapping.getKeyProperty());
+                    });
+            tx.success();
+        }
+    }
+
     protected void verifyEsReplicationForNodeWithLabels(String label, String index, String type, String keyProperty) {
         try (Transaction tx = database.beginTx()) {
             database.findNodes(Label.label(label)).stream().forEach(n -> {
@@ -135,6 +172,9 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
     }
 
     protected void writeSomePersons() {
+        //tx 0
+        database.execute("CREATE (n {name:'Hello'})");
+
         //tx1
         database.execute("CREATE (p:Person:Male {firstName:'Michal', lastName:'Bachman', age:30})-[:WORKS_FOR {since:2013, role:'MD'}]->(c:Company {name:'GraphAware', est: 2013})");
 

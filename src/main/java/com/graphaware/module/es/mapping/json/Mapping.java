@@ -52,15 +52,17 @@ public class Mapping {
         String id = node.getProperties().get(defaults.getKeyProperty()).toString();
         Map<String, Object> source = new HashMap<>();
 
-        for (String s : properties.keySet()) {
-            Expression exp = getExpressionParser().parseExpression(properties.get(s));
-            source.put(s, exp.getValue(nodeExpression));
+        if (null != properties) {
+            for (String s : properties.keySet()) {
+                Expression exp = getExpressionParser().parseExpression(properties.get(s));
+                source.put(s, exp.getValue(nodeExpression));
+            }
         }
 
         if (defaults.includeRemainingProperties()) {
             for (String s : node.getProperties().keySet()) {
                 Object o = node.getProperties().get(s);
-                if (ClassUtils.isPrimitiveOrWrapper(o.getClass())) {
+                if (ClassUtils.isPrimitiveOrWrapper(o.getClass()) || o instanceof String) {
                     source.put(s, node.getProperties().get(s));
                 }
             }
