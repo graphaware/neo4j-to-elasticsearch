@@ -51,6 +51,8 @@ public class DefaultMapping extends Mapping implements MappingDefinition {
 
     private DefaultMapping(String index, String keyProperty) {
         super(index, keyProperty);
+        this.index = index;
+        this.keyProperty = keyProperty;
     }
 
     public DefaultMapping() {

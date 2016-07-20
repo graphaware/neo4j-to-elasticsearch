@@ -107,7 +107,6 @@ public class Neo4jElasticVerifier {
         for (String label : labels) {
             Get get = new Get.Builder(index, nodeKey).type(label).build();
             JestResult result = esClient.execute(get);
-            System.out.println(result.getJsonString());
 
             assertTrue(result.getErrorMessage(), result.isSucceeded());
             assertEquals(index, result.getValue("_index"));
