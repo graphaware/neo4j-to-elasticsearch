@@ -35,16 +35,13 @@ public class Definition {
             if (mapping.supports(node)) {
                 Action action = mapping.getCreateAction(node, defaults);
                 if (action.getSource().keySet().size() == 0) {
-                    System.out.println("MAP EMPTY !!");
                     continue;
                 }
 
                 try {
                     String source = om.writeValueAsString(action.getSource());
-                    System.out.println(source);
                     actions.add(new Index.Builder(source).index(action.getIndex()).type(action.getType()).id(action.getId()).build());
                 } catch (IOException e) {
-                    System.out.println(e.getMessage());
                     //
                 }
             }

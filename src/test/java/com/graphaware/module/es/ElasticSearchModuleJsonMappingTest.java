@@ -73,7 +73,6 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         Map<String, String> config = new HashMap<>();
         config.put("file", "integration/mapping-basic.json");
         mapping.configure(config);
-        System.out.println(mapping.getKeyProperty());
 
         configuration = ElasticSearchConfiguration.defaultConfiguration()
                 .withMapping(mapping)

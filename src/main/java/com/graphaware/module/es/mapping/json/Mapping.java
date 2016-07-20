@@ -3,6 +3,7 @@ package com.graphaware.module.es.mapping.json;
 import com.graphaware.common.representation.NodeRepresentation;
 import org.springframework.expression.Expression;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
+import org.springframework.util.ClassUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -48,6 +49,15 @@ public class Mapping {
         for (String s : properties.keySet()) {
             Expression exp = getExpressionParser().parseExpression(properties.get(s));
             source.put(s, exp.getValue(nodeExpression));
+        }
+
+        if (defaults.includeRemainingProperties()) {
+            for (String s : node.getProperties().keySet()) {
+                Object o = node.getProperties().get(s);
+                if (ClassUtils.isPrimitiveOrWrapper(o.getClass())) {
+                    source.put(s, node.getProperties().get(s));
+                }
+            }
         }
 
         return new Action(index, type, id, source);

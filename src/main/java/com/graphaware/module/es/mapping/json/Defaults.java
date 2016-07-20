@@ -6,6 +6,8 @@ import java.util.List;
 
 public class Defaults {
 
+    private static final boolean DEFAULT_INCLUDE_REMAINING = true;
+
     @JsonProperty("key_property")
     private String keyProperty;
 
@@ -18,7 +20,7 @@ public class Defaults {
     private String relationshipIndex;
 
     @JsonProperty("include_remaining_properties")
-    private boolean includeRemainingProperties;
+    private Boolean includeRemainingProperties;
 
     @JsonProperty("blacklisted_node_properties")
     private List<String> blacklistedNodeProperties;
@@ -39,7 +41,7 @@ public class Defaults {
     }
 
     public boolean includeRemainingProperties() {
-        return includeRemainingProperties;
+        return includeRemainingProperties != null ? includeRemainingProperties : DEFAULT_INCLUDE_REMAINING;
     }
 
     public List<String> getBlacklistedNodeProperties() {
