@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
-public class Defaults {
+public class DocumentMappingDefaults {
 
     private static final boolean DEFAULT_INCLUDE_REMAINING = true;
 

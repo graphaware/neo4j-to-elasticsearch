@@ -3,7 +3,7 @@ package com.graphaware.module.es.mapping.json;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Action {
+public class DocumentRepresentation {
 
     private final String index;
 
@@ -13,14 +13,14 @@ public class Action {
 
     private final Map<String, Object> source;
 
-    public Action(String index, String type, String id) {
+    public DocumentRepresentation(String index, String type, String id) {
         this.index = index;
         this.type = type;
         this.id = id;
         this.source = new HashMap<>();
     }
 
-    public Action(String index, String type, String id, Map<String, Object> source) {
+    public DocumentRepresentation(String index, String type, String id, Map<String, Object> source) {
         this.index = index;
         this.type = type;
         this.id = id;

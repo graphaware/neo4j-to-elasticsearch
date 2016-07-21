@@ -9,7 +9,7 @@ import org.springframework.expression.spel.standard.SpelExpressionParser;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Mapping {
+public class GraphDocumentMapper {
 
     private String condition;
 
@@ -52,11 +52,8 @@ public class Mapping {
         throw new RuntimeException("Element is nor Node nor Relationship");
     }
 
-    public Action getCreateAction(NodeRepresentation node, Defaults defaults) {
+    public DocumentRepresentation getDocumentRepresentation(NodeRepresentation node, DocumentMappingDefaults defaults) {
         NodeExpression nodeExpression = new NodeExpression(node);
-        String i = index != null ? index : defaults.getDefaultNodesIndex();
-        String type = getType();
-        String id = node.getProperties().get(defaults.getKeyProperty()).toString();
         Map<String, Object> source = new HashMap<>();
 
         if (null != properties) {
@@ -71,15 +68,13 @@ public class Mapping {
                 source.put(s, node.getProperties().get(s));
             }
         }
-
-        return new Action(i, type, id, source);
+        String i = index != null ? index : defaults.getDefaultNodesIndex();
+        String id = node.getProperties().get(defaults.getKeyProperty()).toString();
+        return new DocumentRepresentation(i, getType(), id, source);
     }
 
-    public Action getCreateAction(RelationshipRepresentation relationship, Defaults defaults) {
+    public DocumentRepresentation getDocumentRepresentation(RelationshipRepresentation relationship, DocumentMappingDefaults defaults) {
         RelationshipExpression relationshipExpression = new RelationshipExpression(relationship);
-        String i = index != null ? index : defaults.getDefaultRelationshipsIndex();
-        String type = getType();
-        String id = relationship.getProperties().get(defaults.getKeyProperty()).toString();
         Map<String, Object> source = new HashMap<>();
 
         if (null != properties) {
@@ -94,8 +89,9 @@ public class Mapping {
                 source.put(s, relationship.getProperties().get(s));
             }
         }
-
-        return new Action(i, type, id, source);
+        String i = index != null ? index : defaults.getDefaultRelationshipsIndex();
+        String id = relationship.getProperties().get(defaults.getKeyProperty()).toString();
+        return new DocumentRepresentation(i, getType(), id, source);
 
     }
 
