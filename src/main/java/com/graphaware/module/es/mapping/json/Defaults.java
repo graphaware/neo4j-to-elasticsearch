@@ -17,12 +17,6 @@ public class Defaults {
     @JsonProperty("relationships_index")
     private String defaultRelationshipsIndex;
 
-    @JsonProperty("node_index")
-    private String nodeIndex;
-
-    @JsonProperty("relationship_index")
-    private String relationshipIndex;
-
     @JsonProperty("include_remaining_properties")
     private Boolean includeRemainingProperties;
 
@@ -39,14 +33,6 @@ public class Defaults {
 
     public String getDefaultRelationshipsIndex() {
         return defaultRelationshipsIndex;
-    }
-
-    public String getNodeIndex() {
-        return nodeIndex;
-    }
-
-    public String getRelationshipIndex() {
-        return relationshipIndex;
     }
 
     public boolean includeRemainingProperties() {

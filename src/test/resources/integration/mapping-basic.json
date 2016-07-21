@@ -3,8 +3,6 @@
     "key_property": "uuid",
     "nodes_index": "default-index-node",
     "relationships_index": "default-index-relationship",
-    "node_index": "node-index",
-    "relationship_index": "relationship-index",
     "include_remaining_properties": true,
     "blacklisted_node_properties": ["password", "uuid"]
   },
