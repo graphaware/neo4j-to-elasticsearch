@@ -11,7 +11,11 @@ public class Defaults {
     @JsonProperty("key_property")
     private String keyProperty;
 
-    private String index;
+    @JsonProperty("nodes_index")
+    private String defaultNodesIndex;
+
+    @JsonProperty("relationships_index")
+    private String defaultRelationshipsIndex;
 
     @JsonProperty("node_index")
     private String nodeIndex;
@@ -28,8 +32,13 @@ public class Defaults {
     public String getKeyProperty() {
         return keyProperty;
     }
-    public String getIndex() {
-        return index;
+
+    public String getDefaultNodesIndex() {
+        return defaultNodesIndex;
+    }
+
+    public String getDefaultRelationshipsIndex() {
+        return defaultRelationshipsIndex;
     }
 
     public String getNodeIndex() {

@@ -15,15 +15,11 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.neo4j.graphdb.*;
-import org.neo4j.helpers.collection.Iterators;
 import org.neo4j.test.TestGraphDatabaseFactory;
-import org.springframework.util.StreamUtils;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.StreamSupport;
 
 import static org.junit.Assert.assertEquals;
 
@@ -55,7 +51,6 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         Map<String, String> config = new HashMap<>();
         config.put("file", "integration/mapping-basic.json");
         mapping.configure(config);
-        System.out.println(mapping.getKeyProperty());
 
         configuration = ElasticSearchConfiguration.defaultConfiguration()
                 .withMapping(mapping)
@@ -63,6 +58,7 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
                 .withPort(PORT);
 
         assertEquals("uuid", configuration.getMapping().getKeyProperty());
+        assertEquals("default-index-node", ((JsonFileMapping)configuration.getMapping()).getDefinition().getDefaults().getDefaultNodesIndex());
     }
 
     @Test
@@ -89,7 +85,7 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
 
         writeSomePersons();
         TestUtil.waitFor(500);
-        verifyEsReplicationForNodeWithLabels("Person", mapping.getDefinition().getDefaults().getIndex(), "persons", mapping.getDefinition().getDefaults().getKeyProperty());
+        verifyEsReplicationForNodeWithLabels("Person", mapping.getDefinition().getDefaults().getDefaultNodesIndex(), "persons", mapping.getDefinition().getDefaults().getKeyProperty());
     }
 
     @Test
@@ -121,7 +117,7 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
                 new Neo4jElasticVerifier(database, configuration, esClient).verifyEsReplication(n, "females", "girls", mapping.getKeyProperty());
             });
             database.findNodes(Label.label("Person")).stream().forEach(n -> {
-                new Neo4jElasticVerifier(database, configuration, esClient).verifyEsReplication(n, mapping.getDefinition().getDefaults().getIndex(), "persons", mapping.getKeyProperty());
+                new Neo4jElasticVerifier(database, configuration, esClient).verifyEsReplication(n, mapping.getDefinition().getDefaults().getDefaultNodesIndex(), "persons", mapping.getKeyProperty());
             });
             tx.success();
         }
@@ -157,7 +153,7 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
                 return labelsToStrings(n).size() == 0;
             })
                     .forEach(n -> {
-                        new Neo4jElasticVerifier(database, configuration, esClient).verifyEsReplication(n, mapping.getDefinition().getDefaults().getIndex(), "nodes-without-labels", mapping.getKeyProperty());
+                        new Neo4jElasticVerifier(database, configuration, esClient).verifyEsReplication(n, mapping.getDefinition().getDefaults().getDefaultNodesIndex(), "nodes-without-labels", mapping.getKeyProperty());
                     });
             tx.success();
         }
@@ -188,7 +184,7 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         TestUtil.waitFor(1000);
         try (Transaction tx = database.beginTx()) {
             database.findNodes(Label.label("Node")).stream().forEach(n -> {
-                JestResult result = new Neo4jElasticVerifier(database, configuration, esClient).verifyEsReplication(n, mapping.getDefinition().getDefaults().getIndex(), "nodes", mapping.getKeyProperty());
+                JestResult result = new Neo4jElasticVerifier(database, configuration, esClient).verifyEsReplication(n, mapping.getDefinition().getDefaults().getDefaultNodesIndex(), "nodes", mapping.getKeyProperty());
                 Map<String, Object> source = new HashMap<>();
                 List<String> types = (List<String>) result.getSourceAsObject(source.getClass()).get("types");
                 assertEquals(3, types.size());

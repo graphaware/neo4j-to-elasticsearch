@@ -1,7 +1,8 @@
 {
   "defaults": {
     "key_property": "uuid",
-    "index": "default-index",
+    "nodes_index": "default-index-node",
+    "relationships_index": "default-index-relationship",
     "node_index": "node-index",
     "relationship_index": "relationship-index",
     "include_remaining_properties": true,

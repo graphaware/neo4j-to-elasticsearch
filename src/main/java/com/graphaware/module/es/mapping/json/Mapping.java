@@ -3,7 +3,6 @@ package com.graphaware.module.es.mapping.json;
 import com.graphaware.common.representation.NodeRepresentation;
 import org.springframework.expression.Expression;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
-import org.springframework.util.ClassUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -47,7 +46,7 @@ public class Mapping {
 
     public Action getCreateAction(NodeRepresentation node, Defaults defaults) {
         NodeExpression nodeExpression = new NodeExpression(node);
-        String i = index != null ? index : defaults.getIndex();
+        String i = index != null ? index : defaults.getDefaultNodesIndex();
         String type = getType();
         String id = node.getProperties().get(defaults.getKeyProperty()).toString();
         Map<String, Object> source = new HashMap<>();
