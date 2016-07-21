@@ -50,6 +50,9 @@ public class JsonFileMapping implements Mapping {
         switch (operation.getType()) {
             case NODE_CREATED:
                 return createNode(((NodeCreated) operation).getDetails());
+
+            case RELATIONSHIP_CREATED:
+                return definition.createOrUpdateRelationship(((RelationshipCreated) operation).getDetails());
             /*
 
             case NODE_UPDATED:
@@ -59,8 +62,7 @@ public class JsonFileMapping implements Mapping {
             case NODE_DELETED:
                 return deleteNode(((NodeDeleted) operation).getDetails());
 
-            case RELATIONSHIP_CREATED:
-                return createRelationship(((RelationshipCreated) operation).getDetails());
+
 
             case RELATIONSHIP_UPDATED:
                 RelationshipUpdated relUpdated = (RelationshipUpdated) operation;

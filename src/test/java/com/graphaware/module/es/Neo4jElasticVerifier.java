@@ -23,10 +23,7 @@ import io.searchbox.client.JestResult;
 import io.searchbox.core.Get;
 import io.searchbox.core.Search;
 import io.searchbox.core.SearchResult;
-import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.Label;
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Transaction;
+import org.neo4j.graphdb.*;
 
 import java.util.*;
 
@@ -173,6 +170,23 @@ public class Neo4jElasticVerifier {
 
         assertTrue(result.getErrorMessage(), result.isSucceeded());
         assertEquals(nodeKey, result.getValue("_id"));
+
+        return result;
+    }
+
+    public JestResult verifyEsReplication(Relationship relationship, String index, String type, String keyProperty) {
+        String relKey;
+        try (Transaction tx = database.beginTx()) {
+            relKey = relationship.getProperty(keyProperty).toString();
+            tx.success();
+        }
+
+        Get get = new Get.Builder(index, relKey).type(type).build();
+        JestResult result = esClient.execute(get);
+        System.out.println(result.getJsonString());
+
+        assertTrue(result.getErrorMessage(), result.isSucceeded());
+        assertEquals(relKey, result.getValue("_id"));
 
         return result;
     }

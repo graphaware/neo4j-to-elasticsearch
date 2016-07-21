@@ -1,5 +1,8 @@
 package com.graphaware.module.es;
 
+import com.graphaware.common.policy.InclusionPolicies;
+import com.graphaware.common.policy.RelationshipInclusionPolicy;
+import com.graphaware.common.policy.all.IncludeAllRelationships;
 import com.graphaware.integration.es.test.EmbeddedElasticSearchServer;
 import com.graphaware.integration.es.test.JestElasticSearchClient;
 import com.graphaware.module.es.mapping.JsonFileMapping;
@@ -59,6 +62,7 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
 
         assertEquals("uuid", configuration.getMapping().getKeyProperty());
         assertEquals("default-index-node", ((JsonFileMapping)configuration.getMapping()).getDefinition().getDefaults().getDefaultNodesIndex());
+        assertEquals("default-index-relationship", ((JsonFileMapping)configuration.getMapping()).getDefinition().getDefaults().getDefaultRelationshipsIndex());
     }
 
     @Test
@@ -66,7 +70,7 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         database = new TestGraphDatabaseFactory().newImpermanentDatabase();
 
         GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database);
-        runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration().withUuidProperty("uuid"), database));
+        runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration().withUuidProperty("uuid").with(IncludeAllRelationships.getInstance()), database));
 
         JsonFileMapping mapping = (JsonFileMapping) ServiceLoader.loadMapping("com.graphaware.module.es.mapping.JsonFileMapping");
         Map<String, String> config = new HashMap<>();
@@ -75,6 +79,7 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
 
         configuration = ElasticSearchConfiguration.defaultConfiguration()
                 .withMapping(mapping)
+                .with(IncludeAllRelationships.getInstance())
                 .withUri(HOST)
                 .withPort(PORT);
 
@@ -86,6 +91,12 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         writeSomePersons();
         TestUtil.waitFor(500);
         verifyEsReplicationForNodeWithLabels("Person", mapping.getDefinition().getDefaults().getDefaultNodesIndex(), "persons", mapping.getDefinition().getDefaults().getKeyProperty());
+        try (Transaction tx = database.beginTx()) {
+            database.getAllRelationships().stream().forEach(r -> {
+                new Neo4jElasticVerifier(database, configuration, esClient).verifyEsReplication(r, mapping.getDefinition().getDefaults().getDefaultRelationshipsIndex(), "workers", mapping.getKeyProperty());
+            });
+            tx.success();
+        }
     }
 
     @Test
