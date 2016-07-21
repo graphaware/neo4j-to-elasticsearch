@@ -28,6 +28,7 @@ import org.neo4j.graphdb.*;
 import java.util.*;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class Neo4jElasticVerifier {
@@ -172,6 +173,21 @@ public class Neo4jElasticVerifier {
         assertEquals(nodeKey, result.getValue("_id"));
 
         return result;
+    }
+
+    public void verifyNoEsReplication(Node node, String index, String type, String keyProperty) {
+        String nodeKey;
+        try (Transaction tx = database.beginTx()) {
+            nodeKey = node.getProperty(keyProperty).toString();
+            tx.success();
+        }
+
+        Get get = new Get.Builder(index, nodeKey).type(type).build();
+        JestResult result = esClient.execute(get);
+        System.out.println(result.getJsonString());
+
+        assertFalse(result.isSucceeded());
+        assertEquals(false, result.getValue("found"));
     }
 
     public JestResult verifyEsReplication(Relationship relationship, String index, String type, String keyProperty) {

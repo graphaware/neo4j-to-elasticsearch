@@ -22,8 +22,8 @@ import java.util.Map;
 public class JsonFileMapping implements Mapping {
 
     private static final String DEFAULT_KEY_PROPERTY = "uuid";
-
     private static final String FILE_PATH_KEY = "file";
+    
     private Definition definition;
 
     protected String keyProperty;
@@ -51,13 +51,13 @@ public class JsonFileMapping implements Mapping {
             case NODE_CREATED:
                 return createNode(((NodeCreated) operation).getDetails());
 
+            case NODE_UPDATED:
+                NodeUpdated nodeUpdated = (NodeUpdated) operation;
+                return updateNode(nodeUpdated);
+
             case RELATIONSHIP_CREATED:
                 return definition.createOrUpdateRelationship(((RelationshipCreated) operation).getDetails());
             /*
-
-            case NODE_UPDATED:
-                NodeUpdated nodeUpdated = (NodeUpdated) operation;
-                return updateNode(nodeUpdated.getDetails().getPrevious(), nodeUpdated.getDetails().getCurrent());
 
             case NODE_DELETED:
                 return deleteNode(((NodeDeleted) operation).getDetails());
@@ -80,6 +80,15 @@ public class JsonFileMapping implements Mapping {
 
     protected List<BulkableAction<? extends JestResult>> createNode(NodeRepresentation node) {
         return definition.createOrUpdateNode(node);
+    }
+
+    protected List<BulkableAction<? extends JestResult>> updateNode(NodeUpdated nodeUpdated) {
+        NodeRepresentation before = nodeUpdated.getDetails().getPrevious();
+        NodeRepresentation after = nodeUpdated.getDetails().getCurrent();
+        List<BulkableAction<? extends JestResult>> actions = new ArrayList<>();
+        actions.addAll(definition.createOrUpdateNode(after));
+
+        return actions;
     }
 
     @Override

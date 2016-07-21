@@ -204,11 +204,59 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         }
     }
 
+    @Test
+    public void testNodesWithMultipleLabelsAreUpdatedCorrectly() {
+        database = new TestGraphDatabaseFactory().newImpermanentDatabase();
+
+        GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database);
+        runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration().withUuidProperty("uuid"), database));
+
+        JsonFileMapping mapping = (JsonFileMapping) ServiceLoader.loadMapping("com.graphaware.module.es.mapping.JsonFileMapping");
+        Map<String, String> config = new HashMap<>();
+        config.put("file", "integration/mapping-advanced.json");
+        mapping.configure(config);
+
+        configuration = ElasticSearchConfiguration.defaultConfiguration()
+                .withMapping(mapping)
+                .withUri(HOST)
+                .withPort(PORT);
+
+        runtime.registerModule(new ElasticSearchModule("ES", new ElasticSearchWriter(configuration), configuration));
+
+        runtime.start();
+        runtime.waitUntilStarted();
+        writeSomePersons();
+        TestUtil.waitFor(1000);
+        try (Transaction tx = database.beginTx()) {
+            database.findNodes(Label.label("Person")).stream()
+                    .filter(n -> { return n.hasLabel(Label.label("Female"));})
+                    .forEach(n -> {
+                        new Neo4jElasticVerifier(database, configuration, esClient).verifyEsReplication(n, "females", "girls", mapping.getKeyProperty());
+                    });
+            tx.success();
+        }
+
+        database.execute("MATCH (n:Female) REMOVE n:Female SET n:Node");
+        verifyNoEsReplicationForNodesWithLabel("Person", "females", "girls", mapping.getKeyProperty());
+
+
+    }
+
     protected void verifyEsReplicationForNodeWithLabels(String label, String index, String type, String keyProperty) {
         try (Transaction tx = database.beginTx()) {
             database.findNodes(Label.label(label)).stream().forEach(n -> {
                 new Neo4jElasticVerifier(database, configuration, esClient).verifyEsReplication(n, index, type, keyProperty);
             });
+            tx.success();
+        }
+    }
+
+    protected void verifyNoEsReplicationForNodesWithLabel(String label, String index, String type, String keyProperty) {
+        try (Transaction tx = database.beginTx()) {
+            database.findNodes(Label.label(label)).stream()
+                    .forEach(n -> {
+                        new Neo4jElasticVerifier(database, configuration, esClient).verifyNoEsReplication(n, index, type, keyProperty);
+                    });
             tx.success();
         }
     }
