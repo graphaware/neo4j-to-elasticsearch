@@ -183,6 +183,7 @@ public class Neo4jElasticVerifier {
         }
         Get get = new Get.Builder(index, nodeKey).type(type).build();
         JestResult result = esClient.execute(get);
+        System.out.println(result.getJsonString());
 
         assertTrue(!result.isSucceeded() || !((Boolean) result.getValue("found")));
     }

@@ -87,7 +87,7 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         runtime.waitUntilStarted();
 
         writeSomePersons();
-        TestUtil.waitFor(500);
+        TestUtil.waitFor(1000);
         verifyEsReplicationForNodeWithLabels("Person", mapping.getMappingRepresentation().getDefaults().getDefaultNodesIndex(), "persons", mapping.getMappingRepresentation().getDefaults().getKeyProperty());
         try (Transaction tx = database.beginTx()) {
             database.getAllRelationships().stream().forEach(r -> {
@@ -190,7 +190,7 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         runtime.start();
         runtime.waitUntilStarted();
         database.execute("CREATE (n:Node {types:['a','b','c']})");
-        TestUtil.waitFor(1000);
+        TestUtil.waitFor(1500);
         try (Transaction tx = database.beginTx()) {
             database.findNodes(Label.label("Node")).stream().forEach(n -> {
                 JestResult result = new Neo4jElasticVerifier(database, configuration, esClient).verifyEsReplication(n, mapping.getMappingRepresentation().getDefaults().getDefaultNodesIndex(), "nodes", mapping.getKeyProperty());
@@ -237,6 +237,7 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         }
 
         database.execute("MATCH (n:Female) REMOVE n:Female SET n:Node");
+        TestUtil.waitFor(1000);
         verifyNoEsReplicationForNodesWithLabel("Person", "females", "girls", mapping.getKeyProperty());
 
 
