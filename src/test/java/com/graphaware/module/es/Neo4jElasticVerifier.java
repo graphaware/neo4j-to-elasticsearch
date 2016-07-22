@@ -181,13 +181,10 @@ public class Neo4jElasticVerifier {
             nodeKey = node.getProperty(keyProperty).toString();
             tx.success();
         }
-
         Get get = new Get.Builder(index, nodeKey).type(type).build();
         JestResult result = esClient.execute(get);
-        System.out.println(result.getJsonString());
 
-        assertFalse(result.isSucceeded());
-        assertEquals(false, result.getValue("found"));
+        assertTrue(!result.isSucceeded() || !((Boolean) result.getValue("found")));
     }
 
     public JestResult verifyEsReplication(Relationship relationship, String index, String type, String keyProperty) {

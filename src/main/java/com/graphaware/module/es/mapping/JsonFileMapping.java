@@ -13,10 +13,7 @@ import org.springframework.core.io.ClassPathResource;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class JsonFileMapping implements Mapping {
 
@@ -88,10 +85,12 @@ public class JsonFileMapping implements Mapping {
     protected List<BulkableAction<? extends JestResult>> updateNode(NodeUpdated nodeUpdated) {
         NodeRepresentation before = nodeUpdated.getDetails().getPrevious();
         NodeRepresentation after = nodeUpdated.getDetails().getCurrent();
-        List<BulkableAction<? extends JestResult>> actions = new ArrayList<>();
-        actions.addAll(mappingRepresentation.createOrUpdateNode(after));
 
-        return actions;
+        if (labelsChanged(before, after)) {
+            return mappingRepresentation.updateNodeAndRemoveOldIndices(before, after);
+        }
+
+        return mappingRepresentation.createOrUpdateNode(after);
     }
 
     @Override
@@ -107,5 +106,13 @@ public class JsonFileMapping implements Mapping {
     @Override
     public String getKeyProperty() {
         return mappingRepresentation.getDefaults().getKeyProperty() != null ? mappingRepresentation.getDefaults().getKeyProperty() : DEFAULT_KEY_PROPERTY;
+    }
+
+    private boolean labelsChanged(NodeRepresentation before, NodeRepresentation after) {
+        List<String> labelsA = new ArrayList<>(Arrays.asList(before.getLabels()));
+        List<String> labelsB = new ArrayList<>(Arrays.asList(after.getLabels()));
+        labelsA.removeAll(labelsB);
+
+        return labelsA.size() > 0;
     }
 }

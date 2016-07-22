@@ -53,19 +53,25 @@ public class GraphDocumentMapper {
     }
 
     public DocumentRepresentation getDocumentRepresentation(NodeRepresentation node, DocumentMappingDefaults defaults) {
+        return getDocumentRepresentation(node, defaults, true);
+    }
+
+    public DocumentRepresentation getDocumentRepresentation(NodeRepresentation node, DocumentMappingDefaults defaults, boolean buildSource) {
         NodeExpression nodeExpression = new NodeExpression(node);
         Map<String, Object> source = new HashMap<>();
 
-        if (null != properties) {
-            for (String s : properties.keySet()) {
-                Expression exp = getExpressionParser().parseExpression(properties.get(s));
-                source.put(s, exp.getValue(nodeExpression));
+        if (buildSource) {
+            if (null != properties) {
+                for (String s : properties.keySet()) {
+                    Expression exp = getExpressionParser().parseExpression(properties.get(s));
+                    source.put(s, exp.getValue(nodeExpression));
+                }
             }
-        }
 
-        if (defaults.includeRemainingProperties()) {
-            for (String s : node.getProperties().keySet()) {
-                source.put(s, node.getProperties().get(s));
+            if (defaults.includeRemainingProperties()) {
+                for (String s : node.getProperties().keySet()) {
+                    source.put(s, node.getProperties().get(s));
+                }
             }
         }
         String i = index != null ? index : defaults.getDefaultNodesIndex();
@@ -74,19 +80,25 @@ public class GraphDocumentMapper {
     }
 
     public DocumentRepresentation getDocumentRepresentation(RelationshipRepresentation relationship, DocumentMappingDefaults defaults) {
+        return getDocumentRepresentation(relationship, defaults, true);
+    }
+
+    public DocumentRepresentation getDocumentRepresentation(RelationshipRepresentation relationship, DocumentMappingDefaults defaults, boolean buildSource) {
         RelationshipExpression relationshipExpression = new RelationshipExpression(relationship);
         Map<String, Object> source = new HashMap<>();
 
-        if (null != properties) {
-            for (String s : properties.keySet()) {
-                Expression exp = getExpressionParser().parseExpression(properties.get(s));
-                source.put(s, exp.getValue(relationshipExpression));
+        if (buildSource) {
+            if (null != properties) {
+                for (String s : properties.keySet()) {
+                    Expression exp = getExpressionParser().parseExpression(properties.get(s));
+                    source.put(s, exp.getValue(relationshipExpression));
+                }
             }
-        }
 
-        if (defaults.includeRemainingProperties()) {
-            for (String s : relationship.getProperties().keySet()) {
-                source.put(s, relationship.getProperties().get(s));
+            if (defaults.includeRemainingProperties()) {
+                for (String s : relationship.getProperties().keySet()) {
+                    source.put(s, relationship.getProperties().get(s));
+                }
             }
         }
         String i = index != null ? index : defaults.getDefaultRelationshipsIndex();
