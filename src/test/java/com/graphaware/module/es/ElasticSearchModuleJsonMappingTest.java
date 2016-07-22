@@ -12,17 +12,18 @@ import com.graphaware.module.uuid.UuidModule;
 import com.graphaware.runtime.GraphAwareRuntime;
 import com.graphaware.runtime.GraphAwareRuntimeFactory;
 import io.searchbox.client.JestResult;
+import io.searchbox.core.Get;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.neo4j.graphdb.*;
+import org.neo4j.kernel.impl.core.NodeProxy;
 import org.neo4j.test.TestGraphDatabaseFactory;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleIntegrationTest {
 
@@ -240,6 +241,54 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         TestUtil.waitFor(1000);
         verifyNoEsReplicationForNodesWithLabel("Person", "females", "girls", mapping.getKeyProperty());
 
+
+    }
+
+    @Test
+    public void testDeleteNodesAreDeletedFromIndices() {
+        database = new TestGraphDatabaseFactory().newImpermanentDatabase();
+
+        GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database);
+        runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration().withUuidProperty("uuid"), database));
+
+        JsonFileMapping mapping = (JsonFileMapping) ServiceLoader.loadMapping("com.graphaware.module.es.mapping.JsonFileMapping");
+        Map<String, String> config = new HashMap<>();
+        config.put("file", "integration/mapping-advanced.json");
+        mapping.configure(config);
+
+        configuration = ElasticSearchConfiguration.defaultConfiguration()
+                .withMapping(mapping)
+                .withUri(HOST)
+                .withPort(PORT);
+
+        runtime.registerModule(new ElasticSearchModule("ES", new ElasticSearchWriter(configuration), configuration));
+
+        runtime.start();
+        runtime.waitUntilStarted();
+        database.execute("CREATE (n:Person {name:\"Person1\"}), (:Person {name:\"Person2\"})");
+        TestUtil.waitFor(1000);
+        List<String> ids = new ArrayList<>();
+        try (Transaction tx = database.beginTx()) {
+            Iterator<Node> nodes = database.findNodes(Label.label("Person"));
+            while (nodes.hasNext()) {
+                Node n = nodes.next();
+                ids.add(n.getProperty("uuid").toString());
+            }
+
+            tx.success();
+        }
+
+        verifyEsReplicationForNodeWithLabels("Person", ((JsonFileMapping) configuration.getMapping()).getMappingRepresentation().getDefaults().getDefaultNodesIndex(), "persons", configuration.getMapping().getKeyProperty());
+        database.execute("MATCH (n) DETACH DELETE n");
+        TestUtil.waitFor(1000);
+        for (String id : ids) {
+            String index = ((JsonFileMapping) configuration.getMapping()).getMappingRepresentation().getDefaults().getDefaultNodesIndex();
+            String type = "persons";
+            Get get = new Get.Builder(index, id).type(type).build();
+            JestResult result = esClient.execute(get);
+
+            assertTrue(!result.isSucceeded() || !((Boolean) result.getValue("found")));
+        }
 
     }
 

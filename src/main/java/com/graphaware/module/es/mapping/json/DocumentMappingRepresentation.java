@@ -116,6 +116,15 @@ public class DocumentMappingRepresentation {
         return actions;
     }
 
+    public List<BulkableAction<? extends JestResult>> getDeleteNodeActions(NodeRepresentation node) {
+        List<BulkableAction<? extends JestResult>> actions = new ArrayList<>();
+        for (DocumentRepresentation documentRepresentation : getNodeMappingRepresentations(node, defaults)) {
+            actions.add(new Delete.Builder(documentRepresentation.getId()).index(documentRepresentation.getIndex()).type(documentRepresentation.getType()).build());
+        }
+
+        return actions;
+    }
+
     private List<DocumentRepresentation> getNodeMappingRepresentations(NodeRepresentation nodeRepresentation, DocumentMappingDefaults defaults) {
         List<DocumentRepresentation> docs = new ArrayList<>();
         for (GraphDocumentMapper mapper : getNodeMappers()) {

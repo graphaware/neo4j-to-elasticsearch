@@ -51,12 +51,12 @@ public class JsonFileMapping implements Mapping {
                 NodeUpdated nodeUpdated = (NodeUpdated) operation;
                 return updateNode(nodeUpdated);
 
+            case NODE_DELETED:
+                return deleteNode(((NodeDeleted) operation).getDetails());
+
             case RELATIONSHIP_CREATED:
                 return createRelationship(((RelationshipCreated) operation).getDetails());
             /*
-
-            case NODE_DELETED:
-                return deleteNode(((NodeDeleted) operation).getDetails());
 
 
 
@@ -91,6 +91,10 @@ public class JsonFileMapping implements Mapping {
         }
 
         return mappingRepresentation.createOrUpdateNode(after);
+    }
+
+    protected List<BulkableAction<? extends JestResult>> deleteNode(NodeRepresentation node) {
+        return mappingRepresentation.getDeleteNodeActions(node);
     }
 
     @Override
