@@ -73,7 +73,7 @@ public class DocumentMappingRepresentation {
         for (GraphDocumentMapper mapping : relationshipMappers) {
             if (mapping.supports(relationship)) {
                 DocumentRepresentation action = mapping.getDocumentRepresentation(relationship, defaults);
-                if (action.getSource().isEmpty()) {
+                if (action.getSource().isEmpty() && defaults.excludeEmptyProperties()) {
                     continue;
                 }
                 try {
@@ -83,6 +83,19 @@ public class DocumentMappingRepresentation {
                     LOG.error("Error while creating json from action: " + relationship.toString(), ex);
                     throw new RuntimeException("Error while creating json from action: " + relationship.toString(), ex);
                 }
+            }
+        }
+
+        return actions;
+    }
+
+    public List<BulkableAction<? extends JestResult>> getDeleteRelationshipActions(RelationshipRepresentation relationship) {
+        List<BulkableAction<? extends JestResult>> actions = new ArrayList<>();
+
+        for (GraphDocumentMapper mapping : relationshipMappers) {
+            if (mapping.supports(relationship)) {
+                DocumentRepresentation action = mapping.getDocumentRepresentation(relationship, defaults);
+                actions.add(new Delete.Builder(action.getId()).index(action.getIndex()).type(action.getType()).build());
             }
         }
 

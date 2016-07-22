@@ -1,5 +1,6 @@
 package com.graphaware.module.es;
 
+import com.graphaware.common.policy.RelationshipInclusionPolicy;
 import com.graphaware.common.policy.all.IncludeAllRelationships;
 import com.graphaware.integration.es.test.EmbeddedElasticSearchServer;
 import com.graphaware.integration.es.test.JestElasticSearchClient;
@@ -289,6 +290,59 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
 
             assertTrue(!result.isSucceeded() || !((Boolean) result.getValue("found")));
         }
+
+    }
+
+    @Test
+    public void testDeletedRelationshipsAreDeletedFromIndices() {
+        database = new TestGraphDatabaseFactory().newImpermanentDatabase();
+
+        GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database);
+        runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration().withUuidProperty("uuid").with(IncludeAllRelationships.getInstance()), database));
+
+        JsonFileMapping mapping = (JsonFileMapping) ServiceLoader.loadMapping("com.graphaware.module.es.mapping.JsonFileMapping");
+        Map<String, String> config = new HashMap<>();
+        config.put("file", "integration/mapping-advanced.json");
+        mapping.configure(config);
+
+        configuration = ElasticSearchConfiguration.defaultConfiguration()
+                .withMapping(mapping)
+                .with(IncludeAllRelationships.getInstance())
+                .withUri(HOST)
+                .withPort(PORT);
+
+        runtime.registerModule(new ElasticSearchModule("ES", new ElasticSearchWriter(configuration), configuration));
+
+        runtime.start();
+        runtime.waitUntilStarted();
+        database.execute("CREATE (n:Person {name:\"Person1\"}), (n2:Person {name:\"Person2\"}), (n)-[:KNOWS]->(n2)");
+        TestUtil.waitFor(1500);
+        List<String> ids = new ArrayList<>();
+        try (Transaction tx = database.beginTx()) {
+            ResourceIterator<Relationship> rels = database.getAllRelationships().iterator();
+            while (rels.hasNext()) {
+                Relationship r = rels.next();
+                ids.add(r.getProperty("uuid").toString());
+                String index = ((JsonFileMapping) configuration.getMapping()).getMappingRepresentation().getDefaults().getDefaultRelationshipsIndex();
+                Get get = new Get.Builder(index, r.getProperty("uuid").toString()).type("knowers").build();
+                JestResult result = esClient.execute(get);
+                assertTrue(result.isSucceeded() || ((Boolean) result.getValue("found")));
+            }
+
+            tx.success();
+        }
+
+
+        database.execute("MATCH ()-[r]-() DELETE r");
+        TestUtil.waitFor(1500);
+
+        for (String id : ids) {
+            String index = ((JsonFileMapping) configuration.getMapping()).getMappingRepresentation().getDefaults().getDefaultRelationshipsIndex();
+            Get get = new Get.Builder(index, id).type("knowers").build();
+            JestResult result = esClient.execute(get);
+            assertTrue(!result.isSucceeded() || !((Boolean) result.getValue("found")));
+        }
+
 
     }
 

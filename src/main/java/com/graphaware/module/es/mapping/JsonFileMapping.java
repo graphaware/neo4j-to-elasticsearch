@@ -56,6 +56,9 @@ public class JsonFileMapping implements Mapping {
 
             case RELATIONSHIP_CREATED:
                 return createRelationship(((RelationshipCreated) operation).getDetails());
+
+            case RELATIONSHIP_DELETED:
+                return deleteRelationship(((RelationshipDeleted) operation).getDetails());
             /*
 
 
@@ -64,8 +67,7 @@ public class JsonFileMapping implements Mapping {
                 RelationshipUpdated relUpdated = (RelationshipUpdated) operation;
                 return updateRelationship(relUpdated.getDetails().getPrevious(), relUpdated.getDetails().getCurrent());
 
-            case RELATIONSHIP_DELETED:
-                return deleteRelationship(((RelationshipDeleted) operation).getDetails());
+
                 */
 
             default:
@@ -95,6 +97,10 @@ public class JsonFileMapping implements Mapping {
 
     protected List<BulkableAction<? extends JestResult>> deleteNode(NodeRepresentation node) {
         return mappingRepresentation.getDeleteNodeActions(node);
+    }
+
+    protected List<BulkableAction<? extends JestResult>> deleteRelationship(RelationshipRepresentation relationship) {
+        return mappingRepresentation.getDeleteRelationshipActions(relationship);
     }
 
     @Override

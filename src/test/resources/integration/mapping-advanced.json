@@ -4,7 +4,8 @@
     "nodes_index": "node-index",
     "relationships_index": "relationship-index",
     "include_remaining_properties": true,
-    "blacklisted_node_properties": ["password", "uuid"]
+    "blacklisted_node_properties": ["password", "uuid"],
+    "exclude_empty_properties": false
   },
   "node_mappings": [
     {
@@ -30,6 +31,12 @@
     {
       "condition": "hasLabel('Node')",
       "type": "nodes"
+    }
+  ],
+  "relationship_mappings": [
+    {
+      "condition": "hasType('KNOWS')",
+      "type": "knowers"
     }
   ]
 }

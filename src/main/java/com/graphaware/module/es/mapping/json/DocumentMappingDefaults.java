@@ -23,6 +23,9 @@ public class DocumentMappingDefaults {
     @JsonProperty("blacklisted_node_properties")
     private List<String> blacklistedNodeProperties;
 
+    @JsonProperty("exclude_empty_properties")
+    private boolean excludeEmptyProperties;
+
     public String getKeyProperty() {
         return keyProperty;
     }
@@ -41,5 +44,9 @@ public class DocumentMappingDefaults {
 
     public List<String> getBlacklistedNodeProperties() {
         return blacklistedNodeProperties;
+    }
+
+    public boolean excludeEmptyProperties() {
+        return excludeEmptyProperties;
     }
 }
