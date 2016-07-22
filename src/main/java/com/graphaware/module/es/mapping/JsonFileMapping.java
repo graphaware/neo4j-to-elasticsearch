@@ -2,7 +2,8 @@ package com.graphaware.module.es.mapping;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphaware.common.representation.NodeRepresentation;
-import com.graphaware.module.es.mapping.json.Definition;
+import com.graphaware.common.representation.RelationshipRepresentation;
+import com.graphaware.module.es.mapping.json.DocumentMappingRepresentation;
 import com.graphaware.writer.thirdparty.*;
 import io.searchbox.action.BulkableAction;
 import io.searchbox.client.JestClient;
@@ -12,8 +13,6 @@ import org.springframework.core.io.ClassPathResource;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -23,8 +22,8 @@ public class JsonFileMapping implements Mapping {
 
     private static final String DEFAULT_KEY_PROPERTY = "uuid";
     private static final String FILE_PATH_KEY = "file";
-    
-    private Definition definition;
+
+    private DocumentMappingRepresentation mappingRepresentation;
 
     protected String keyProperty;
 
@@ -35,14 +34,14 @@ public class JsonFileMapping implements Mapping {
         }
         try {
             String file = new ClassPathResource(config.get("file")).getFile().getAbsolutePath();
-            definition = new ObjectMapper().readValue(new File(file), Definition.class);
+            mappingRepresentation = new ObjectMapper().readValue(new File(file), DocumentMappingRepresentation.class);
         } catch (IOException e) {
             throw new RuntimeException("Unable to read json mapping file", e);
         }
     }
 
-    public Definition getDefinition() {
-        return definition;
+    public DocumentMappingRepresentation getMappingRepresentation() {
+        return mappingRepresentation;
     }
 
     @Override
@@ -56,7 +55,7 @@ public class JsonFileMapping implements Mapping {
                 return updateNode(nodeUpdated);
 
             case RELATIONSHIP_CREATED:
-                return definition.createOrUpdateRelationship(((RelationshipCreated) operation).getDetails());
+                return createRelationship(((RelationshipCreated) operation).getDetails());
             /*
 
             case NODE_DELETED:
@@ -79,14 +78,18 @@ public class JsonFileMapping implements Mapping {
     }
 
     protected List<BulkableAction<? extends JestResult>> createNode(NodeRepresentation node) {
-        return definition.createOrUpdateNode(node);
+        return mappingRepresentation.createOrUpdateNode(node);
+    }
+    
+    protected List<BulkableAction<? extends JestResult>> createRelationship(RelationshipRepresentation relationship) {
+        return mappingRepresentation.createOrUpdateRelationship(relationship);
     }
 
     protected List<BulkableAction<? extends JestResult>> updateNode(NodeUpdated nodeUpdated) {
         NodeRepresentation before = nodeUpdated.getDetails().getPrevious();
         NodeRepresentation after = nodeUpdated.getDetails().getCurrent();
         List<BulkableAction<? extends JestResult>> actions = new ArrayList<>();
-        actions.addAll(definition.createOrUpdateNode(after));
+        actions.addAll(mappingRepresentation.createOrUpdateNode(after));
 
         return actions;
     }
@@ -103,6 +106,6 @@ public class JsonFileMapping implements Mapping {
 
     @Override
     public String getKeyProperty() {
-        return definition.getDefaults().getKeyProperty() != null ? definition.getDefaults().getKeyProperty() : DEFAULT_KEY_PROPERTY;
+        return mappingRepresentation.getDefaults().getKeyProperty() != null ? mappingRepresentation.getDefaults().getKeyProperty() : DEFAULT_KEY_PROPERTY;
     }
 }

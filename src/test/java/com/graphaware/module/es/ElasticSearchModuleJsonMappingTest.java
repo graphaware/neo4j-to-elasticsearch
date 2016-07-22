@@ -59,8 +59,8 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
                 .withPort(PORT);
 
         assertEquals("uuid", configuration.getMapping().getKeyProperty());
-        assertEquals("default-index-node", ((JsonFileMapping)configuration.getMapping()).getDefinition().getDefaults().getDefaultNodesIndex());
-        assertEquals("default-index-relationship", ((JsonFileMapping)configuration.getMapping()).getDefinition().getDefaults().getDefaultRelationshipsIndex());
+        assertEquals("default-index-node", ((JsonFileMapping)configuration.getMapping()).getMappingRepresentation().getDefaults().getDefaultNodesIndex());
+        assertEquals("default-index-relationship", ((JsonFileMapping)configuration.getMapping()).getMappingRepresentation().getDefaults().getDefaultRelationshipsIndex());
     }
 
     @Test
@@ -88,10 +88,10 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
 
         writeSomePersons();
         TestUtil.waitFor(500);
-        verifyEsReplicationForNodeWithLabels("Person", mapping.getDefinition().getDefaults().getDefaultNodesIndex(), "persons", mapping.getDefinition().getDefaults().getKeyProperty());
+        verifyEsReplicationForNodeWithLabels("Person", mapping.getMappingRepresentation().getDefaults().getDefaultNodesIndex(), "persons", mapping.getMappingRepresentation().getDefaults().getKeyProperty());
         try (Transaction tx = database.beginTx()) {
             database.getAllRelationships().stream().forEach(r -> {
-                new Neo4jElasticVerifier(database, configuration, esClient).verifyEsReplication(r, mapping.getDefinition().getDefaults().getDefaultRelationshipsIndex(), "workers", mapping.getKeyProperty());
+                new Neo4jElasticVerifier(database, configuration, esClient).verifyEsReplication(r, mapping.getMappingRepresentation().getDefaults().getDefaultRelationshipsIndex(), "workers", mapping.getKeyProperty());
             });
             tx.success();
         }
@@ -126,7 +126,7 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
                 new Neo4jElasticVerifier(database, configuration, esClient).verifyEsReplication(n, "females", "girls", mapping.getKeyProperty());
             });
             database.findNodes(Label.label("Person")).stream().forEach(n -> {
-                new Neo4jElasticVerifier(database, configuration, esClient).verifyEsReplication(n, mapping.getDefinition().getDefaults().getDefaultNodesIndex(), "persons", mapping.getKeyProperty());
+                new Neo4jElasticVerifier(database, configuration, esClient).verifyEsReplication(n, mapping.getMappingRepresentation().getDefaults().getDefaultNodesIndex(), "persons", mapping.getKeyProperty());
             });
             tx.success();
         }
@@ -162,7 +162,7 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
                 return labelsToStrings(n).size() == 0;
             })
                     .forEach(n -> {
-                        new Neo4jElasticVerifier(database, configuration, esClient).verifyEsReplication(n, mapping.getDefinition().getDefaults().getDefaultNodesIndex(), "nodes-without-labels", mapping.getKeyProperty());
+                        new Neo4jElasticVerifier(database, configuration, esClient).verifyEsReplication(n, mapping.getMappingRepresentation().getDefaults().getDefaultNodesIndex(), "nodes-without-labels", mapping.getKeyProperty());
                     });
             tx.success();
         }
@@ -193,7 +193,7 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         TestUtil.waitFor(1000);
         try (Transaction tx = database.beginTx()) {
             database.findNodes(Label.label("Node")).stream().forEach(n -> {
-                JestResult result = new Neo4jElasticVerifier(database, configuration, esClient).verifyEsReplication(n, mapping.getDefinition().getDefaults().getDefaultNodesIndex(), "nodes", mapping.getKeyProperty());
+                JestResult result = new Neo4jElasticVerifier(database, configuration, esClient).verifyEsReplication(n, mapping.getMappingRepresentation().getDefaults().getDefaultNodesIndex(), "nodes", mapping.getKeyProperty());
                 Map<String, Object> source = new HashMap<>();
                 List<String> types = (List<String>) result.getSourceAsObject(source.getClass()).get("types");
                 assertEquals(3, types.size());
