@@ -160,6 +160,33 @@ For indexing nodes without labels, you verify the length of the labels array in 
 }
 ```
 
+### Indexing all nodes and relationships :
+
+There are two expression helpers for this kind of usage, respectively `allNodes()` and `allRelationships()` :
+
+```json
+{
+  "defaults": {
+    "key_property": "uuid",
+    "nodes_index": "default-index-node",
+    "relationships_index": "default-index-relationship",
+    "include_remaining_properties": true
+  },
+  "node_mappings": [
+    {
+      "condition": "allNodes()",
+      "type": "nodes"
+    }
+  ],
+  "relationship_mappings": [
+    {
+      "condition": "allRelationships()",
+      "type": "relationships"
+    }
+  ]
+}
+```
+
 ### Dynamic index names
 
 You can use expressions also for defining the name of the index, for example if you want to have index names based

@@ -1,6 +1,5 @@
 package com.graphaware.module.es;
 
-import com.graphaware.common.policy.RelationshipInclusionPolicy;
 import com.graphaware.common.policy.all.IncludeAllRelationships;
 import com.graphaware.integration.es.test.EmbeddedElasticSearchServer;
 import com.graphaware.integration.es.test.JestElasticSearchClient;
@@ -18,7 +17,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.neo4j.graphdb.*;
-import org.neo4j.kernel.impl.core.NodeProxy;
 import org.neo4j.test.TestGraphDatabaseFactory;
 
 import java.util.*;
@@ -379,6 +377,97 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
                 System.out.println(result.getJsonString());
                 assertTrue(result.isSucceeded() && ((Boolean) result.getValue("found")));
             });
+            tx.success();
+        }
+    }
+
+    @Test
+    public void testBlacklistedPropertiesAreNotIndexed() {
+        database = new TestGraphDatabaseFactory().newImpermanentDatabase();
+
+        GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database);
+        runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration().withUuidProperty("uuid").with(IncludeAllRelationships.getInstance()), database));
+
+        JsonFileMapping mapping = (JsonFileMapping) ServiceLoader.loadMapping("com.graphaware.module.es.mapping.JsonFileMapping");
+        Map<String, String> config = new HashMap<>();
+        config.put("file", "integration/mapping-advanced.json");
+        mapping.configure(config);
+
+        configuration = ElasticSearchConfiguration.defaultConfiguration()
+                .withMapping(mapping)
+                .with(IncludeAllRelationships.getInstance())
+                .withUri(HOST)
+                .withPort(PORT);
+
+        runtime.registerModule(new ElasticSearchModule("ES", new ElasticSearchWriter(configuration), configuration));
+
+        runtime.start();
+        runtime.waitUntilStarted();
+        database.execute("CREATE (n:User {login: 'ikwattro', password:'s3cr3t'})-[:WORKS_AT {since:'2014-11-15'}]->(c:Company {name:'GraphAware'})");
+        TestUtil.waitFor(1500);
+
+        try (Transaction tx = database.beginTx()) {
+            database.findNodes(Label.label("User")).stream().forEach(n -> {
+                Get get = new Get.Builder("node-index", n.getProperty("uuid").toString()).type("users").build();
+                JestResult result = esClient.execute(get);
+                System.out.println(result.getJsonString());
+
+                assertTrue(!result.getSourceAsObject(new HashMap<String, Object>().getClass()).containsKey("password"));
+                assertTrue(result.getSourceAsObject(new HashMap<String, Object>().getClass()).containsKey("login"));
+            });
+
+            database.getAllRelationships().stream().forEach(r -> {
+                Get get = new Get.Builder("relationship-index", r.getProperty("uuid").toString()).type("workers").build();
+                JestResult result = esClient.execute(get);
+                System.out.println(result.getJsonString());
+                assertTrue(result.isSucceeded());
+                assertTrue(!result.getSourceAsObject(new HashMap<String, Object>().getClass()).containsKey("uuid"));
+                assertTrue(result.getSourceAsObject(new HashMap<String, Object>().getClass()).containsKey("since"));
+            });
+
+            tx.success();
+        }
+    }
+
+    @Test
+    public void testIndexWithAllNodesAndAllRelsExpression() {
+        database = new TestGraphDatabaseFactory().newImpermanentDatabase();
+
+        GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database);
+        runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration().withUuidProperty("uuid").with(IncludeAllRelationships.getInstance()), database));
+
+        JsonFileMapping mapping = (JsonFileMapping) ServiceLoader.loadMapping("com.graphaware.module.es.mapping.JsonFileMapping");
+        Map<String, String> config = new HashMap<>();
+        config.put("file", "integration/mapping-all.json");
+        mapping.configure(config);
+
+        configuration = ElasticSearchConfiguration.defaultConfiguration()
+                .withMapping(mapping)
+                .with(IncludeAllRelationships.getInstance())
+                .withUri(HOST)
+                .withPort(PORT);
+
+        runtime.registerModule(new ElasticSearchModule("ES", new ElasticSearchWriter(configuration), configuration));
+
+        runtime.start();
+        runtime.waitUntilStarted();
+        database.execute("CREATE (n:User {login: 'ikwattro', password:'s3cr3t'})-[:WORKS_AT {since:'2014-11-15'}]->(c:Company {name:'GraphAware'})");
+        TestUtil.waitFor(1500);
+
+        try (Transaction tx = database.beginTx()) {
+            database.findNodes(Label.label("User")).stream().forEach(n -> {
+                Get get = new Get.Builder("default-index-node", n.getProperty("uuid").toString()).type("nodes").build();
+                JestResult result = esClient.execute(get);
+                assertTrue(result.isSucceeded());
+
+            });
+
+            database.getAllRelationships().stream().forEach(r -> {
+                Get get = new Get.Builder("default-index-relationship", r.getProperty("uuid").toString()).type("relationships").build();
+                JestResult result = esClient.execute(get);
+                assertTrue(result.isSucceeded());
+            });
+
             tx.success();
         }
     }

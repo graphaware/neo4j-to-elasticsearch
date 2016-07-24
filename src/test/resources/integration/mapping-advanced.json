@@ -4,7 +4,8 @@
     "nodes_index": "node-index",
     "relationships_index": "relationship-index",
     "include_remaining_properties": true,
-    "blacklisted_node_properties": ["password", "uuid"],
+    "blacklisted_node_properties": ["password"],
+    "blacklisted_relationship_properties": ["uuid"],
     "exclude_empty_properties": false
   },
   "node_mappings": [
@@ -36,12 +37,20 @@
       "condition": "hasLabel('Tweet')",
       "index": "('tweets-' + formatTime('timestamp','YYYY-MM-dd')).replaceAll('-','_')",
       "type": "tweets"
+    },
+    {
+      "condition": "hasLabel('User')",
+      "type": "users"
     }
   ],
   "relationship_mappings": [
     {
       "condition": "hasType('KNOWS')",
       "type": "knowers"
+    },
+    {
+      "condition": "hasType('WORKS_AT')",
+      "type": "workers"
     }
   ]
 }

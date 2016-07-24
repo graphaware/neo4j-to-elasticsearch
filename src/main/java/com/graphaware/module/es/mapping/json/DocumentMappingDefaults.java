@@ -2,11 +2,13 @@ package com.graphaware.module.es.mapping.json;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class DocumentMappingDefaults {
 
     private static final boolean DEFAULT_INCLUDE_REMAINING = true;
+    private static final List<String> DEFAULT_BLACKLIST = new ArrayList<>();
 
     @JsonProperty("key_property")
     private String keyProperty;
@@ -22,6 +24,9 @@ public class DocumentMappingDefaults {
 
     @JsonProperty("blacklisted_node_properties")
     private List<String> blacklistedNodeProperties;
+
+    @JsonProperty("blacklisted_relationship_properties")
+    private List<String> blacklistedRelationshipProperties;
 
     @JsonProperty("exclude_empty_properties")
     private boolean excludeEmptyProperties;
@@ -43,7 +48,11 @@ public class DocumentMappingDefaults {
     }
 
     public List<String> getBlacklistedNodeProperties() {
-        return blacklistedNodeProperties;
+        return null != blacklistedNodeProperties ? blacklistedNodeProperties : DEFAULT_BLACKLIST;
+    }
+
+    public List<String> getBlacklistedRelationshipProperties() {
+        return null != blacklistedNodeProperties ? blacklistedNodeProperties : DEFAULT_BLACKLIST;
     }
 
     public boolean excludeEmptyProperties() {

@@ -12,6 +12,10 @@ public class RelationshipExpression extends PropertyContainerExpression {
         return getRelationship().getType().equals(type);
     }
 
+    public boolean allRelationships() {
+        return true;
+    }
+
     private RelationshipRepresentation getRelationship() {
         return (RelationshipRepresentation) propertyContainer;
     }

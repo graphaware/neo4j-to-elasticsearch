@@ -49,7 +49,6 @@ public class DocumentMappingRepresentation {
 
         for (GraphDocumentMapper mapper : nodeMappers) {
             if (mapper.supports(node)) {
-
                 try {
                     DocumentRepresentation action = mapper.getDocumentRepresentation(node, defaults);
                     if (action.getSource().keySet().isEmpty()) {

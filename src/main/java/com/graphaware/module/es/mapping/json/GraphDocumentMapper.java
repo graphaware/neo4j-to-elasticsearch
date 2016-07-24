@@ -76,7 +76,9 @@ public class GraphDocumentMapper {
 
             if (defaults.includeRemainingProperties()) {
                 for (String s : node.getProperties().keySet()) {
-                    source.put(s, node.getProperties().get(s));
+                    if (!defaults.getBlacklistedNodeProperties().contains(s)) {
+                        source.put(s, node.getProperties().get(s));
+                    }
                 }
             }
         }
@@ -117,7 +119,9 @@ public class GraphDocumentMapper {
 
             if (defaults.includeRemainingProperties()) {
                 for (String s : relationship.getProperties().keySet()) {
-                    source.put(s, relationship.getProperties().get(s));
+                    if (!defaults.getBlacklistedRelationshipProperties().contains(s)) {
+                        source.put(s, relationship.getProperties().get(s));
+                    }
                 }
             }
         }

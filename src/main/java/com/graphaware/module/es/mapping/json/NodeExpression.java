@@ -22,4 +22,8 @@ public class NodeExpression extends PropertyContainerExpression {
         return ((NodeRepresentation) propertyContainer).getLabels();
     }
 
+    public boolean allNodes() {
+        return true;
+    }
+
 }
