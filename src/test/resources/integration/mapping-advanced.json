@@ -34,7 +34,7 @@
     },
     {
       "condition": "hasLabel('Tweet')",
-      "index": "('tweets-' + formatTime('timestamp','YYYY-MM-dd')).replaceAll('-','_')",
+      "index": "'tweets-' + formatTime('timestamp','YYYY-MM-dd')",
       "type": "tweets"
     }
   ],
