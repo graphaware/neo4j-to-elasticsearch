@@ -346,6 +346,43 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
 
     }
 
+    @Test
+    public void testTimeBasedIndex() {
+        database = new TestGraphDatabaseFactory().newImpermanentDatabase();
+
+        GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database);
+        runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration().withUuidProperty("uuid").with(IncludeAllRelationships.getInstance()), database));
+
+        JsonFileMapping mapping = (JsonFileMapping) ServiceLoader.loadMapping("com.graphaware.module.es.mapping.JsonFileMapping");
+        Map<String, String> config = new HashMap<>();
+        config.put("file", "integration/mapping-advanced.json");
+        mapping.configure(config);
+
+        configuration = ElasticSearchConfiguration.defaultConfiguration()
+                .withMapping(mapping)
+                .with(IncludeAllRelationships.getInstance())
+                .withUri(HOST)
+                .withPort(PORT);
+
+        runtime.registerModule(new ElasticSearchModule("ES", new ElasticSearchWriter(configuration), configuration));
+
+        runtime.start();
+        runtime.waitUntilStarted();
+        Long ts = 1469369250000L; // 07/24/2016 @ 2:07pm (UTC)
+        database.execute("CREATE (n:Tweet {timestamp: " + ts + "})");
+        TestUtil.waitFor(1500);
+
+        try (Transaction tx = database.beginTx()) {
+            database.findNodes(Label.label("Tweet")).stream().forEach(n -> {
+                Get get = new Get.Builder("tweets_2016_07_24", n.getProperty("uuid").toString()).type("tweets").build();
+                JestResult result = esClient.execute(get);
+                System.out.println(result.getJsonString());
+                assertTrue(result.isSucceeded() && ((Boolean) result.getValue("found")));
+            });
+            tx.success();
+        }
+    }
+
     protected void verifyEsReplicationForNodeWithLabels(String label, String index, String type, String keyProperty) {
         try (Transaction tx = database.beginTx()) {
             database.findNodes(Label.label(label)).stream().forEach(n -> {

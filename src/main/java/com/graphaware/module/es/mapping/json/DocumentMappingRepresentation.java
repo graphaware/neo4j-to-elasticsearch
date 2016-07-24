@@ -49,18 +49,25 @@ public class DocumentMappingRepresentation {
 
         for (GraphDocumentMapper mapper : nodeMappers) {
             if (mapper.supports(node)) {
-                DocumentRepresentation action = mapper.getDocumentRepresentation(node, defaults);
-                if (action.getSource().keySet().isEmpty()) {
-                    continue;
-                }
 
                 try {
-                    String source = om.writeValueAsString(action.getSource());
-                    actions.add(new Index.Builder(source).index(action.getIndex()).type(action.getType()).id(action.getId()).build());
-                } catch (IOException ex) {
-                    LOG.error("Error while creating json from action: " + node.toString(), ex);
-                    throw new RuntimeException("Error while creating json from action: " + node.toString(), ex);
-                }                
+                    DocumentRepresentation action = mapper.getDocumentRepresentation(node, defaults);
+                    if (action.getSource().keySet().isEmpty()) {
+                        continue;
+                    }
+                    try {
+                        String source = om.writeValueAsString(action.getSource());
+                        actions.add(new Index.Builder(source).index(action.getIndex()).type(action.getType()).id(action.getId()).build());
+                    } catch (IOException ex) {
+                        LOG.error("Error while creating json from action: " + node.toString(), ex);
+                        // @// TODO: 24/07/16  Should we really throw the exception here, instead of silently logging and failing 
+                        //throw new RuntimeException("Error while creating json from action: " + node.toString(), ex);
+                    }
+                } catch (Exception e) {
+                    LOG.error(e.getMessage());
+                }
+
+
             }
         }
 
@@ -72,16 +79,21 @@ public class DocumentMappingRepresentation {
 
         for (GraphDocumentMapper mapping : relationshipMappers) {
             if (mapping.supports(relationship)) {
-                DocumentRepresentation action = mapping.getDocumentRepresentation(relationship, defaults);
-                if (action.getSource().isEmpty() && defaults.excludeEmptyProperties()) {
-                    continue;
-                }
                 try {
-                    String source = om.writeValueAsString(action.getSource());
-                    actions.add(new Index.Builder(source).index(action.getIndex()).type(action.getType()).id(action.getId()).build());
-                } catch (IOException ex) {
-                    LOG.error("Error while creating json from action: " + relationship.toString(), ex);
-                    throw new RuntimeException("Error while creating json from action: " + relationship.toString(), ex);
+                    DocumentRepresentation action = mapping.getDocumentRepresentation(relationship, defaults);
+                    if (action.getSource().isEmpty() && defaults.excludeEmptyProperties()) {
+                        continue;
+                    }
+                    try {
+                        String source = om.writeValueAsString(action.getSource());
+                        actions.add(new Index.Builder(source).index(action.getIndex()).type(action.getType()).id(action.getId()).build());
+                    } catch (IOException ex) {
+                        LOG.error("Error while creating json from action: " + relationship.toString(), ex);
+                        // @// TODO: 24/07/16 Same as above
+                        // throw new RuntimeException("Error while creating json from action: " + relationship.toString(), ex);
+                    }
+                } catch (Exception e) {
+                    LOG.error(e.getMessage());
                 }
             }
         }
@@ -94,8 +106,12 @@ public class DocumentMappingRepresentation {
 
         for (GraphDocumentMapper mapping : relationshipMappers) {
             if (mapping.supports(relationship)) {
-                DocumentRepresentation action = mapping.getDocumentRepresentation(relationship, defaults);
-                actions.add(new Delete.Builder(action.getId()).index(action.getIndex()).type(action.getType()).build());
+                try {
+                    DocumentRepresentation action = mapping.getDocumentRepresentation(relationship, defaults);
+                    actions.add(new Delete.Builder(action.getId()).index(action.getIndex()).type(action.getType()).build());
+                } catch (Exception e) {
+                    LOG.error(e.getMessage());
+                }
             }
         }
 
@@ -142,8 +158,12 @@ public class DocumentMappingRepresentation {
         List<DocumentRepresentation> docs = new ArrayList<>();
         for (GraphDocumentMapper mapper : getNodeMappers()) {
             if (mapper.supports(nodeRepresentation)) {
-                DocumentRepresentation representation = mapper.getDocumentRepresentation(nodeRepresentation, defaults);
-                docs.add(representation);
+                try {
+                    DocumentRepresentation representation = mapper.getDocumentRepresentation(nodeRepresentation, defaults);
+                    docs.add(representation);
+                } catch (Exception e) {
+                    LOG.error(e.getMessage());
+                }
             }
         }
 

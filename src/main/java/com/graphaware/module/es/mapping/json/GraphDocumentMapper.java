@@ -1,8 +1,10 @@
 package com.graphaware.module.es.mapping.json;
 
+import com.graphaware.common.log.LoggerFactory;
 import com.graphaware.common.representation.NodeRepresentation;
 import com.graphaware.common.representation.PropertyContainerRepresentation;
 import com.graphaware.common.representation.RelationshipRepresentation;
+import org.neo4j.logging.Log;
 import org.springframework.expression.Expression;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 
@@ -10,6 +12,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class GraphDocumentMapper {
+
+    private static final Log LOG = LoggerFactory.getLogger(GraphDocumentMapper.class);
 
     private String condition;
 
@@ -59,6 +63,8 @@ public class GraphDocumentMapper {
     public DocumentRepresentation getDocumentRepresentation(NodeRepresentation node, DocumentMappingDefaults defaults, boolean buildSource) {
         NodeExpression nodeExpression = new NodeExpression(node);
         Map<String, Object> source = new HashMap<>();
+        String i = getIndex(nodeExpression, defaults.getDefaultNodesIndex());
+        String id = node.getProperties().get(defaults.getKeyProperty()).toString();
 
         if (buildSource) {
             if (null != properties) {
@@ -74,9 +80,23 @@ public class GraphDocumentMapper {
                 }
             }
         }
-        String i = index != null ? index : defaults.getDefaultNodesIndex();
-        String id = node.getProperties().get(defaults.getKeyProperty()).toString();
         return new DocumentRepresentation(i, getType(), id, source);
+    }
+
+    protected String getIndex(PropertyContainerExpression expression, String defaultIndex)
+    {
+        String i = index != null ? index : defaultIndex;
+        if (i.contains("(") && i.contains(")")) {
+            Expression indexExpression = getExpressionParser().parseExpression(i);
+            i = indexExpression.getValue(expression).toString();
+        }
+
+        if (i == null || i.equals("")) {
+            LOG.error("Unable to build index name");
+            throw new RuntimeException("Unable to build index name");
+        }
+
+        return i;
     }
 
     public DocumentRepresentation getDocumentRepresentation(RelationshipRepresentation relationship, DocumentMappingDefaults defaults) {
@@ -101,7 +121,7 @@ public class GraphDocumentMapper {
                 }
             }
         }
-        String i = index != null ? index : defaults.getDefaultRelationshipsIndex();
+        String i = getIndex(relationshipExpression, defaults.getDefaultRelationshipsIndex());
         String id = relationship.getProperties().get(defaults.getKeyProperty()).toString();
         return new DocumentRepresentation(i, getType(), id, source);
 

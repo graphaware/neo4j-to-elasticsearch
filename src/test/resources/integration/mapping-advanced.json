@@ -31,6 +31,11 @@
     {
       "condition": "hasLabel('Node')",
       "type": "nodes"
+    },
+    {
+      "condition": "hasLabel('Tweet')",
+      "index": "('tweets-' + formatTime('timestamp','YYYY-MM-dd')).replaceAll('-','_')",
+      "type": "tweets"
     }
   ],
   "relationship_mappings": [
