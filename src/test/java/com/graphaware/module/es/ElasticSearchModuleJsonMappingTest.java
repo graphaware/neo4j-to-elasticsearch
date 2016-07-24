@@ -412,8 +412,8 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
                 JestResult result = esClient.execute(get);
                 System.out.println(result.getJsonString());
 
-                assertTrue(!result.getSourceAsObject(new HashMap<String, Object>().getClass()).containsKey("password"));
-                assertTrue(result.getSourceAsObject(new HashMap<String, Object>().getClass()).containsKey("login"));
+                assertTrue(!result.getSourceAsObject(Map.class).containsKey("password"));
+                assertTrue(result.getSourceAsObject(Map.class).containsKey("login"));
             });
 
             database.getAllRelationships().stream().forEach(r -> {
@@ -421,8 +421,8 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
                 JestResult result = esClient.execute(get);
                 System.out.println(result.getJsonString());
                 assertTrue(result.isSucceeded());
-                assertTrue(!result.getSourceAsObject(new HashMap<String, Object>().getClass()).containsKey("uuid"));
-                assertTrue(result.getSourceAsObject(new HashMap<String, Object>().getClass()).containsKey("since"));
+                assertTrue(!result.getSourceAsObject(Map.class).containsKey("uuid"));
+                assertTrue(result.getSourceAsObject(Map.class).containsKey("since"));
             });
 
             tx.success();
