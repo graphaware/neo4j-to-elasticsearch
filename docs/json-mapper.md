@@ -176,7 +176,7 @@ on the value of a property, you can use the following as example :
 Or for time based indices, a helper method can be used for converting a node/relationship property timestamp to a formatted
 date string :
 
-```
+```json
 {
       "condition": "hasLabel('Tweet')",
       "index": "'tweets-' + formatTime('timestamp','YYYY-MM-dd')",
@@ -188,7 +188,7 @@ Note that the time **must** be in milliseconds. `'timestamp'` argument represent
 
 A third argument can be used for defining the timezone :
 
-```
+```json
 {
       "condition": "hasLabel('Tweet')",
       "index": "'tweets-' + formatTime('timestamp','YYYY-MM-dd', 'GMT+10')",
