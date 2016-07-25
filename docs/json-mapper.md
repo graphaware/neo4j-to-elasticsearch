@@ -223,5 +223,38 @@ A third argument can be used for defining the timezone :
 }
 ```
 
+### Blacklisting properties
+
+Sometimes you may want to not index some properties of nodes or relationships, like `password` or any other sensitive data.
+
+You can predefine a list of blacklisted node / relationship property keys that shouldn't be indexed, example :
+
+```json
+{
+  "defaults": {
+    "key_property": "uuid",
+    "nodes_index": "node-index",
+    "relationships_index": "relationship-index",
+    "include_remaining_properties": true,
+    "blacklisted_node_properties": ["password"],
+    "blacklisted_relationship_properties": ["uuid"],
+    "exclude_empty_properties": false
+  },
+  "node_mappings": [
+    {
+      "condition": "hasLabel('Person')",
+      "type": "persons",
+      "properties": {
+        "name": "getProperty('firstName') + ' ' + getProperty('lastName')",
+        "labels": "getLabels()"
+      }
+    }
+  ]
+}
+```
+
+With the above configuration, passwords will never be included in the json source of the ES documents neither the
+relationship uuid properties.
+
 
 
