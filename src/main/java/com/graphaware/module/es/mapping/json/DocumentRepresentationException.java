@@ -13,24 +13,12 @@
  */
 package com.graphaware.module.es.mapping.json;
 
-import com.graphaware.common.representation.RelationshipRepresentation;
+import java.io.IOException;
+import java.util.Map;
 
-public class RelationshipExpression extends PropertyContainerExpression {
-
-    public RelationshipExpression(RelationshipRepresentation relationship) {
-        super(relationship);
+public class DocumentRepresentationException extends IOException {
+    
+    public DocumentRepresentationException(Map<String, Object> source, IOException ex) {
+        super("Error while creating json from action: " + source, ex);
     }
-
-    public boolean hasType(String type) {
-        return getRelationship().getType().equals(type);
-    }
-
-    public boolean allRelationships() {
-        return true;
-    }
-
-    private RelationshipRepresentation getRelationship() {
-        return (RelationshipRepresentation) propertyContainer;
-    }
-
 }

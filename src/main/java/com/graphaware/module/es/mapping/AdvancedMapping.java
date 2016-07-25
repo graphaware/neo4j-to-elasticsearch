@@ -66,7 +66,7 @@ public class AdvancedMapping extends DefaultMapping {
     }
     
     protected void addExtra(Map<String, Object> data, RelationshipRepresentation relationship) {
-        data.put(RELATIONSHIP_FIELD,  new ArrayList<>(Arrays.asList(relationship.getType())));
+        data.put(RELATIONSHIP_FIELD,  relationship.getType());
     }
 
 }

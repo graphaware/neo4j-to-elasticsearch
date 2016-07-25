@@ -1,3 +1,16 @@
+/*
+ * Copyright (c) 2013-2016 GraphAware
+ *
+ * This file is part of the GraphAware Framework.
+ *
+ * GraphAware Framework is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 package com.graphaware.module.es.mapping.json;
 
 
@@ -9,21 +22,15 @@ import io.searchbox.action.BulkableAction;
 import io.searchbox.client.JestResult;
 import io.searchbox.core.Delete;
 import io.searchbox.core.Index;
-import org.codehaus.jackson.map.ObjectMapper;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.neo4j.graphdb.Node;
 import org.neo4j.logging.Log;
 
 public class DocumentMappingRepresentation {
 
     private static final Log LOG = LoggerFactory.getLogger(DocumentMappingRepresentation.class);
     
-    private static final ObjectMapper om = new ObjectMapper();
-
     private DocumentMappingDefaults defaults;
 
     @JsonProperty("node_mappings")
@@ -51,18 +58,11 @@ public class DocumentMappingRepresentation {
             if (mapper.supports(node)) {
                 try {
                     DocumentRepresentation action = mapper.getDocumentRepresentation(node, defaults);
-                    try {
-                        String source = om.writeValueAsString(action.getSource());
-                        actions.add(new Index.Builder(source).index(action.getIndex()).type(action.getType()).id(action.getId()).build());
-                    } catch (IOException ex) {
-                        LOG.error("Error while creating json from action: " + node.toString(), ex);
-                        // @// TODO: 24/07/16  Should we really throw the exception here, instead of silently logging and failing 
-                        //throw new RuntimeException("Error while creating json from action: " + node.toString(), ex);
-                    }
+                    String json = action.getJson();
+                    actions.add(new Index.Builder(json).index(action.getIndex()).type(action.getType()).id(action.getId()).build());
                 } catch (Exception e) {
-                    LOG.error(e.getMessage());
+                    LOG.error("Error while creating or updating node", e);
                 }
-
 
             }
         }
@@ -77,16 +77,10 @@ public class DocumentMappingRepresentation {
             if (mapping.supports(relationship)) {
                 try {
                     DocumentRepresentation action = mapping.getDocumentRepresentation(relationship, defaults);
-                    try {
-                        String source = om.writeValueAsString(action.getSource());
-                        actions.add(new Index.Builder(source).index(action.getIndex()).type(action.getType()).id(action.getId()).build());
-                    } catch (IOException ex) {
-                        LOG.error("Error while creating json from action: " + relationship.toString(), ex);
-                        // @// TODO: 24/07/16 Same as above
-                        // throw new RuntimeException("Error while creating json from action: " + relationship.toString(), ex);
-                    }
+                    String json = action.getJson();
+                    actions.add(new Index.Builder(json).index(action.getIndex()).type(action.getType()).id(action.getId()).build());
                 } catch (Exception e) {
-                    LOG.error(e.getMessage());
+                    LOG.error("Error while creating relationship: " + relationship.toString(), e);
                 }
             }
         }
@@ -103,7 +97,7 @@ public class DocumentMappingRepresentation {
                     DocumentRepresentation action = mapping.getDocumentRepresentation(relationship, defaults);
                     actions.add(new Delete.Builder(action.getId()).index(action.getIndex()).type(action.getType()).build());
                 } catch (Exception e) {
-                    LOG.error(e.getMessage());
+                    LOG.error("Error while deleting relationship: " + relationship.toString(), e);
                 }
             }
         }
@@ -116,13 +110,11 @@ public class DocumentMappingRepresentation {
         List<String> afterIndices = new ArrayList<>();
         for (DocumentRepresentation action : getNodeMappingRepresentations(after, defaults)) {
             afterIndices.add(action.getIndex() + "_" + action.getType());
-
             try {
-                String source = om.writeValueAsString(action.getSource());
-                actions.add(new Index.Builder(source).index(action.getIndex()).type(action.getType()).id(action.getId()).build());
-            } catch (IOException ex) {
-                LOG.error("Error while creating json from action: " + after.toString(), ex);
-                throw new RuntimeException("Error while creating json from action: " + after.toString(), ex);
+                String json = action.getJson();
+                actions.add(new Index.Builder(json).index(action.getIndex()).type(action.getType()).id(action.getId()).build());
+            } catch (DocumentRepresentationException ex) {
+                LOG.error("Error while adding action for node: " + before.toString(), ex);
             }
         }
 
@@ -141,13 +133,12 @@ public class DocumentMappingRepresentation {
 
         for (DocumentRepresentation action : getRelationshipMappingRepresentations(after, defaults)) {
             afterIndices.add(action.getIndex() + "_" + action.getType());
-
             try {
-                String source = om.writeValueAsString(action.getSource());
-                actions.add(new Index.Builder(source).index(action.getIndex()).type(action.getType()).id(action.getId()).build());
-            } catch (IOException e) {
-                LOG.error("Error while creating json from action " + after.toString(), e);
-            }
+                String json = action.getJson();
+                actions.add(new Index.Builder(json).index(action.getIndex()).type(action.getType()).id(action.getId()).build());
+            } catch (DocumentRepresentationException ex) {
+                LOG.error("Error while adding update action for nodes: " + before.toString() + " -> " + after.toString(), ex);
+            }            
         }
 
         for (DocumentRepresentation representation : getRelationshipMappingRepresentations(before, defaults)) {
@@ -176,7 +167,7 @@ public class DocumentMappingRepresentation {
                     DocumentRepresentation representation = mapper.getDocumentRepresentation(nodeRepresentation, defaults);
                     docs.add(representation);
                 } catch (Exception e) {
-                    LOG.error(e.getMessage());
+                    LOG.error("Error while getting document for node: " + nodeRepresentation.toString(), e);
                 }
             }
         }
@@ -192,7 +183,7 @@ public class DocumentMappingRepresentation {
                     DocumentRepresentation representation = mapper.getDocumentRepresentation(relationshipRepresentation, defaults);
                     docs.add(representation);
                 } catch (Exception e) {
-                    LOG.error(e.getMessage());
+                    LOG.error("Error while getting document for relationship: " + relationshipRepresentation.toString(), e);
                 }
             }
         }
