@@ -74,34 +74,29 @@ public class JsonFileMapping implements Mapping {
         }
     }
 
-    protected List<BulkableAction<? extends JestResult>> createNode(NodeRepresentation node) {
+    private List<BulkableAction<? extends JestResult>> createNode(NodeRepresentation node) {
         return mappingRepresentation.createOrUpdateNode(node);
     }
     
-    protected List<BulkableAction<? extends JestResult>> createRelationship(RelationshipRepresentation relationship) {
+    private List<BulkableAction<? extends JestResult>> createRelationship(RelationshipRepresentation relationship) {
         return mappingRepresentation.createOrUpdateRelationship(relationship);
     }
 
-    protected List<BulkableAction<? extends JestResult>> updateRelationship(RelationshipRepresentation before, RelationshipRepresentation after) {
+    private List<BulkableAction<? extends JestResult>> updateRelationship(RelationshipRepresentation before, RelationshipRepresentation after) {
         return mappingRepresentation.updateRelationshipAndRemoveOldIndices(before, after);
     }
 
-    protected List<BulkableAction<? extends JestResult>> updateNode(NodeUpdated nodeUpdated) {
+    private List<BulkableAction<? extends JestResult>> updateNode(NodeUpdated nodeUpdated) {
         NodeRepresentation before = nodeUpdated.getDetails().getPrevious();
         NodeRepresentation after = nodeUpdated.getDetails().getCurrent();
-
-        if (labelsChanged(before, after)) {
-            return mappingRepresentation.updateNodeAndRemoveOldIndices(before, after);
-        }
-
-        return mappingRepresentation.createOrUpdateNode(after);
+        return mappingRepresentation.updateNodeAndRemoveOldIndices(before, after);
     }
 
-    protected List<BulkableAction<? extends JestResult>> deleteNode(NodeRepresentation node) {
+    private List<BulkableAction<? extends JestResult>> deleteNode(NodeRepresentation node) {
         return mappingRepresentation.getDeleteNodeActions(node);
     }
 
-    protected List<BulkableAction<? extends JestResult>> deleteRelationship(RelationshipRepresentation relationship) {
+    private List<BulkableAction<? extends JestResult>> deleteRelationship(RelationshipRepresentation relationship) {
         return mappingRepresentation.getDeleteRelationshipActions(relationship);
     }
 
@@ -118,13 +113,5 @@ public class JsonFileMapping implements Mapping {
     @Override
     public String getKeyProperty() {
         return mappingRepresentation.getDefaults().getKeyProperty() != null ? mappingRepresentation.getDefaults().getKeyProperty() : DEFAULT_KEY_PROPERTY;
-    }
-
-    private boolean labelsChanged(NodeRepresentation before, NodeRepresentation after) {
-        List<String> labelsA = new ArrayList<>(Arrays.asList(before.getLabels()));
-        List<String> labelsB = new ArrayList<>(Arrays.asList(after.getLabels()));
-        labelsA.removeAll(labelsB);
-
-        return labelsA.size() > 0;
     }
 }
