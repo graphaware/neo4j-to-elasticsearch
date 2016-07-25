@@ -52,7 +52,7 @@ public class DocumentMappingDefaults {
     }
 
     public List<String> getBlacklistedRelationshipProperties() {
-        return null != blacklistedNodeProperties ? blacklistedNodeProperties : DEFAULT_BLACKLIST;
+        return null != blacklistedRelationshipProperties ? blacklistedRelationshipProperties : DEFAULT_BLACKLIST;
     }
 
     public boolean excludeEmptyProperties() {

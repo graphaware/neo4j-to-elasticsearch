@@ -472,6 +472,52 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         }
     }
 
+    @Test
+    public void testRelationshipsAreUpdatedAndRemovedIfNeeded() {
+        database = new TestGraphDatabaseFactory().newImpermanentDatabase();
+
+        GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database);
+        runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration().withUuidProperty("uuid").with(IncludeAllRelationships.getInstance()), database));
+
+        JsonFileMapping mapping = (JsonFileMapping) ServiceLoader.loadMapping("com.graphaware.module.es.mapping.JsonFileMapping");
+        Map<String, String> config = new HashMap<>();
+        config.put("file", "integration/mapping-advanced.json");
+        mapping.configure(config);
+
+        configuration = ElasticSearchConfiguration.defaultConfiguration()
+                .withMapping(mapping)
+                .with(IncludeAllRelationships.getInstance())
+                .withUri(HOST)
+                .withPort(PORT);
+
+        runtime.registerModule(new ElasticSearchModule("ES", new ElasticSearchWriter(configuration), configuration));
+
+        runtime.start();
+        runtime.waitUntilStarted();
+        database.execute("CREATE (n:User {login: 'ikwattro', password:'s3cr3t'})-[:CLICKS_ON {count: 10}]->(c:Company {name:'GraphAware'})");
+        TestUtil.waitFor(1500);
+        String relIndex = ((JsonFileMapping) configuration.getMapping()).getMappingRepresentation().getDefaults().getDefaultRelationshipsIndex();
+        try (Transaction tx = database.beginTx()) {
+            database.getAllRelationships().stream().forEach(r -> {
+                Get get = new Get.Builder(relIndex, r.getProperty("uuid").toString()).type("clicks").build();
+                JestResult result = esClient.execute(get);
+                assertTrue(result.isSucceeded());
+            });
+
+            tx.success();
+        }
+        database.execute("MATCH ()-[r]-() REMOVE r.count");
+        TestUtil.waitFor(1000);
+        try (Transaction tx = database.beginTx()) {
+            database.getAllRelationships().stream().forEach(r -> {
+                Get get = new Get.Builder(relIndex, r.getProperty("uuid").toString()).type("clicks").build();
+                JestResult result = esClient.execute(get);
+                assertTrue(!result.isSucceeded());
+            });
+            tx.success();
+        }
+    }
+
     protected void verifyEsReplicationForNodeWithLabels(String label, String index, String type, String keyProperty) {
         try (Transaction tx = database.beginTx()) {
             database.findNodes(Label.label(label)).stream().forEach(n -> {

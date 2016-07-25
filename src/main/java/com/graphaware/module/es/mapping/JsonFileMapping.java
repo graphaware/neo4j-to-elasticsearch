@@ -1,6 +1,7 @@
 package com.graphaware.module.es.mapping;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.graphaware.common.log.LoggerFactory;
 import com.graphaware.common.representation.NodeRepresentation;
 import com.graphaware.common.representation.RelationshipRepresentation;
 import com.graphaware.module.es.mapping.json.DocumentMappingRepresentation;
@@ -9,6 +10,7 @@ import io.searchbox.action.BulkableAction;
 import io.searchbox.client.JestClient;
 import io.searchbox.client.JestResult;
 import org.neo4j.graphdb.PropertyContainer;
+import org.neo4j.logging.Log;
 import org.springframework.core.io.ClassPathResource;
 
 import java.io.File;
@@ -16,6 +18,8 @@ import java.io.IOException;
 import java.util.*;
 
 public class JsonFileMapping implements Mapping {
+
+    private static final Log LOG = LoggerFactory.getLogger(JsonFileMapping.class);
 
     private static final String DEFAULT_KEY_PROPERTY = "uuid";
     private static final String FILE_PATH_KEY = "file";
@@ -59,19 +63,13 @@ public class JsonFileMapping implements Mapping {
 
             case RELATIONSHIP_DELETED:
                 return deleteRelationship(((RelationshipDeleted) operation).getDetails());
-            /*
-
-
 
             case RELATIONSHIP_UPDATED:
                 RelationshipUpdated relUpdated = (RelationshipUpdated) operation;
                 return updateRelationship(relUpdated.getDetails().getPrevious(), relUpdated.getDetails().getCurrent());
 
-
-                */
-
             default:
-                //LOG.warn("Unsupported operation " + operation.getType());
+                LOG.warn("Unsupported operation " + operation.getType());
                 return Collections.emptyList();
         }
     }
@@ -82,6 +80,10 @@ public class JsonFileMapping implements Mapping {
     
     protected List<BulkableAction<? extends JestResult>> createRelationship(RelationshipRepresentation relationship) {
         return mappingRepresentation.createOrUpdateRelationship(relationship);
+    }
+
+    protected List<BulkableAction<? extends JestResult>> updateRelationship(RelationshipRepresentation before, RelationshipRepresentation after) {
+        return mappingRepresentation.updateRelationshipAndRemoveOldIndices(before, after);
     }
 
     protected List<BulkableAction<? extends JestResult>> updateNode(NodeUpdated nodeUpdated) {

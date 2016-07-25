@@ -22,6 +22,10 @@ public abstract class PropertyContainerExpression {
         this.propertyContainer = propertyContainer;
     }
 
+    public boolean hasProperty(String key) {
+        return propertyContainer.getProperties().containsKey(key);
+    }
+
     public Object getProperty(String key, Object def) {
         return propertyContainer.getProperties().getOrDefault(key, def);
     }

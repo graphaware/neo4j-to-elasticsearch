@@ -51,9 +51,6 @@ public class DocumentMappingRepresentation {
             if (mapper.supports(node)) {
                 try {
                     DocumentRepresentation action = mapper.getDocumentRepresentation(node, defaults);
-                    if (action.getSource().keySet().isEmpty()) {
-                        continue;
-                    }
                     try {
                         String source = om.writeValueAsString(action.getSource());
                         actions.add(new Index.Builder(source).index(action.getIndex()).type(action.getType()).id(action.getId()).build());
@@ -80,9 +77,6 @@ public class DocumentMappingRepresentation {
             if (mapping.supports(relationship)) {
                 try {
                     DocumentRepresentation action = mapping.getDocumentRepresentation(relationship, defaults);
-                    if (action.getSource().isEmpty() && defaults.excludeEmptyProperties()) {
-                        continue;
-                    }
                     try {
                         String source = om.writeValueAsString(action.getSource());
                         actions.add(new Index.Builder(source).index(action.getIndex()).type(action.getType()).id(action.getId()).build());
@@ -122,9 +116,6 @@ public class DocumentMappingRepresentation {
         List<String> afterIndices = new ArrayList<>();
         for (DocumentRepresentation action : getNodeMappingRepresentations(after, defaults)) {
             afterIndices.add(action.getIndex() + "_" + action.getType());
-            if (action.getSource().keySet().isEmpty()) {
-                continue;
-            }
 
             try {
                 String source = om.writeValueAsString(action.getSource());
@@ -136,6 +127,30 @@ public class DocumentMappingRepresentation {
         }
 
         for (DocumentRepresentation representation : getNodeMappingRepresentations(before, defaults)) {
+            if (!afterIndices.contains(representation.getIndex() + "_" + representation.getType())) {
+                actions.add(new Delete.Builder(representation.getId()).index(representation.getIndex()).type(representation.getType()).build());
+            }
+        }
+
+        return actions;
+    }
+
+    public List<BulkableAction<? extends JestResult>> updateRelationshipAndRemoveOldIndices(RelationshipRepresentation before, RelationshipRepresentation after) {
+        List<BulkableAction<? extends JestResult>> actions = new ArrayList<>();
+        List<String> afterIndices = new ArrayList<>();
+
+        for (DocumentRepresentation action : getRelationshipMappingRepresentations(after, defaults)) {
+            afterIndices.add(action.getIndex() + "_" + action.getType());
+
+            try {
+                String source = om.writeValueAsString(action.getSource());
+                actions.add(new Index.Builder(source).index(action.getIndex()).type(action.getType()).id(action.getId()).build());
+            } catch (IOException e) {
+                LOG.error("Error while creating json from action " + after.toString(), e);
+            }
+        }
+
+        for (DocumentRepresentation representation : getRelationshipMappingRepresentations(before, defaults)) {
             if (!afterIndices.contains(representation.getIndex() + "_" + representation.getType())) {
                 actions.add(new Delete.Builder(representation.getId()).index(representation.getIndex()).type(representation.getType()).build());
             }
@@ -159,6 +174,22 @@ public class DocumentMappingRepresentation {
             if (mapper.supports(nodeRepresentation)) {
                 try {
                     DocumentRepresentation representation = mapper.getDocumentRepresentation(nodeRepresentation, defaults);
+                    docs.add(representation);
+                } catch (Exception e) {
+                    LOG.error(e.getMessage());
+                }
+            }
+        }
+
+        return docs;
+    }
+
+    private List<DocumentRepresentation> getRelationshipMappingRepresentations(RelationshipRepresentation relationshipRepresentation, DocumentMappingDefaults defaults) {
+        List<DocumentRepresentation> docs = new ArrayList<>();
+        for (GraphDocumentMapper mapper : getRelationshipMappers()) {
+            if (mapper.supports(relationshipRepresentation)) {
+                try {
+                    DocumentRepresentation representation = mapper.getDocumentRepresentation(relationshipRepresentation, defaults);
                     docs.add(representation);
                 } catch (Exception e) {
                     LOG.error(e.getMessage());

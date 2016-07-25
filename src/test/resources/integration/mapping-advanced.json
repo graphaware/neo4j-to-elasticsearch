@@ -51,6 +51,10 @@
     {
       "condition": "hasType('WORKS_AT')",
       "type": "workers"
+    },
+    {
+      "condition": "hasType('CLICKS_ON') && hasProperty('count')",
+      "type": "clicks"
     }
   ]
 }
