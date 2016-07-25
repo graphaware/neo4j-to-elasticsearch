@@ -518,6 +518,44 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         }
     }
 
+    @Test
+    public void testDynamicTypesAreCorrectlyHandled() {
+        database = new TestGraphDatabaseFactory().newImpermanentDatabase();
+
+        GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database);
+        runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration().withUuidProperty("uuid").with(IncludeAllRelationships.getInstance()), database));
+
+        JsonFileMapping mapping = (JsonFileMapping) ServiceLoader.loadMapping("com.graphaware.module.es.mapping.JsonFileMapping");
+        Map<String, String> config = new HashMap<>();
+        config.put("file", "integration/mapping-advanced.json");
+        mapping.configure(config);
+
+        configuration = ElasticSearchConfiguration.defaultConfiguration()
+                .withMapping(mapping)
+                .with(IncludeAllRelationships.getInstance())
+                .withUri(HOST)
+                .withPort(PORT);
+
+        runtime.registerModule(new ElasticSearchModule("ES", new ElasticSearchWriter(configuration), configuration));
+
+        runtime.start();
+        runtime.waitUntilStarted();
+        database.execute("CREATE (n:DynaType {action: 'pull'})");
+        TestUtil.waitFor(1500);
+        try (Transaction tx = database.beginTx()) {
+            database.findNodes(Label.label("DynaType")).stream().forEach(n -> {
+                String index = ((JsonFileMapping) configuration.getMapping()).getMappingRepresentation().getDefaults().getDefaultNodesIndex();
+                String type = n.getProperty("action").toString();
+                Get get = new Get.Builder(index, n.getProperty("uuid").toString()).type(type).build();
+                JestResult result = esClient.execute(get);
+                System.out.println(result.getJsonString());
+                assertTrue(result.isSucceeded());
+            });
+
+            tx.success();
+        }
+    }
+
     protected void verifyEsReplicationForNodeWithLabels(String label, String index, String type, String keyProperty) {
         try (Transaction tx = database.beginTx()) {
             database.findNodes(Label.label(label)).stream().forEach(n -> {

@@ -187,9 +187,9 @@ There are two expression helpers for this kind of usage, respectively `allNodes(
 }
 ```
 
-### Dynamic index names
+### Dynamic index or type names
 
-You can use expressions also for defining the name of the index, for example if you want to have index names based
+You can use expressions also for defining the name of the index or the type, for example if you want to have index names based
 on the value of a property, you can use the following as example :
 
 ```json

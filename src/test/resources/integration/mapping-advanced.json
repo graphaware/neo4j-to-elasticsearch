@@ -41,6 +41,10 @@
     {
       "condition": "hasLabel('User')",
       "type": "users"
+    },
+    {
+      "condition": "hasLabel('DynaType')",
+      "type": "getProperty('action')"
     }
   ],
   "relationship_mappings": [

@@ -82,7 +82,22 @@ public class GraphDocumentMapper {
                 }
             }
         }
-        return new DocumentRepresentation(i, getType(), id, source);
+        return new DocumentRepresentation(i, getType(nodeExpression), id, source);
+    }
+
+    protected String getType(PropertyContainerExpression expression) {
+        String t = type;
+        if (t.contains("(") && t.contains(")")) {
+            Expression typeExpression = getExpressionParser().parseExpression(t);
+            t = typeExpression.getValue(expression).toString();
+        }
+
+        if (t == null || t.equals("")) {
+            LOG.error("Unable to build type name");
+            throw new RuntimeException("Unable to build type name");
+        }
+
+        return t;
     }
 
     protected String getIndex(PropertyContainerExpression expression, String defaultIndex)
@@ -127,7 +142,7 @@ public class GraphDocumentMapper {
         }
         String i = getIndex(relationshipExpression, defaults.getDefaultRelationshipsIndex());
         String id = relationship.getProperties().get(defaults.getKeyProperty()).toString();
-        return new DocumentRepresentation(i, getType(), id, source);
+        return new DocumentRepresentation(i, getType(relationshipExpression), id, source);
 
     }
 
