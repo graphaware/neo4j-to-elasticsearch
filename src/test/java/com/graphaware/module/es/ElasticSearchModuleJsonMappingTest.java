@@ -556,6 +556,60 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         }
     }
 
+    @Test
+    public void testInvalidJsonMappingDoesNotFailTransaction() {
+        database = new TestGraphDatabaseFactory().newImpermanentDatabase();
+
+        GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database);
+        runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration().withUuidProperty("uuid").with(IncludeAllRelationships.getInstance()), database));
+
+        JsonFileMapping mapping = (JsonFileMapping) ServiceLoader.loadMapping("com.graphaware.module.es.mapping.JsonFileMapping");
+        Map<String, String> config = new HashMap<>();
+        config.put("file", "integration/mapping-invalid.json");
+        mapping.configure(config);
+
+        configuration = ElasticSearchConfiguration.defaultConfiguration()
+                .withMapping(mapping)
+                .with(IncludeAllRelationships.getInstance())
+                .withUri(HOST)
+                .withPort(PORT);
+
+        runtime.registerModule(new ElasticSearchModule("ES", new ElasticSearchWriter(configuration), configuration));
+
+        runtime.start();
+        runtime.waitUntilStarted();
+        database.execute("CREATE (n:Person {name:'John Doe'})-[:WORKS_FOR]->(c:Company {name:'Acme'})<-[:WORKED_AT {since: 123456}]-(x:Person {name:'Rocko Balboi'})");
+        TestUtil.waitFor(1500);
+        try (Transaction tx = database.beginTx()) {
+            int i = 0;
+            Iterator<Node> it = database.findNodes(Label.label("Company"));
+            while (it.hasNext()) {
+                Node node = it.next();
+                ++i;
+                Get get = new Get.Builder("default-index-node", node.getProperty("uuid").toString()).type("companies").build();
+                JestResult result = esClient.execute(get);
+                assertTrue(result.isSucceeded());
+            }
+            assertEquals(1, i);
+
+            int z = 0;
+            Iterator<Relationship> itr = database.getAllRelationships().iterator();
+            while (itr.hasNext()) {
+                Relationship r = itr.next();
+                if (r.getType().toString().equals("WORKED_AT")) {
+                    ++z;
+                    Get get = new Get.Builder("default-index-relationship", r.getProperty("uuid").toString()).type("old-workers").build();
+                    JestResult result = esClient.execute(get);
+                    assertTrue(result.isSucceeded());
+                }
+            }
+            assertEquals(1, z);
+
+            tx.success();
+        }
+
+    }
+
     protected void verifyEsReplicationForNodeWithLabels(String label, String index, String type, String keyProperty) {
         try (Transaction tx = database.beginTx()) {
             database.findNodes(Label.label(label)).stream().forEach(n -> {

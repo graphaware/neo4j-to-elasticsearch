@@ -63,17 +63,22 @@ public class GraphDocumentMapper {
 
     public boolean supports(PropertyContainerRepresentation element) {
         if (null == condition) {
-            return true;
-        }
-        Expression expression = getExpressionParser().parseExpression(condition);
-
-        if (element instanceof NodeRepresentation) {
-            return (Boolean) expression.getValue(new NodeExpression((NodeRepresentation) element));
-        } else if (element instanceof RelationshipRepresentation) {
-            return (Boolean) expression.getValue(new RelationshipExpression((RelationshipRepresentation) element));
+            return false;
         }
 
-        throw new RuntimeException("Element is nor Node nor Relationship");
+        try {
+            Expression expression = getExpressionParser().parseExpression(condition);
+
+            if (element instanceof NodeRepresentation) {
+                return (Boolean) expression.getValue(new NodeExpression((NodeRepresentation) element));
+            } else if (element instanceof RelationshipRepresentation) {
+                return (Boolean) expression.getValue(new RelationshipExpression((RelationshipRepresentation) element));
+            }
+        } catch (Exception e) {
+            LOG.error("Invalid condition expression {}", condition);
+        }
+
+        return false;
     }
 
     public DocumentRepresentation getDocumentRepresentation(NodeRepresentation node, DocumentMappingDefaults defaults) throws DocumentRepresentationException {
