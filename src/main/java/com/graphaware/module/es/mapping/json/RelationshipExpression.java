@@ -15,7 +15,9 @@ package com.graphaware.module.es.mapping.json;
 
 import com.graphaware.common.representation.RelationshipRepresentation;
 
-public class RelationshipExpression extends PropertyContainerExpression {
+public class RelationshipExpression extends PropertyContainerExpression<RelationshipRepresentation> {
+
+    private static final String GRAPH_TYPE_RELATIONSHIP = "relationship";
 
     public RelationshipExpression(RelationshipRepresentation relationship) {
         super(relationship);
@@ -30,7 +32,14 @@ public class RelationshipExpression extends PropertyContainerExpression {
     }
 
     private RelationshipRepresentation getRelationship() {
-        return (RelationshipRepresentation) propertyContainer;
+        return propertyContainer;
     }
 
+    public String getGraphType() {
+        if (propertyContainer instanceof RelationshipRepresentation) {
+            return GRAPH_TYPE_RELATIONSHIP;
+        }
+
+        throw new RuntimeException("Property Container is not valid");
+    }
 }

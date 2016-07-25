@@ -23,6 +23,7 @@ import org.springframework.expression.spel.standard.SpelExpressionParser;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.springframework.expression.ParseException;
 
 public class GraphDocumentMapper {
 
@@ -35,8 +36,14 @@ public class GraphDocumentMapper {
     private String type;
 
     private Map<String, String> properties;
-
+    
     private SpelExpressionParser expressionParser;
+    
+    //Some cache to avoid continous parsing
+    private Map<String, Expression> expressions;
+    private Expression typeExpression;
+    private Map<String, Expression> indexsExpression;
+    
     
     public String getCondition() {
         return condition;
@@ -82,7 +89,7 @@ public class GraphDocumentMapper {
         if (buildSource) {
             if (null != properties) {
                 for (String s : properties.keySet()) {
-                    Expression exp = getExpressionParser().parseExpression(properties.get(s));
+                    Expression exp = getExpression(s);
                     source.put(s, exp.getValue(nodeExpression));
                 }
             }
@@ -99,11 +106,11 @@ public class GraphDocumentMapper {
     }
 
     protected String getType(PropertyContainerExpression expression) {
-        String t = type;
-        if (t.contains("(") && t.contains(")")) {
-            Expression typeExpression = getExpressionParser().parseExpression(t);
-            t = typeExpression.getValue(expression).toString();
-        }
+        String t;
+        if (getTypeExpression() != null)
+            t = getTypeExpression().getValue(expression).toString();        
+        else
+            t = type;
 
         if (t == null || t.equals("")) {
             LOG.error("Unable to build type name");
@@ -115,18 +122,18 @@ public class GraphDocumentMapper {
 
     protected String getIndex(PropertyContainerExpression expression, String defaultIndex)
     {
-        String i = index != null ? index : defaultIndex;
-        if (i.contains("(") && i.contains(")")) {
-            Expression indexExpression = getExpressionParser().parseExpression(i);
-            i = indexExpression.getValue(expression).toString();
-        }
-
-        if (i == null || i.equals("")) {
+        String indexName;
+        if (getIndexExpression(defaultIndex) != null)
+            indexName = getIndexExpression(defaultIndex).getValue(expression).toString();
+        else 
+            indexName = index != null ? index : defaultIndex;
+                
+        if (indexName == null || indexName.equals("")) {
             LOG.error("Unable to build index name");
             throw new RuntimeException("Unable to build index name");
         }
 
-        return i;
+        return indexName;
     }
 
     public DocumentRepresentation getDocumentRepresentation(RelationshipRepresentation relationship, DocumentMappingDefaults defaults) {
@@ -140,7 +147,7 @@ public class GraphDocumentMapper {
         if (buildSource) {
             if (null != properties) {
                 for (String s : properties.keySet()) {
-                    Expression exp = getExpressionParser().parseExpression(properties.get(s));
+                    Expression exp = getExpression(s);
                     source.put(s, exp.getValue(relationshipExpression));
                 }
             }
@@ -166,4 +173,50 @@ public class GraphDocumentMapper {
 
         return expressionParser;
     }        
+    
+    private Expression getExpression(String key) {
+        if (null == expressions) {
+            expressions = new HashMap<>();
+        }
+        if (expressions.containsKey(key)) {
+            return expressions.get(key);
+        } else {
+            if (!properties.containsKey(key)) {
+                throw new RuntimeException("Properties doesn't contains key: " + key);
+            }
+            Expression parsedExpression = getExpressionParser().parseExpression(properties.get(key));
+            expressions.put(key, parsedExpression);
+            return parsedExpression;
+        }
+    }
+    
+    private Expression getTypeExpression() throws ParseException {
+        if (type != null && type.contains("(") && type.contains(")")) {
+            if (typeExpression != null) {
+                return typeExpression;
+            }
+            typeExpression = getExpressionParser().parseExpression(type);
+        }
+        return typeExpression;
+    }
+    
+    private Expression getIndexExpression(String defaultIndex) throws ParseException {
+        String indexName = index != null ? index : defaultIndex;
+        if (indexName != null && indexName.contains("(") && indexName.contains(")")) {
+            if (null == indexsExpression) {
+                indexsExpression = new HashMap<>();
+            }
+            if (indexsExpression.containsKey(indexName)) {
+                return indexsExpression.get(indexName);
+            }
+            Expression indexExpression;
+            indexExpression = getExpressionParser().parseExpression(indexName);
+            indexsExpression.put(indexName, indexExpression);
+            return indexExpression;
+        } else {
+            return null;
+        }
+        
+        
+    }
 }

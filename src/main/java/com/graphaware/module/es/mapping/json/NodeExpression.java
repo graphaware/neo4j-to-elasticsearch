@@ -14,15 +14,18 @@
 package com.graphaware.module.es.mapping.json;
 
 import com.graphaware.common.representation.NodeRepresentation;
+import com.graphaware.common.representation.RelationshipRepresentation;
 
-public class NodeExpression extends PropertyContainerExpression {
+public class NodeExpression extends PropertyContainerExpression<NodeRepresentation> {
+
+    private static final String GRAPH_TYPE_NODE = "node";
 
     public NodeExpression(NodeRepresentation nodeRepresentation) {
         super(nodeRepresentation);
     }
 
     public boolean hasLabel(String label) {
-        for (String s : ((NodeRepresentation) propertyContainer).getLabels()) {
+        for (String s : propertyContainer.getLabels()) {
             if (s.equals(label)) {
                 return true;
             }
@@ -32,11 +35,18 @@ public class NodeExpression extends PropertyContainerExpression {
     }
 
     public String[] getLabels() {
-        return ((NodeRepresentation) propertyContainer).getLabels();
+        return propertyContainer.getLabels();
     }
 
     public boolean allNodes() {
         return true;
+    }
+    
+    public String getGraphType() {
+        if (propertyContainer instanceof NodeRepresentation) {
+            return GRAPH_TYPE_NODE;
+        }
+        throw new RuntimeException("Property Container is not valid");
     }
 
 }

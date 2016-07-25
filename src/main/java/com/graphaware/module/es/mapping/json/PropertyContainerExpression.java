@@ -22,16 +22,13 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
-public abstract class PropertyContainerExpression {
-
-    private static final String GRAPH_TYPE_NODE = "node";
-    private static final String GRAPH_TYPE_RELATIONSHIP = "relationship";
+public abstract class PropertyContainerExpression<TPropertyContainerRepresentation extends PropertyContainerRepresentation> {
 
     private static final String DEFAULT_TIMEZONE = "UTC";
 
-    protected final PropertyContainerRepresentation propertyContainer;
+    protected final TPropertyContainerRepresentation propertyContainer;
 
-    public PropertyContainerExpression(PropertyContainerRepresentation propertyContainer) {
+    public PropertyContainerExpression(TPropertyContainerRepresentation propertyContainer) {
         this.propertyContainer = propertyContainer;
     }
 
@@ -53,17 +50,7 @@ public abstract class PropertyContainerExpression {
         return null;
     }
 
-    public String getGraphType() {
-        if (propertyContainer instanceof NodeRepresentation) {
-            return GRAPH_TYPE_NODE;
-        }
-
-        if (propertyContainer instanceof RelationshipRepresentation) {
-            return GRAPH_TYPE_RELATIONSHIP;
-        }
-
-        throw new RuntimeException("Property Container is not valid");
-    }
+    public abstract String getGraphType();
 
     public String formatTime(String propertyKey, String format) {
         return formatTime(propertyKey, format, DEFAULT_TIMEZONE);
