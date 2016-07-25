@@ -57,9 +57,9 @@ public class DocumentMappingRepresentation {
         for (GraphDocumentMapper mapper : nodeMappers) {
             if (mapper.supports(node)) {
                 try {
-                    DocumentRepresentation action = mapper.getDocumentRepresentation(node, defaults);
-                    String json = action.getJson();
-                    actions.add(new Index.Builder(json).index(action.getIndex()).type(action.getType()).id(action.getId()).build());
+                    DocumentRepresentation document = mapper.getDocumentRepresentation(node, defaults);
+                    String json = document.getJson();
+                    actions.add(new Index.Builder(json).index(document.getIndex()).type(document.getType()).id(document.getId()).build());
                 } catch (Exception e) {
                     LOG.error("Error while creating or updating node", e);
                 }
@@ -76,9 +76,9 @@ public class DocumentMappingRepresentation {
         for (GraphDocumentMapper mapping : relationshipMappers) {
             if (mapping.supports(relationship)) {
                 try {
-                    DocumentRepresentation action = mapping.getDocumentRepresentation(relationship, defaults);
-                    String json = action.getJson();
-                    actions.add(new Index.Builder(json).index(action.getIndex()).type(action.getType()).id(action.getId()).build());
+                    DocumentRepresentation document = mapping.getDocumentRepresentation(relationship, defaults);
+                    String json = document.getJson();
+                    actions.add(new Index.Builder(json).index(document.getIndex()).type(document.getType()).id(document.getId()).build());
                 } catch (Exception e) {
                     LOG.error("Error while creating relationship: " + relationship.toString(), e);
                 }
@@ -94,8 +94,8 @@ public class DocumentMappingRepresentation {
         for (GraphDocumentMapper mapping : relationshipMappers) {
             if (mapping.supports(relationship)) {
                 try {
-                    DocumentRepresentation action = mapping.getDocumentRepresentation(relationship, defaults);
-                    actions.add(new Delete.Builder(action.getId()).index(action.getIndex()).type(action.getType()).build());
+                    DocumentRepresentation document = mapping.getDocumentRepresentation(relationship, defaults);
+                    actions.add(new Delete.Builder(document.getId()).index(document.getIndex()).type(document.getType()).build());
                 } catch (Exception e) {
                     LOG.error("Error while deleting relationship: " + relationship.toString(), e);
                 }
@@ -164,8 +164,8 @@ public class DocumentMappingRepresentation {
         for (GraphDocumentMapper mapper : getNodeMappers()) {
             if (mapper.supports(nodeRepresentation)) {
                 try {
-                    DocumentRepresentation representation = mapper.getDocumentRepresentation(nodeRepresentation, defaults);
-                    docs.add(representation);
+                    DocumentRepresentation document = mapper.getDocumentRepresentation(nodeRepresentation, defaults);
+                    docs.add(document);
                 } catch (Exception e) {
                     LOG.error("Error while getting document for node: " + nodeRepresentation.toString(), e);
                 }
@@ -180,8 +180,8 @@ public class DocumentMappingRepresentation {
         for (GraphDocumentMapper mapper : getRelationshipMappers()) {
             if (mapper.supports(relationshipRepresentation)) {
                 try {
-                    DocumentRepresentation representation = mapper.getDocumentRepresentation(relationshipRepresentation, defaults);
-                    docs.add(representation);
+                    DocumentRepresentation document = mapper.getDocumentRepresentation(relationshipRepresentation, defaults);
+                    docs.add(document);
                 } catch (Exception e) {
                     LOG.error("Error while getting document for relationship: " + relationshipRepresentation.toString(), e);
                 }

@@ -14,7 +14,6 @@
 package com.graphaware.module.es.mapping.json;
 
 import com.graphaware.common.representation.NodeRepresentation;
-import com.graphaware.common.representation.RelationshipRepresentation;
 
 public class NodeExpression extends PropertyContainerExpression<NodeRepresentation> {
 

@@ -16,9 +16,13 @@ package com.graphaware.module.es.mapping.json;
 import java.io.IOException;
 import java.util.Map;
 
-public class DocumentRepresentationException extends IOException {
+public class DocumentRepresentationException extends Exception {
     
     public DocumentRepresentationException(Map<String, Object> source, IOException ex) {
         super("Error while creating json from action: " + source, ex);
+    }
+    
+    public DocumentRepresentationException(String keyProperty) {
+        super("Error while creating json. Missing keyProperty");
     }
 }

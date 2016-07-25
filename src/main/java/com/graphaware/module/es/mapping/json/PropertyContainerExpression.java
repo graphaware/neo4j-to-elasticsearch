@@ -13,9 +13,7 @@
  */
 package com.graphaware.module.es.mapping.json;
 
-import com.graphaware.common.representation.NodeRepresentation;
 import com.graphaware.common.representation.PropertyContainerRepresentation;
-import com.graphaware.common.representation.RelationshipRepresentation;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
