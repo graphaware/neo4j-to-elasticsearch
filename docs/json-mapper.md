@@ -94,7 +94,7 @@ This simple example has two definitions, one for nodes and one for relationships
 }
 ```
 
-The condition will check this mapping is valid for the current node to be indexed, it has a `condtion` checking if the node
+The condition will check this mapping is valid for the current node to be indexed, it has a `condition` checking if the node
 contains the `Person` label.
 
 The `type` defines the type to use for indexing the elasticsearch document.
