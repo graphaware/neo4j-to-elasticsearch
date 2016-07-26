@@ -25,11 +25,6 @@ import com.graphaware.writer.thirdparty.BaseThirdPartyWriter;
 import com.graphaware.writer.thirdparty.ThirdPartyWriter;
 import com.graphaware.writer.thirdparty.WriteOperation;
 import io.searchbox.client.JestClient;
-import io.searchbox.client.JestClientFactory;
-import io.searchbox.client.config.HttpClientConfig;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.neo4j.logging.Log;
 
 import java.util.Collection;
@@ -50,7 +45,6 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
     private final String uri;
     private final String port;
     private final String keyProperty;
-    private final String index;
     private final boolean retryOnError;
     private final OperationExecutorFactory executorFactory;
     private final AtomicBoolean indexExists = new AtomicBoolean(false); //this must be thread-safe
@@ -66,12 +60,11 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
         this.uri = configuration.getUri();
         this.port = configuration.getPort();
         this.keyProperty = configuration.getKeyProperty();
-        this.index = configuration.getIndex();
         this.retryOnError = configuration.isRetryOnError();
         this.executorFactory = configuration.isExecuteBulk() ? new BulkOperationExecutorFactory() : new RequestPerOperationExecutorFactory();
         this.authUser = configuration.getAuthUser();
         this.authPassword = configuration.getAuthPassword();
-        this.mapping = Mapping.getMapping(index, keyProperty, configuration.getMapping());
+        this.mapping = configuration.getMapping();
     }
 
     /**

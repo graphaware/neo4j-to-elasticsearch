@@ -15,6 +15,8 @@
 package com.graphaware.module.es;
 
 import com.graphaware.common.log.LoggerFactory;
+import com.graphaware.module.es.mapping.Mapping;
+import com.graphaware.module.es.util.ServiceLoader;
 import com.graphaware.runtime.module.BaseRuntimeModuleBootstrapper;
 import com.graphaware.runtime.module.RuntimeModule;
 import com.graphaware.runtime.module.RuntimeModuleBootstrapper;
@@ -64,11 +66,6 @@ public class ElasticSearchModuleBootstrapper extends BaseRuntimeModuleBootstrapp
             throw new IllegalStateException("Elasticsearch port must be specified!");
         }
 
-        if (configExists(config, INDEX)) {
-            configuration = configuration.withIndexName(config.get(INDEX));
-            LOG.info("Elasticsearch index set to %s", configuration.getIndex());
-        }
-
         if (configExists(config, KEY_PROPERTY)) {
             configuration = configuration.withKeyProperty(config.get(KEY_PROPERTY));
             LOG.info("Elasticsearch key property set to %s", configuration.getKeyProperty());
@@ -95,8 +92,10 @@ public class ElasticSearchModuleBootstrapper extends BaseRuntimeModuleBootstrapp
         }
 
         if (configExists(config, MAPPING)) {
-            configuration = configuration.withMapping(config.get(MAPPING));
-            LOG.info("Elasticsearch mapping set to %s", configuration.getMapping());
+            Mapping mapping = ServiceLoader.loadMapping(config.get(MAPPING));
+            mapping.configure(config);
+            configuration = configuration.withMapping(mapping);
+            LOG.info("Elasticsearch mapping configured with %s", mapping.getClass());
         }
 
         return new ElasticSearchModule(moduleId, produceWriter(configuration), configuration);

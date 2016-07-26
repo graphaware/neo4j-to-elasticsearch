@@ -26,10 +26,10 @@ import org.neo4j.graphdb.PropertyContainer;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.logging.Log;
 
-import java.util.Map;
 import java.util.List;
 import java.util.Collections;
 import java.util.ArrayList;
+import java.util.Map;
 
 /**
  * This mapping indexes all documents in the same ElasticSearch index.
@@ -39,11 +39,15 @@ import java.util.ArrayList;
  *
  * Relationships are not indexed.
  */
-public class DefaultMapping extends Mapping {
+public class DefaultMapping extends BaseMapping implements Mapping {
+
+    private static final String DEFAULT_INDEX = "neo4j-index";
+    private static final String DEFAULT_KEY_PROPERTY = "uuid";
+
     private static final Log LOG = LoggerFactory.getLogger(DefaultMapping.class);
 
-    public DefaultMapping(String index, String keyProperty) {
-        super(index, keyProperty);
+    public DefaultMapping() {
+
     }
 
     @Override
@@ -58,6 +62,10 @@ public class DefaultMapping extends Mapping {
         return actions;
     }
 
+    public static DefaultMapping newInstance() {
+        return new DefaultMapping();
+    }
+
     @Override
     protected List<BulkableAction<? extends JestResult>> updateNode(NodeRepresentation before, NodeRepresentation after) {
         return createOrUpdateNode(after);
@@ -68,9 +76,9 @@ public class DefaultMapping extends Mapping {
         return createOrUpdateNode(node);
     }
 
-    private List<BulkableAction<? extends JestResult>> createOrUpdateNode(NodeRepresentation node) {
+    protected List<BulkableAction<? extends JestResult>> createOrUpdateNode(NodeRepresentation node) {
         String id = getKey(node);
-        Map<String, String> source = map(node);
+        String source = getJson(node);
         List<BulkableAction<? extends JestResult>> actions = new ArrayList<>();
 
         for (String label : node.getLabels()) {
@@ -97,14 +105,30 @@ public class DefaultMapping extends Mapping {
         );
     }
 
-    private List<BulkableAction<? extends JestResult>> createOrUpdateRelationship(RelationshipRepresentation r) {
+    protected List<BulkableAction<? extends JestResult>> createOrUpdateRelationship(RelationshipRepresentation r) {
         return Collections.singletonList(
-                new Index.Builder(map(r)).index(getIndexFor(Relationship.class)).type(r.getType()).id(getKey(r)).build()
+                new Index.Builder(getJson(r)).index(getIndexFor(Relationship.class)).type(r.getType()).id(getKey(r)).build()
         );
     }
 
     @Override
     public <T extends PropertyContainer> String getIndexFor(Class<T> searchedType) {
         return getIndexPrefix() + (searchedType.equals(Node.class) ? "-node" : "-relationship");
+    }
+
+    @Override
+    public void configure(Map<String, String> config) {
+        index = config.getOrDefault("index", DEFAULT_INDEX).trim();
+        keyProperty = config.getOrDefault("keyProperty", DEFAULT_KEY_PROPERTY).trim();
+    }
+
+    @Override
+    protected String getIndexPrefix() {
+        return null != index ? index : DEFAULT_INDEX;
+    }
+
+    @Override
+    public String getKeyProperty() {
+        return null != keyProperty ? keyProperty : DEFAULT_KEY_PROPERTY;
     }
 }

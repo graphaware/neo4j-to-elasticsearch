@@ -63,7 +63,7 @@ public class Searcher {
         this.database = database;
         this.uuidReader = createUuidReader(database);
         this.client = createClient(configuration.getUri(), configuration.getPort(), configuration.getAuthUser(), configuration.getAuthPassword());
-        this.mapping = Mapping.getMapping(configuration.getIndex(), keyProperty, configuration.getMapping());
+        this.mapping = configuration.getMapping();
     }
 
     private UuidReader createUuidReader(GraphDatabaseService database) {

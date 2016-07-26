@@ -17,10 +17,17 @@ import com.graphaware.integration.es.test.ElasticSearchClient;
 import com.graphaware.integration.es.test.ElasticSearchServer;
 import com.graphaware.integration.es.test.EmbeddedElasticSearchServer;
 import com.graphaware.integration.es.test.JestElasticSearchClient;
+import com.graphaware.module.es.mapping.Mapping;
+import com.graphaware.module.es.util.ServiceLoader;
 import org.junit.After;
 import org.junit.Before;
 import org.neo4j.graphdb.*;
 import org.neo4j.test.TestGraphDatabaseFactory;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static com.graphaware.module.es.util.TestUtil.waitFor;
 
@@ -86,6 +93,10 @@ public abstract class ElasticSearchModuleIntegrationTest {
     protected void verifyEsReplication() {
         new Neo4jElasticVerifier(database, configuration, esClient).verifyEsReplication();
     }
+    
+    protected void verifyEsAdvancedReplication() {
+        new Neo4jElasticVerifier(database, configuration, esClient).verifyEsAdvancedReplication();
+    }
 
     protected void verifyEsReplication(String indexprefix) {
         new Neo4jElasticVerifier(database, configuration, esClient).verifyEsReplication(indexprefix);
@@ -118,5 +129,28 @@ public abstract class ElasticSearchModuleIntegrationTest {
             tx.success();
         }
         return result;
+    }
+
+    protected Mapping getDefaultMapping(String index, String keyProperty) {
+        Mapping mapping = ServiceLoader.loadMapping("com.graphaware.module.es.mapping.DefaultMapping");
+        Map<String, String> params = new HashMap<>();
+        params.put("index", index);
+        params.put("keyProperty", keyProperty);
+        mapping.configure(params);
+
+        return mapping;
+    }
+
+    protected List<String> labelsToStrings(Node node) {
+        List<String> list = new ArrayList<>();
+        try (Transaction tx = database.beginTx()) {
+            for (Label l : node.getLabels()) {
+                list.add(l.name());
+            }
+
+            tx.success();
+        }
+
+        return list;
     }
 }
