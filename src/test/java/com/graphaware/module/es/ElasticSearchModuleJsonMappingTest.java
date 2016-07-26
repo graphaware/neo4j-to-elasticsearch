@@ -49,12 +49,11 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration(), database));
 
         Mapping mapping = ServiceLoader.loadMapping("com.graphaware.module.es.mapping.JsonFileMapping");
-        Map<String, String> config = new HashMap<>();
-        config.put("file", "integration/mapping-basic.json");
-        mapping.configure(config);
+        Map<String, String> mappingConfig = new HashMap<>();
+        mappingConfig.put("file", "integration/mapping-basic.json");
 
         configuration = ElasticSearchConfiguration.defaultConfiguration()
-                .withMapping(mapping)
+                .withMapping(mapping, mappingConfig)
                 .withUri(HOST)
                 .withPort(PORT);
 
@@ -71,12 +70,11 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration().withUuidProperty("uuid").with(IncludeAllRelationships.getInstance()), database));
 
         JsonFileMapping mapping = (JsonFileMapping) ServiceLoader.loadMapping("com.graphaware.module.es.mapping.JsonFileMapping");
-        Map<String, String> config = new HashMap<>();
-        config.put("file", "integration/mapping-basic.json");
-        mapping.configure(config);
+        Map<String, String> mappingConfig = new HashMap<>();
+        mappingConfig.put("file", "integration/mapping-basic.json");
 
         configuration = ElasticSearchConfiguration.defaultConfiguration()
-                .withMapping(mapping)
+                .withMapping(mapping, mappingConfig)
                 .with(IncludeAllRelationships.getInstance())
                 .withUri(HOST)
                 .withPort(PORT);
@@ -105,12 +103,11 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration().withUuidProperty("uuid"), database));
 
         JsonFileMapping mapping = (JsonFileMapping) ServiceLoader.loadMapping("com.graphaware.module.es.mapping.JsonFileMapping");
-        Map<String, String> config = new HashMap<>();
-        config.put("file", "integration/mapping-multi-labels.json");
-        mapping.configure(config);
+        Map<String, String> mappingConfig = new HashMap<>();
+        mappingConfig.put("file", "integration/mapping-multi-labels.json");
 
         configuration = ElasticSearchConfiguration.defaultConfiguration()
-                .withMapping(mapping)
+                .withMapping(mapping, mappingConfig)
                 .withUri(HOST)
                 .withPort(PORT);
 
@@ -140,12 +137,11 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration().withUuidProperty("uuid"), database));
 
         JsonFileMapping mapping = (JsonFileMapping) ServiceLoader.loadMapping("com.graphaware.module.es.mapping.JsonFileMapping");
-        Map<String, String> config = new HashMap<>();
-        config.put("file", "integration/mapping-advanced.json");
-        mapping.configure(config);
+        Map<String, String> mappingConfig = new HashMap<>();
+        mappingConfig.put("file", "integration/mapping-advanced.json");
 
         configuration = ElasticSearchConfiguration.defaultConfiguration()
-                .withMapping(mapping)
+                .withMapping(mapping, mappingConfig)
                 .withUri(HOST)
                 .withPort(PORT);
 
@@ -176,12 +172,11 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration().withUuidProperty("uuid"), database));
 
         JsonFileMapping mapping = (JsonFileMapping) ServiceLoader.loadMapping("com.graphaware.module.es.mapping.JsonFileMapping");
-        Map<String, String> config = new HashMap<>();
-        config.put("file", "integration/mapping-advanced.json");
-        mapping.configure(config);
+        Map<String, String> mappingConfig = new HashMap<>();
+        mappingConfig.put("file", "integration/mapping-advanced.json");
 
         configuration = ElasticSearchConfiguration.defaultConfiguration()
-                .withMapping(mapping)
+                .withMapping(mapping, mappingConfig)
                 .withUri(HOST)
                 .withPort(PORT);
 
@@ -212,12 +207,11 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration().withUuidProperty("uuid"), database));
 
         JsonFileMapping mapping = (JsonFileMapping) ServiceLoader.loadMapping("com.graphaware.module.es.mapping.JsonFileMapping");
-        Map<String, String> config = new HashMap<>();
-        config.put("file", "integration/mapping-advanced.json");
-        mapping.configure(config);
+        Map<String, String> mappingConfig = new HashMap<>();
+        mappingConfig.put("file", "integration/mapping-advanced.json");
 
         configuration = ElasticSearchConfiguration.defaultConfiguration()
-                .withMapping(mapping)
+                .withMapping(mapping, mappingConfig)
                 .withUri(HOST)
                 .withPort(PORT);
 
@@ -251,12 +245,11 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration().withUuidProperty("uuid"), database));
 
         JsonFileMapping mapping = (JsonFileMapping) ServiceLoader.loadMapping("com.graphaware.module.es.mapping.JsonFileMapping");
-        Map<String, String> config = new HashMap<>();
-        config.put("file", "integration/mapping-advanced.json");
-        mapping.configure(config);
+        Map<String, String> mappingConfig = new HashMap<>();
+        mappingConfig.put("file", "integration/mapping-advanced.json");
 
         configuration = ElasticSearchConfiguration.defaultConfiguration()
-                .withMapping(mapping)
+                .withMapping(mapping, mappingConfig)
                 .withUri(HOST)
                 .withPort(PORT);
 
@@ -299,12 +292,11 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration().withUuidProperty("uuid").with(IncludeAllRelationships.getInstance()), database));
 
         JsonFileMapping mapping = (JsonFileMapping) ServiceLoader.loadMapping("com.graphaware.module.es.mapping.JsonFileMapping");
-        Map<String, String> config = new HashMap<>();
-        config.put("file", "integration/mapping-advanced.json");
-        mapping.configure(config);
+        Map<String, String> mappingConfig = new HashMap<>();
+        mappingConfig.put("file", "integration/mapping-advanced.json");
 
         configuration = ElasticSearchConfiguration.defaultConfiguration()
-                .withMapping(mapping)
+                .withMapping(mapping, mappingConfig)
                 .with(IncludeAllRelationships.getInstance())
                 .withUri(HOST)
                 .withPort(PORT);
@@ -352,12 +344,11 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration().withUuidProperty("uuid").with(IncludeAllRelationships.getInstance()), database));
 
         JsonFileMapping mapping = (JsonFileMapping) ServiceLoader.loadMapping("com.graphaware.module.es.mapping.JsonFileMapping");
-        Map<String, String> config = new HashMap<>();
-        config.put("file", "integration/mapping-advanced.json");
-        mapping.configure(config);
+        Map<String, String> mappingConfig = new HashMap<>();
+        mappingConfig.put("file", "integration/mapping-advanced.json");
 
         configuration = ElasticSearchConfiguration.defaultConfiguration()
-                .withMapping(mapping)
+                .withMapping(mapping, mappingConfig)
                 .with(IncludeAllRelationships.getInstance())
                 .withUri(HOST)
                 .withPort(PORT);
@@ -389,12 +380,11 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration().withUuidProperty("uuid").with(IncludeAllRelationships.getInstance()), database));
 
         JsonFileMapping mapping = (JsonFileMapping) ServiceLoader.loadMapping("com.graphaware.module.es.mapping.JsonFileMapping");
-        Map<String, String> config = new HashMap<>();
-        config.put("file", "integration/mapping-advanced.json");
-        mapping.configure(config);
+        Map<String, String> mappingConfig = new HashMap<>();
+        mappingConfig.put("file", "integration/mapping-advanced.json");
 
         configuration = ElasticSearchConfiguration.defaultConfiguration()
-                .withMapping(mapping)
+                .withMapping(mapping, mappingConfig)
                 .with(IncludeAllRelationships.getInstance())
                 .withUri(HOST)
                 .withPort(PORT);
@@ -437,12 +427,11 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration().withUuidProperty("uuid").with(IncludeAllRelationships.getInstance()), database));
 
         JsonFileMapping mapping = (JsonFileMapping) ServiceLoader.loadMapping("com.graphaware.module.es.mapping.JsonFileMapping");
-        Map<String, String> config = new HashMap<>();
-        config.put("file", "integration/mapping-all.json");
-        mapping.configure(config);
+        Map<String, String> mappingConfig = new HashMap<>();
+        mappingConfig.put("file", "integration/mapping-all.json");
 
         configuration = ElasticSearchConfiguration.defaultConfiguration()
-                .withMapping(mapping)
+                .withMapping(mapping, mappingConfig)
                 .with(IncludeAllRelationships.getInstance())
                 .withUri(HOST)
                 .withPort(PORT);
@@ -480,12 +469,11 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration().withUuidProperty("uuid").with(IncludeAllRelationships.getInstance()), database));
 
         JsonFileMapping mapping = (JsonFileMapping) ServiceLoader.loadMapping("com.graphaware.module.es.mapping.JsonFileMapping");
-        Map<String, String> config = new HashMap<>();
-        config.put("file", "integration/mapping-advanced.json");
-        mapping.configure(config);
+        Map<String, String> mappingConfig = new HashMap<>();
+        mappingConfig.put("file", "integration/mapping-advanced.json");
 
         configuration = ElasticSearchConfiguration.defaultConfiguration()
-                .withMapping(mapping)
+                .withMapping(mapping, mappingConfig)
                 .with(IncludeAllRelationships.getInstance())
                 .withUri(HOST)
                 .withPort(PORT);
@@ -526,12 +514,11 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration().withUuidProperty("uuid").with(IncludeAllRelationships.getInstance()), database));
 
         JsonFileMapping mapping = (JsonFileMapping) ServiceLoader.loadMapping("com.graphaware.module.es.mapping.JsonFileMapping");
-        Map<String, String> config = new HashMap<>();
-        config.put("file", "integration/mapping-advanced.json");
-        mapping.configure(config);
+        Map<String, String> mappingConfig = new HashMap<>();
+        mappingConfig.put("file", "integration/mapping-advanced.json");
 
         configuration = ElasticSearchConfiguration.defaultConfiguration()
-                .withMapping(mapping)
+                .withMapping(mapping, mappingConfig)
                 .with(IncludeAllRelationships.getInstance())
                 .withUri(HOST)
                 .withPort(PORT);
@@ -564,12 +551,11 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration().withUuidProperty("uuid").with(IncludeAllRelationships.getInstance()), database));
 
         JsonFileMapping mapping = (JsonFileMapping) ServiceLoader.loadMapping("com.graphaware.module.es.mapping.JsonFileMapping");
-        Map<String, String> config = new HashMap<>();
-        config.put("file", "integration/mapping-invalid.json");
-        mapping.configure(config);
+        Map<String, String> mappingConfig = new HashMap<>();
+        mappingConfig.put("file", "integration/mapping-invalid.json");
 
         configuration = ElasticSearchConfiguration.defaultConfiguration()
-                .withMapping(mapping)
+                .withMapping(mapping, mappingConfig)
                 .with(IncludeAllRelationships.getInstance())
                 .withUri(HOST)
                 .withPort(PORT);

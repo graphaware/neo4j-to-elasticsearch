@@ -17,6 +17,7 @@ import com.graphaware.common.policy.BaseNodeInclusionPolicy;
 import com.graphaware.common.policy.NodePropertyInclusionPolicy;
 import com.graphaware.integration.es.test.EmbeddedElasticSearchServer;
 import com.graphaware.integration.es.test.JestElasticSearchClient;
+import com.graphaware.module.es.util.ServiceLoader;
 import com.graphaware.module.uuid.UuidConfiguration;
 import com.graphaware.module.uuid.UuidModule;
 import com.graphaware.runtime.GraphAwareRuntime;
@@ -31,6 +32,7 @@ import org.neo4j.test.RepeatRule;
 import org.neo4j.test.TestGraphDatabaseFactory;
 
 import java.io.IOException;
+import java.util.HashMap;
 
 import static com.graphaware.module.es.util.TestUtil.waitFor;
 
@@ -85,7 +87,7 @@ public class ElasticSearchModuleProgrammaticTest extends ElasticSearchModuleInte
         runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration().withUuidProperty("id"), database));
 
         configuration = ElasticSearchConfiguration.defaultConfiguration().withUri(HOST).withPort(PORT)
-                .withMapping(getDefaultMapping("different-index-name", "id"))
+                .withMapping(ServiceLoader.loadMapping("DefaultMapping"), getDefaultMapping("different-index-name", "id"))
                 .withQueueCapacity(1000)
                 .withRetryOnError(false)
                 .with(new BaseNodeInclusionPolicy() {

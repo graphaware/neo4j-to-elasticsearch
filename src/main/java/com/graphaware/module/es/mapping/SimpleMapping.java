@@ -40,4 +40,14 @@ import java.util.Map;
 public class SimpleMapping extends DefaultMapping {
     private static final Log LOG = LoggerFactory.getLogger(SimpleMapping.class);
 
+    /**
+     * Convert all property values to strings
+     *
+     * @param propertyValue Property value to normalize
+     * @return a string representation of a property
+     */
+    @Override
+    protected Object normalizeProperty(Object propertyValue) {
+        return String.valueOf(propertyValue);
+    }
 }

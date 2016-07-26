@@ -34,7 +34,6 @@ public class ElasticSearchModuleBootstrapper extends BaseRuntimeModuleBootstrapp
 
     private static final String URI = "uri";
     private static final String PORT = "port";
-    private static final String INDEX = "index";
     private static final String KEY_PROPERTY = "keyProperty";
     private static final String RETRY_ON_ERROR = "retryOnError";
     private static final String QUEUE_CAPACITY = "queueSize";
@@ -93,8 +92,7 @@ public class ElasticSearchModuleBootstrapper extends BaseRuntimeModuleBootstrapp
 
         if (configExists(config, MAPPING)) {
             Mapping mapping = ServiceLoader.loadMapping(config.get(MAPPING));
-            mapping.configure(config);
-            configuration = configuration.withMapping(mapping);
+            configuration = configuration.withMapping(mapping, config);
             LOG.info("Elasticsearch mapping configured with %s", mapping.getClass());
         }
 

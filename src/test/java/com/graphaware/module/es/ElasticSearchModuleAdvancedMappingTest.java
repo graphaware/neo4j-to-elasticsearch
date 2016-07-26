@@ -59,11 +59,9 @@ public class ElasticSearchModuleAdvancedMappingTest extends ElasticSearchModuleI
         runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration(), database));
 
         Mapping mapping = ServiceLoader.loadMapping("com.graphaware.module.es.mapping.AdvancedMapping");
-        Map<String, String> config = new HashMap<>();
-        mapping.configure(config);
 
         configuration = ElasticSearchConfiguration.defaultConfiguration()
-                .withMapping(mapping)
+                .withMapping(mapping, new HashMap<>())
                 .withUri(HOST)
                 .withPort(PORT);
         runtime.registerModule(new ElasticSearchModule("ES", new ElasticSearchWriter(configuration), configuration));
