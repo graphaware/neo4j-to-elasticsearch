@@ -98,14 +98,14 @@ public abstract class BaseMapping implements Mapping {
     }
 
     /**
-     * Currently used to convert all properties to their String representation.
-     * Could be disabled by a configuration flag to index number as-is.
+     * Can be used to convert all properties to their String representation.
+     * todo: should be configuration-based.
      *
      * @param propertyValue Property value to normalize
      * @return normalized property value
      */
     protected Object normalizeProperty(Object propertyValue) {
-        return String.valueOf(propertyValue);
+        return propertyValue;
     }
 
     /**
