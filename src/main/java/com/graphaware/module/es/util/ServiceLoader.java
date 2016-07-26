@@ -17,25 +17,35 @@ import com.graphaware.module.es.mapping.Mapping;
 
 public class ServiceLoader {
 
-    public static Mapping loadMapping(String mappingClazz) {
-        Mapping mapping;
+    public static Mapping loadMapping(String mappingClass) {
         try {
-            Class<?> clazz = Class
-                    .forName(mappingClazz);
-            Mapping definition = (Mapping) clazz.newInstance();
+            Class<?> clazz;
+            try {
+                clazz = Class.forName(mappingClass);
+            } catch(ClassNotFoundException e) {
+                if (!mappingClass.contains(".")) {
+                    /**
+                     * If the mapping class name does not contain a ".", assume that is is the name of
+                     * a class in the same package as the Mapping interface and try again.
+                     */
+                    clazz = Class.forName(Mapping.class.getPackage().getName() + "." + mappingClass);
+                } else {
+                    throw e;
+                }
+            }
+
+            Object definition = clazz.newInstance();
             if (definition instanceof Mapping) {
-                mapping = (Mapping) definition;
+                return (Mapping) definition;
             } else {
-                throw new IllegalArgumentException(mappingClazz + " is not a Mapping class");
+                throw new IllegalArgumentException(mappingClass + " is not a Mapping class");
             }
 
         } catch (ClassNotFoundException
                 | InstantiationException
                 | IllegalAccessException
                 | IllegalArgumentException e) {
-            throw new RuntimeException("Could not instantiate mapping class " + mappingClazz + " : " + e.getMessage(), e);
+            throw new RuntimeException("Could not instantiate mapping class " + mappingClass + " : " + e.getMessage(), e);
         }
-
-        return mapping;
     }
 }
