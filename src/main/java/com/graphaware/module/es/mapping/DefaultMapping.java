@@ -78,7 +78,7 @@ public class DefaultMapping extends BaseMapping implements Mapping {
 
     protected List<BulkableAction<? extends JestResult>> createOrUpdateNode(NodeRepresentation node) {
         String id = getKey(node);
-        String source = getJson(node);
+        Map<String, Object> source = map(node);
         List<BulkableAction<? extends JestResult>> actions = new ArrayList<>();
 
         for (String label : node.getLabels()) {
@@ -107,7 +107,7 @@ public class DefaultMapping extends BaseMapping implements Mapping {
 
     protected List<BulkableAction<? extends JestResult>> createOrUpdateRelationship(RelationshipRepresentation r) {
         return Collections.singletonList(
-                new Index.Builder(getJson(r)).index(getIndexFor(Relationship.class)).type(r.getType()).id(getKey(r)).build()
+                new Index.Builder(map(r)).index(getIndexFor(Relationship.class)).type(r.getType()).id(getKey(r)).build()
         );
     }
 

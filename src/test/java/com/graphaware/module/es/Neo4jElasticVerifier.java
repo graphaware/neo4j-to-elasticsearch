@@ -27,9 +27,7 @@ import org.neo4j.graphdb.*;
 
 import java.util.*;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class Neo4jElasticVerifier {
 
@@ -104,8 +102,10 @@ public class Neo4jElasticVerifier {
         Map<String, Object> properties = new HashMap<>();
         Set<String> labels = new HashSet<>();
         String nodeKey;
+        String nodeKeyProperty;
         try (Transaction tx = database.beginTx()) {
-            nodeKey = node.getProperty(configuration.getMapping().getKeyProperty()).toString();
+            nodeKeyProperty = configuration.getMapping().getKeyProperty();
+            nodeKey = node.getProperty(nodeKeyProperty).toString();
 
             for (String key : node.getPropertyKeys()) {
                 if (configuration.getInclusionPolicies().getNodePropertyInclusionPolicy().include(key, node)) {
@@ -131,9 +131,11 @@ public class Neo4jElasticVerifier {
             assertTrue((Boolean) result.getValue("found"));
 
             JsonObject source = result.getJsonObject().getAsJsonObject("_source");
-            assertEquals(properties.size(), source.entrySet().size());
+            assertEquals(properties.size() - 1, source.entrySet().size());
             for (String key : properties.keySet()) {
-                if (properties.get(key) instanceof String[]) {
+                if (key.equals(nodeKeyProperty)) {
+                    assertNull(source.get(key));
+                } else if (properties.get(key) instanceof String[]) {
                     checkStringArray(source, key, properties);                
                 } else if (properties.get(key) instanceof int[]) {
                     checkIntArray(source, key, properties);                
@@ -210,8 +212,11 @@ public class Neo4jElasticVerifier {
         Map<String, Object> properties = new HashMap<>();
         Set<String> labels = new TreeSet<>();
         String nodeKey;
+        String nodeKeyProperty;
+
         try (Transaction tx = database.beginTx()) {
-            nodeKey = node.getProperty(configuration.getKeyProperty()).toString();
+            nodeKeyProperty = configuration.getKeyProperty();
+            nodeKey = node.getProperty(nodeKeyProperty).toString();
 
             for (String key : node.getPropertyKeys()) {
                 if (configuration.getInclusionPolicies().getNodePropertyInclusionPolicy().include(key, node)) {
@@ -236,9 +241,12 @@ public class Neo4jElasticVerifier {
         assertTrue((Boolean) result.getValue("found"));
 
         JsonObject source = result.getJsonObject().getAsJsonObject("_source");
-        assertEquals(properties.size() + 1, source.entrySet().size());
+        // field count: "_labels"/"_type" added but "uuid" removed
+        assertEquals(properties.size(), source.entrySet().size());
         for (String key : properties.keySet()) {
-            if (properties.get(key) instanceof String[]) {
+            if (key.equals(nodeKeyProperty)) {
+                assertNull(source.get(key));
+            } else if (properties.get(key) instanceof String[]) {
                 checkStringArray(source, key, properties);
             } else if (properties.get(key) instanceof int[]) {
                 checkIntArray(source, key, properties);

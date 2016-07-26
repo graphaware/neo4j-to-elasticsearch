@@ -14,8 +14,6 @@
 
 package com.graphaware.module.es.mapping;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphaware.common.log.LoggerFactory;
 import com.graphaware.common.representation.NodeRepresentation;
 import com.graphaware.common.representation.PropertyContainerRepresentation;
@@ -31,6 +29,7 @@ import org.neo4j.graphdb.PropertyContainer;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.logging.Log;
 
+import java.lang.reflect.Array;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -43,8 +42,6 @@ public abstract class BaseMapping implements Mapping {
 
     protected String keyProperty;
     protected String index;
-
-    private final ObjectMapper mapper = new ObjectMapper();
 
     public BaseMapping() {
     }
@@ -67,58 +64,60 @@ public abstract class BaseMapping implements Mapping {
     }
 
     /**
+     * Creates an ElasticSearch document from a node or relationship.
+     * Includes all properties, except the keyProperty (usually "uuid") which is already the ElasticSearch document ID.
+     *
+     * @param item The node or relationship to build the ElasticSearch representation for.
+     * @return a document to index in ElasticSearch
+     */
+    private Map<String, Object> commonMap(PropertyContainerRepresentation item) {
+        String keyProperty = getKeyProperty();
+        Map<String, Object> source = new HashMap<>();
+        Map<String, Object> properties = item.getProperties();
+        if (item.getProperties() != null) {
+            for (String key : properties.keySet()) {
+                if (keyProperty.equals(key)) {
+                    // don't index the key property in ElasticSearch
+                    continue;
+                }
+                Object value = properties.get(key);
+                if (value.getClass().isArray()) {
+                    int length = Array.getLength(value);
+                    Object[] newValues = new Object[length];
+                    for (int i = 0; i < length; i ++) {
+                        newValues[i] = normalizeProperty(Array.get(value, i));
+                    }
+                    value = newValues;
+                } else {
+                    value = normalizeProperty(value);
+                }
+                source.put(key, value);
+            }
+        }
+        return source;
+    }
+
+    /**
+     * Currently used to convert all properties to their String representation.
+     * Could be disabled by a configuration flag to index number as-is.
+     *
+     * @param propertyValue Property value to normalize
+     * @return normalized property value
+     */
+    protected Object normalizeProperty(Object propertyValue) {
+        return String.valueOf(propertyValue);
+    }
+
+    /**
      * Convert a Neo4j representation to a ElasticSearch representation of a node.
      *
      * @param node A Neo4j node
      * @return a map of fields to store in ElasticSearch
      */
-    protected Map<String, String> map(NodeRepresentation node) {
-        Map<String, String> source = new HashMap<>();
-        for (String key : node.getProperties().keySet()) {
-              source.put(key, String.valueOf(node.getProperties().get(key)));
-        }
+    protected Map<String, Object> map(NodeRepresentation node) {
+        Map<String, Object> source = commonMap(node);
+        addExtra(source, node);
         return source;
-    }
-    
-    
-    
-    protected String getJson(NodeRepresentation node) {
-        Map<String,Object> data = new HashMap<>();
-        
-        for (String key : node.getProperties().keySet()) {
-              data.put(key, node.getProperties().get(key));
-        }
-        addExtra(data, node);
-        try {
-            String json = mapper.writeValueAsString(data);
-            return json;
-        } catch (JsonProcessingException ex) {
-            LOG.error("Error while creating json from node: " + node.toString(), ex);
-            throw new RuntimeException("Error while creating json from node: " + node.toString(), ex);
-        }
-    }
-    
-    protected String getJson(RelationshipRepresentation relationship) {
-        Map<String,Object> data = new HashMap<>();
-        
-        for (String key : relationship.getProperties().keySet()) {
-              data.put(key, relationship.getProperties().get(key));
-        }
-        addExtra(data, relationship);
-        try {
-            return mapper.writeValueAsString(data);
-        } catch (JsonProcessingException ex) {
-            LOG.error("Error while creating json from node: " + relationship.toString(), ex);
-            throw new RuntimeException("Error while creating json from node: " + relationship.toString(), ex);
-        }
-    }
-    
-    protected void addExtra(Map<String, Object> data, NodeRepresentation node) {
-        
-    }
-    
-    protected void addExtra(Map<String, Object> data, RelationshipRepresentation relationship) {
-        
     }
 
     /**
@@ -127,13 +126,15 @@ public abstract class BaseMapping implements Mapping {
      * @param relationship A Neo4j relationship
      * @return a map of fields to store in ElasticSearch
      */
-    protected Map<String, String> map(RelationshipRepresentation relationship) {
-        Map<String, String> source = new HashMap<>();
-        for (String key : relationship.getProperties().keySet()) {
-            source.put(key, String.valueOf(relationship.getProperties().get(key)));
-        }
+    protected Map<String, Object> map(RelationshipRepresentation relationship) {
+        Map<String, Object> source = commonMap(relationship);
+        addExtra(source, relationship);
         return source;
     }
+
+    protected void addExtra(Map<String, Object> data, NodeRepresentation node) { }
+    
+    protected void addExtra(Map<String, Object> data, RelationshipRepresentation relationship) { }
 
     /**
      * Create the ElasticSearch index(es) and initialize the mapping

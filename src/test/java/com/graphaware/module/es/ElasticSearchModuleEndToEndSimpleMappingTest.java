@@ -57,7 +57,11 @@ public class ElasticSearchModuleEndToEndSimpleMappingTest extends GraphAwareInte
         Get get = new Get.Builder("neo4j-index-node", uuid).type("Person").build();
         JestResult result = esClient.execute(get);
         System.out.println(result.getJsonString());
-        JSONAssert.assertEquals("{\"_index\":\"neo4j-index-node\",\"_type\":\"Person\",\"_id\":\"" + uuid + "\",\"_version\":2,\"found\":true,\"_source\":{\"age\":\"31\",\"name\":\"Michal\",\"uuid\":\"" + uuid + "\"}}", result.getJsonString(), false);
+        JSONAssert.assertEquals(
+                "{\"_index\":\"neo4j-index-node\",\"_type\":\"Person\",\"_id\":\"" + uuid + "\",\"_version\":2,\"found\":true,\"_source\":{\"age\":\"31\",\"name\":\"Michal\"}}",
+                result.getJsonString(),
+                false
+        );
     }
 
     protected String writeSomeStuffToNeo4j() {
