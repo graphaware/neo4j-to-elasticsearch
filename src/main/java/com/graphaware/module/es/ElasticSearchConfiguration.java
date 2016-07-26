@@ -21,6 +21,9 @@ import com.graphaware.module.es.mapping.Mapping;
 import com.graphaware.runtime.config.BaseTxDrivenModuleConfiguration;
 import com.graphaware.runtime.policy.InclusionPoliciesFactory;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * {@link BaseTxDrivenModuleConfiguration} for {@link ElasticSearchModule}.
  */
@@ -31,6 +34,10 @@ public class ElasticSearchConfiguration extends BaseTxDrivenModuleConfiguration<
     private static final boolean DEFAULT_EXECUTE_BULK = true;
     private static final InclusionPolicies DEFAULT_INCLUSION_POLICIES = InclusionPoliciesFactory.allBusiness().with(IncludeNoRelationships.getInstance());
     private static final Mapping DEFAULT_MAPPING = DefaultMapping.newInstance();
+    static {
+        DEFAULT_MAPPING.configure(new HashMap<>());
+    }
+
     private static final int DEFAULT_QUEUE_CAPACITY = 10000;
     private static final String DEFAULT_AUTH_USER = null;
     private static final String DEFAULT_AUTH_PASSWORD = null;
@@ -114,7 +121,9 @@ public class ElasticSearchConfiguration extends BaseTxDrivenModuleConfiguration<
         return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), getUri(), getPort(), getKeyProperty(), isRetryOnError(), getQueueCapacity(), isExecuteBulk(), authUser, authPassword, getMapping());
     }
 
-    public ElasticSearchConfiguration withMapping(Mapping mapping) {
+    public ElasticSearchConfiguration withMapping(Mapping mapping, Map<String, String> mappingConfig) {
+        // prevents mappings from being started without configure() from being called
+        mapping.configure(mappingConfig);
         return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), getUri(), getPort(), getKeyProperty(), isRetryOnError(), getQueueCapacity(), isExecuteBulk(), getAuthUser(), getAuthPassword(), mapping);
     }
 

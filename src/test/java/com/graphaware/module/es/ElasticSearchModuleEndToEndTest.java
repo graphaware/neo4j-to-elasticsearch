@@ -57,7 +57,7 @@ public class ElasticSearchModuleEndToEndTest extends GraphAwareIntegrationTest {
         Get get = new Get.Builder("neo4j-index-node", uuid).type("Person").build();
         JestResult result = esClient.execute(get);
         JSONAssert.assertEquals(
-                "{\"_index\":\"neo4j-index-node\",\"_type\":\"Person\",\"_id\":\"" + uuid + "\",\"_version\":2,\"found\":true,\"_source\":{\"age\":\"31\",\"name\":\"Michal\"}}",
+                "{\"_index\":\"neo4j-index-node\",\"_type\":\"Person\",\"_id\":\"" + uuid + "\",\"_version\":2,\"found\":true,\"_source\":{\"age\":31,\"name\":\"Michal\"}}",
                 result.getJsonString(),
                 false
         );

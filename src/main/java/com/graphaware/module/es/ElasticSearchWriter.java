@@ -44,7 +44,6 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
     private JestClient client;
     private final String uri;
     private final String port;
-    private final String keyProperty;
     private final boolean retryOnError;
     private final OperationExecutorFactory executorFactory;
     private final AtomicBoolean indexExists = new AtomicBoolean(false); //this must be thread-safe
@@ -59,7 +58,6 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
 
         this.uri = configuration.getUri();
         this.port = configuration.getPort();
-        this.keyProperty = configuration.getKeyProperty();
         this.retryOnError = configuration.isRetryOnError();
         this.executorFactory = configuration.isExecuteBulk() ? new BulkOperationExecutorFactory() : new RequestPerOperationExecutorFactory();
         this.authUser = configuration.getAuthUser();

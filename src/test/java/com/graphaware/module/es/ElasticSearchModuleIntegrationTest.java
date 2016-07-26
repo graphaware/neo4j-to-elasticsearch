@@ -131,14 +131,11 @@ public abstract class ElasticSearchModuleIntegrationTest {
         return result;
     }
 
-    protected Mapping getDefaultMapping(String index, String keyProperty) {
-        Mapping mapping = ServiceLoader.loadMapping("com.graphaware.module.es.mapping.DefaultMapping");
+    protected Map<String, String> getDefaultMapping(String index, String keyProperty) {
         Map<String, String> params = new HashMap<>();
         params.put("index", index);
         params.put("keyProperty", keyProperty);
-        mapping.configure(params);
-
-        return mapping;
+        return params;
     }
 
     protected List<String> labelsToStrings(Node node) {

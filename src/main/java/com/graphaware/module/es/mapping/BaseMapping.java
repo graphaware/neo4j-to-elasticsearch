@@ -40,10 +40,44 @@ public abstract class BaseMapping implements Mapping {
 
     private static final Log LOG = LoggerFactory.getLogger(BaseMapping.class);
 
+    private static final String DEFAULT_INDEX = "neo4j-index";
+    private static final String DEFAULT_KEY_PROPERTY = "uuid";
+    private static final String DEFAULT_FORCE_STRINGS = "false";
+
     protected String keyProperty;
-    protected String index;
+    protected String indexPrefix;
+    protected boolean forceStrings;
 
     public BaseMapping() {
+    }
+
+    @Override
+    public void configure(Map<String, String> config) {
+        indexPrefix = config.getOrDefault("index", DEFAULT_INDEX).trim();
+        if (indexPrefix.isEmpty()) { indexPrefix = DEFAULT_INDEX; }
+        LOG.info("ElasticSearch index-prefix set to %s", indexPrefix);
+
+        keyProperty = config.getOrDefault("keyProperty", DEFAULT_KEY_PROPERTY).trim();
+        if (keyProperty.isEmpty()) { keyProperty = DEFAULT_KEY_PROPERTY; }
+        LOG.info("ElasticSearch key-property set to %s", keyProperty);
+
+        forceStrings = config.getOrDefault("forceStrings", DEFAULT_FORCE_STRINGS).trim().toLowerCase().equals("true");
+        LOG.info("ElasticSearch force-strings set to %s", forceStrings);
+    }
+
+    /**
+     * @return the name of the ElasticSearch index name prefix to use for indexing.
+     */
+    protected String getIndexPrefix() {
+        return indexPrefix;
+    }
+
+    /**+
+     * @return the node/relationship property used as document ID in ElasticSearch (usually "uuid")
+     */
+    @Override
+    public String getKeyProperty() {
+        return keyProperty;
     }
 
     /**
@@ -54,13 +88,6 @@ public abstract class BaseMapping implements Mapping {
      */
     protected final String getKey(PropertyContainerRepresentation propertyContainer) {
         return String.valueOf(propertyContainer.getProperties().get(getKeyProperty()));
-    }
-
-    /**
-     * @return name of the ElasticSearch index name prefix to use for indexing.
-     */
-    protected String getIndexPrefix() {
-        return index;
     }
 
     /**
@@ -99,13 +126,12 @@ public abstract class BaseMapping implements Mapping {
 
     /**
      * Can be used to convert all properties to their String representation.
-     * todo: should be configuration-based.
      *
      * @param propertyValue Property value to normalize
      * @return normalized property value
      */
     protected Object normalizeProperty(Object propertyValue) {
-        return propertyValue;
+        return forceStrings ? String.valueOf(propertyValue) : propertyValue;
     }
 
     /**
