@@ -39,7 +39,7 @@ import java.util.Map;
  *
  * Relationships are not indexed.
  */
-public class DefaultMapping extends BaseMapping implements Mapping {
+public class DefaultMapping extends BaseMapping {
 
     private static final Log LOG = LoggerFactory.getLogger(DefaultMapping.class);
 
