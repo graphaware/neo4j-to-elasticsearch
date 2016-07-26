@@ -36,7 +36,7 @@ public abstract class ElasticSearchModuleIntegrationTest {
 
     protected static final String HOST = "localhost";
     protected static final String PORT = "9201";
-    protected static final Label PERSON = DynamicLabel.label("Person");
+    protected static final Label PERSON = Label.label("Person");
 
     protected GraphDatabaseService database;
     protected ElasticSearchConfiguration configuration;

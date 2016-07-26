@@ -21,7 +21,7 @@ import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
-public class ESProcedureIntegrationTest extends GraphAwareIntegrationTest {
+public abstract class ESProcedureIntegrationTest extends GraphAwareIntegrationTest {
     private ElasticSearchServer esServer;
 
     @Override

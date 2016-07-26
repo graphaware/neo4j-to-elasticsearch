@@ -40,24 +40,4 @@ import java.util.Map;
 public class SimpleMapping extends DefaultMapping {
     private static final Log LOG = LoggerFactory.getLogger(SimpleMapping.class);
 
-    @Override
-    protected List<BulkableAction<? extends JestResult>> createOrUpdateNode(NodeRepresentation node) {
-        String id = getKey(node);
-        Map<String, String> source = map(node);
-        List<BulkableAction<? extends JestResult>> actions = new ArrayList<>();
-
-        for (String label : node.getLabels()) {
-            actions.add(new Index.Builder(source).index(getIndexFor(Node.class)).type(label).id(id).build());
-        }
-
-        return actions;
-    }
-
-    @Override
-    protected List<BulkableAction<? extends JestResult>> createOrUpdateRelationship(RelationshipRepresentation r) {
-        return Collections.singletonList(
-                new Index.Builder(map(r)).index(getIndexFor(Relationship.class)).type(r.getType()).id(getKey(r)).build()
-        );
-    }
-
 }

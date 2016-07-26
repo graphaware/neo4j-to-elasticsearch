@@ -33,13 +33,12 @@ import java.util.Map;
 /**
  * This mapping indexes all documents in the same ElasticSearch index.
  *
- * The node's neo4j labels are stored are ElasticSearch "type".
- * If a node has multiple labels, it is stored multiple times, once for each label.
- *
- * Relationships are not indexed.
+ * Node's neo4j labels are stored in "_labels" field.
+ * Relationships's neo4j type is stored in "_type" field.
  */
 public class AdvancedMapping extends DefaultMapping {
     private static final Log LOG = LoggerFactory.getLogger(AdvancedMapping.class);
+
     public static final String NODE_TYPE = "node";
     public static final String RELATIONSHIP_TYPE = "relationship";
     public static final String LABELS_FIELD = "_labels";
@@ -47,26 +46,25 @@ public class AdvancedMapping extends DefaultMapping {
 
     @Override
     protected List<BulkableAction<? extends JestResult>> createOrUpdateNode(NodeRepresentation node) {
-        String id = getKey(node);
-        String source = getJson(node);
+        Map<String, Object> source = map(node);
         List<BulkableAction<? extends JestResult>> actions = new ArrayList<>();
-        actions.add(new Index.Builder(source).index(getIndexFor(Node.class)).type(NODE_TYPE).id(id).build());
+        actions.add(new Index.Builder(source).index(getIndexFor(Node.class)).type(NODE_TYPE).id(getKey(node)).build());
         return actions;
     }
 
     @Override
     protected List<BulkableAction<? extends JestResult>> createOrUpdateRelationship(RelationshipRepresentation r) {
         return Collections.singletonList(
-                new Index.Builder(getJson(r)).index(getIndexFor(Relationship.class)).type(RELATIONSHIP_TYPE).id(getKey(r)).build()
+                new Index.Builder(map(r)).index(getIndexFor(Relationship.class)).type(RELATIONSHIP_TYPE).id(getKey(r)).build()
         );
     }
      
     protected void addExtra(Map<String, Object> data, NodeRepresentation node) {
-        data.put(LABELS_FIELD,  new ArrayList<>(Arrays.asList(node.getLabels())));
+        data.put(LABELS_FIELD, Arrays.asList(node.getLabels()));
     }
     
     protected void addExtra(Map<String, Object> data, RelationshipRepresentation relationship) {
-        data.put(RELATIONSHIP_FIELD,  relationship.getType());
+        data.put(RELATIONSHIP_FIELD, relationship.getType());
     }
 
 }
