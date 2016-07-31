@@ -59,6 +59,10 @@
     {
       "condition": "hasType('CLICKS_ON') && hasProperty('count')",
       "type": "clicks"
+    },
+    {
+      "condition": "hasType('RELATED_TO')",
+      "type": "getType()"
     }
   ]
 }

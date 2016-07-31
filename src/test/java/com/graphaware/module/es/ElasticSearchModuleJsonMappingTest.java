@@ -596,6 +596,42 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
 
     }
 
+    @Test
+    public void testTypeOfRelationshipCanBeUsedAsFieldContent() {
+        database = new TestGraphDatabaseFactory().newImpermanentDatabase();
+
+        GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database);
+        runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration().withUuidProperty("uuid").with(IncludeAllRelationships.getInstance()), database));
+
+        JsonFileMapping mapping = (JsonFileMapping) ServiceLoader.loadMapping("com.graphaware.module.es.mapping.JsonFileMapping");
+        Map<String, String> mappingConfig = new HashMap<>();
+        mappingConfig.put("file", "integration/mapping-advanced.json");
+
+        configuration = ElasticSearchConfiguration.defaultConfiguration()
+                .withMapping(mapping, mappingConfig)
+                .with(IncludeAllRelationships.getInstance())
+                .withUri(HOST)
+                .withPort(PORT);
+
+        runtime.registerModule(new ElasticSearchModule("ES", new ElasticSearchWriter(configuration), configuration));
+
+        runtime.start();
+        runtime.waitUntilStarted();
+        database.execute("CREATE (n:Person {name:'John Doe'})-[:RELATED_TO]->(c:Company {name:'Acme'})");
+        TestUtil.waitFor(1500);
+
+        try (Transaction tx = database.beginTx()) {
+            for (Relationship rel : database.getAllRelationships()) {
+                String uuid = rel.getProperty("uuid").toString();
+                String type = rel.getType().name();
+                Get get = new Get.Builder("relationship-index", uuid).type(type).build();
+                JestResult result = esClient.execute(get);
+                assertTrue(result.isSucceeded());
+                tx.success();
+            }
+        }
+    }
+
     protected void verifyEsReplicationForNodeWithLabels(String label, String index, String type, String keyProperty) {
         try (Transaction tx = database.beginTx()) {
             database.findNodes(Label.label(label)).stream().forEach(n -> {

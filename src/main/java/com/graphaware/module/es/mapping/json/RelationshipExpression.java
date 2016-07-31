@@ -31,6 +31,10 @@ public class RelationshipExpression extends PropertyContainerExpression<Relation
         return true;
     }
 
+    public String getType() {
+        return ((RelationshipRepresentation) propertyContainer).getType();
+    }
+
     private RelationshipRepresentation getRelationship() {
         return propertyContainer;
     }
