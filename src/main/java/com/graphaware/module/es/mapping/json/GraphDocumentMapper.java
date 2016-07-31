@@ -95,14 +95,26 @@ public class GraphDocumentMapper {
             if (null != properties) {
                 for (String s : properties.keySet()) {
                     Expression exp = getExpression(s);
-                    source.put(s, exp.getValue(nodeExpression));
+                    Object o;
+                    try {
+                        o = exp.getValue(nodeExpression);
+                    } catch (Exception e) {
+                        LOG.warn(e.getMessage());
+                        o = null;
+                    }
+                    if (null != o || !defaults.excludeEmptyProperties()) {
+                        source.put(s, o);
+                    }
                 }
             }
 
             if (defaults.includeRemainingProperties()) {
                 for (String s : node.getProperties().keySet()) {
                     if (!defaults.getBlacklistedNodeProperties().contains(s)) {
-                        source.put(s, node.getProperties().get(s));
+                        Object o = node.getProperties().get(s);
+                        if (o != null || !defaults.excludeEmptyProperties()) {
+                            source.put(s, o);
+                        }
                     }
                 }
             }
