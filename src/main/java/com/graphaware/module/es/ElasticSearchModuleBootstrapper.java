@@ -15,6 +15,7 @@
 package com.graphaware.module.es;
 
 import com.graphaware.common.log.LoggerFactory;
+import com.graphaware.module.es.mapping.DefaultMapping;
 import com.graphaware.module.es.mapping.Mapping;
 import com.graphaware.module.es.util.ServiceLoader;
 import com.graphaware.runtime.module.BaseRuntimeModuleBootstrapper;
@@ -90,11 +91,10 @@ public class ElasticSearchModuleBootstrapper extends BaseRuntimeModuleBootstrapp
             LOG.info("Elasticsearch Auth Credentials bulk execution set to %s", configuration.isExecuteBulk());
         }
 
-        if (configExists(config, MAPPING)) {
-            Mapping mapping = ServiceLoader.loadMapping(config.get(MAPPING));
-            configuration = configuration.withMapping(mapping, config);
-            LOG.info("Elasticsearch mapping configured with %s", mapping.getClass());
-        }
+        String mappingClass = configExists(config, MAPPING) ? config.get(MAPPING) : "com.graphaware.module.es.mapping.DefaultMapping";
+        Mapping mapping = ServiceLoader.loadMapping(mappingClass);
+        configuration = configuration.withMapping(mapping, config);
+        LOG.info("Elasticsearch mapping configured with %s", mapping.getClass());
 
         return new ElasticSearchModule(moduleId, produceWriter(configuration), configuration);
     }
