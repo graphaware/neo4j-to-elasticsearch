@@ -67,4 +67,43 @@ public abstract class PropertyContainerExpression<TPropertyContainerRepresentati
         return dateFormat.format(date);
     }
 
+    public String asString(String key) {
+        if (hasProperty(key)) {
+            return propertyContainer.getProperties().get(key).toString();
+        }
+
+        return null;
+    }
+
+    public Long asLong(String key) {
+        if (hasProperty(key)) {
+            return Long.valueOf(getProperty(key).toString());
+        }
+
+        return null;
+    }
+
+    public Integer asInt(String key) {
+        if (hasProperty(key)) {
+            return Integer.parseInt(getProperty(key).toString());
+        }
+
+        return null;
+    }
+
+    public Float asFloat(String key) {
+        if (hasProperty(key)) {
+            return Float.valueOf(getProperty(key).toString());
+        }
+
+        return null;
+    }
+
+    public Double asDouble(String key) {
+        if (hasProperty(key)) {
+            return Double.valueOf(getProperty(key).toString());
+        }
+
+        return null;
+    }
 }
