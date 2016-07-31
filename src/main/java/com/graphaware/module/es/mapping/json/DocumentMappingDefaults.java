@@ -23,6 +23,7 @@ public class DocumentMappingDefaults {
 
     private static final boolean DEFAULT_INCLUDE_REMAINING = true;
     private static final List<String> DEFAULT_BLACKLIST = new ArrayList<>();
+    private static final boolean DEFAULT_SKIP_NULL_PROPERTIES = false;
 
     @JsonProperty("key_property")
     private String keyProperty;
@@ -43,7 +44,7 @@ public class DocumentMappingDefaults {
     private List<String> blacklistedRelationshipProperties;
 
     @JsonProperty("exclude_empty_properties")
-    private boolean excludeEmptyProperties;
+    private Boolean excludeEmptyProperties;
 
     public String getKeyProperty() {
         return keyProperty;
@@ -70,6 +71,6 @@ public class DocumentMappingDefaults {
     }
 
     public boolean excludeEmptyProperties() {
-        return excludeEmptyProperties;
+        return null != excludeEmptyProperties ? excludeEmptyProperties : DEFAULT_SKIP_NULL_PROPERTIES;
     }
 }

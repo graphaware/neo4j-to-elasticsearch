@@ -632,6 +632,44 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         }
     }
 
+    @Test
+    public void testPropertyValuesTransformation() {
+        database = new TestGraphDatabaseFactory().newImpermanentDatabase();
+
+        GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database);
+        runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration().withUuidProperty("uuid").with(IncludeAllRelationships.getInstance()), database));
+
+        JsonFileMapping mapping = (JsonFileMapping) ServiceLoader.loadMapping("com.graphaware.module.es.mapping.JsonFileMapping");
+        Map<String, String> mappingConfig = new HashMap<>();
+        mappingConfig.put("file", "integration/mapping-transformation.json");
+
+        configuration = ElasticSearchConfiguration.defaultConfiguration()
+                .withMapping(mapping, mappingConfig)
+                .with(IncludeAllRelationships.getInstance())
+                .withUri(HOST)
+                .withPort(PORT);
+
+        runtime.registerModule(new ElasticSearchModule("ES", new ElasticSearchWriter(configuration), configuration));
+
+        runtime.start();
+        runtime.waitUntilStarted();
+        database.execute("CREATE (l:Location {time:'1234', lat:'1.489', long:1234567890123})");
+        TestUtil.waitFor(1500);
+        try (Transaction tx = database.beginTx()) {
+            for (Node node : database.getAllNodes()) {
+                Get get = new Get.Builder("nodes", node.getProperty("uuid").toString()).type("locations").build();
+                JestResult result = esClient.execute(get);
+                assertTrue(result.isSucceeded());
+                Map<String, Object> source = new HashMap<>();
+                Map<String, Object> map = result.getSourceAsObject(source.getClass());
+                assertEquals("1234567890123", map.get("longitude"));
+                //assertEquals(1234, map.get("timestamp"));
+                assertEquals(1.489, map.get("latitude"));
+            }
+            tx.success();
+        }
+    }
+
     protected void verifyEsReplicationForNodeWithLabels(String label, String index, String type, String keyProperty) {
         try (Transaction tx = database.beginTx()) {
             database.findNodes(Label.label(label)).stream().forEach(n -> {

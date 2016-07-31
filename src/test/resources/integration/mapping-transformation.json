@@ -1,0 +1,18 @@
+{
+  "defaults": {
+    "key_property": "uuid",
+    "nodes_index": "nodes",
+    "relationships_index": "relationships"
+  },
+  "node_mappings": [
+    {
+      "condition": "allNodes()",
+      "type": "locations",
+      "properties": {
+        "timestamp": "asInt('time')",
+        "latitude": "asFloat('lat')",
+        "longitude": "asString('long')"
+      }
+    }
+  ]
+}
