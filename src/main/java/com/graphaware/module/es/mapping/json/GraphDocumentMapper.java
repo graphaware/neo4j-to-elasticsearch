@@ -110,7 +110,7 @@ public class GraphDocumentMapper {
 
             if (defaults.includeRemainingProperties()) {
                 for (String s : node.getProperties().keySet()) {
-                    if (!defaults.getBlacklistedNodeProperties().contains(s)) {
+                    if (!defaults.getBlacklistedNodeProperties().contains(s) && !source.containsKey(s)) {
                         Object o = node.getProperties().get(s);
                         if (o != null || !defaults.excludeEmptyProperties()) {
                             source.put(s, o);
