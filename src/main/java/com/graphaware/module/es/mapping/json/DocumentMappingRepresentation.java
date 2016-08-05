@@ -16,8 +16,6 @@ package com.graphaware.module.es.mapping.json;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphaware.common.log.LoggerFactory;
-import com.graphaware.common.representation.NodeRepresentation;
-import com.graphaware.common.representation.RelationshipRepresentation;
 import io.searchbox.action.BulkableAction;
 import io.searchbox.client.JestResult;
 import io.searchbox.core.Delete;

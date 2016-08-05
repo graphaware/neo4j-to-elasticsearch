@@ -14,12 +14,10 @@
 
 package com.graphaware.module.es.mapping;
 
+import com.graphaware.common.expression.PropertyContainerExpressions;
 import com.graphaware.common.log.LoggerFactory;
-import com.graphaware.common.representation.NodeRepresentation;
-import com.graphaware.common.representation.PropertyContainerRepresentation;
-import com.graphaware.common.representation.RelationshipRepresentation;
-import com.graphaware.writer.thirdparty.*;
-import io.searchbox.action.BulkableAction;
+import com.graphaware.module.es.mapping.json.NodeRepresentation;
+import com.graphaware.module.es.mapping.json.RelationshipRepresentation;
 import io.searchbox.client.JestClient;
 import io.searchbox.client.JestResult;
 import io.searchbox.indices.CreateIndex;
@@ -30,11 +28,10 @@ import org.neo4j.graphdb.Relationship;
 import org.neo4j.logging.Log;
 
 import java.lang.reflect.Array;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Arrays;
 
 public abstract class BaseMapping implements Mapping {
 
@@ -86,7 +83,7 @@ public abstract class BaseMapping implements Mapping {
      * @param propertyContainer Node or relationship to be indexed.
      * @return key of the node.
      */
-    protected final String getKey(PropertyContainerRepresentation propertyContainer) {
+    protected final String getKey(PropertyContainerExpressions propertyContainer) {
         return String.valueOf(propertyContainer.getProperties().get(getKeyProperty()));
     }
 
@@ -97,7 +94,7 @@ public abstract class BaseMapping implements Mapping {
      * @param item The node or relationship to build the ElasticSearch representation for.
      * @return a document to index in ElasticSearch
      */
-    private Map<String, Object> commonMap(PropertyContainerRepresentation item) {
+    private Map<String, Object> commonMap(PropertyContainerExpressions item) {
         String keyProperty = getKeyProperty();
         Map<String, Object> source = new HashMap<>();
         Map<String, Object> properties = item.getProperties();
@@ -199,46 +196,6 @@ public abstract class BaseMapping implements Mapping {
             LOG.error("Failed to create ElasticSearch index. Details: " + execute.getErrorMessage());
         }
     }
-
-    public final List<BulkableAction<? extends JestResult>> getActions(WriteOperation operation) {
-        switch (operation.getType()) {
-            case NODE_CREATED:
-                return createNode(((NodeCreated) operation).getDetails());
-
-            case NODE_UPDATED:
-                NodeUpdated nodeUpdated = (NodeUpdated) operation;
-                return updateNode(nodeUpdated.getDetails().getPrevious(), nodeUpdated.getDetails().getCurrent());
-
-            case NODE_DELETED:
-                return deleteNode(((NodeDeleted) operation).getDetails());
-
-            case RELATIONSHIP_CREATED:
-                return createRelationship(((RelationshipCreated) operation).getDetails());
-
-            case RELATIONSHIP_UPDATED:
-                RelationshipUpdated relUpdated = (RelationshipUpdated) operation;
-                return updateRelationship(relUpdated.getDetails().getPrevious(), relUpdated.getDetails().getCurrent());
-
-            case RELATIONSHIP_DELETED:
-                return deleteRelationship(((RelationshipDeleted) operation).getDetails());
-
-            default:
-                LOG.warn("Unsupported operation " + operation.getType());
-                return Collections.emptyList();
-        }
-    }
-
-    protected abstract List<BulkableAction<? extends JestResult>> createNode(NodeRepresentation node);
-
-    protected abstract List<BulkableAction<? extends JestResult>> updateNode(NodeRepresentation before, NodeRepresentation after);
-
-    protected abstract List<BulkableAction<? extends JestResult>> deleteNode(NodeRepresentation node);
-
-    protected abstract List<BulkableAction<? extends JestResult>> createRelationship(RelationshipRepresentation relationship);
-
-    protected abstract List<BulkableAction<? extends JestResult>> updateRelationship(RelationshipRepresentation before, RelationshipRepresentation after);
-
-    protected abstract List<BulkableAction<? extends JestResult>> deleteRelationship(RelationshipRepresentation relationship);
 
     public abstract <T extends PropertyContainer> String getIndexFor(Class<T> searchedType);
 }

@@ -16,9 +16,9 @@ package com.graphaware.module.es.mapping;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphaware.common.log.LoggerFactory;
-import com.graphaware.common.representation.NodeRepresentation;
-import com.graphaware.common.representation.RelationshipRepresentation;
 import com.graphaware.module.es.mapping.json.DocumentMappingRepresentation;
+import com.graphaware.module.es.mapping.json.NodeRepresentation;
+import com.graphaware.module.es.mapping.json.RelationshipRepresentation;
 import com.graphaware.writer.thirdparty.*;
 import io.searchbox.action.BulkableAction;
 import io.searchbox.client.JestClient;
@@ -59,58 +59,28 @@ public class JsonFileMapping implements Mapping {
         return mappingRepresentation;
     }
 
-    @Override
-    public List<BulkableAction<? extends JestResult>> getActions(WriteOperation operation) {
-        switch (operation.getType()) {
-            case NODE_CREATED:
-                return createNode(((NodeCreated) operation).getDetails());
-
-            case NODE_UPDATED:
-                NodeUpdated nodeUpdated = (NodeUpdated) operation;
-                return updateNode(nodeUpdated);
-
-            case NODE_DELETED:
-                return deleteNode(((NodeDeleted) operation).getDetails());
-
-            case RELATIONSHIP_CREATED:
-                return createRelationship(((RelationshipCreated) operation).getDetails());
-
-            case RELATIONSHIP_DELETED:
-                return deleteRelationship(((RelationshipDeleted) operation).getDetails());
-
-            case RELATIONSHIP_UPDATED:
-                RelationshipUpdated relUpdated = (RelationshipUpdated) operation;
-                return updateRelationship(relUpdated.getDetails().getPrevious(), relUpdated.getDetails().getCurrent());
-
-            default:
-                LOG.warn("Unsupported operation " + operation.getType());
-                return Collections.emptyList();
-        }
-    }
-
-    private List<BulkableAction<? extends JestResult>> createNode(NodeRepresentation node) {
+    public List<BulkableAction<? extends JestResult>> createNode(NodeRepresentation node) {
         return mappingRepresentation.createOrUpdateNode(node);
     }
-    
-    private List<BulkableAction<? extends JestResult>> createRelationship(RelationshipRepresentation relationship) {
+
+    public List<BulkableAction<? extends JestResult>> createRelationship(RelationshipRepresentation relationship) {
         return mappingRepresentation.createOrUpdateRelationship(relationship);
     }
 
-    private List<BulkableAction<? extends JestResult>> updateRelationship(RelationshipRepresentation before, RelationshipRepresentation after) {
+    public List<BulkableAction<? extends JestResult>> updateRelationship(RelationshipRepresentation before, RelationshipRepresentation after) {
         return mappingRepresentation.updateRelationshipAndRemoveOldIndices(before, after);
     }
 
-    private List<BulkableAction<? extends JestResult>> updateNode(NodeUpdated nodeUpdated) {
-        NodeRepresentation before = nodeUpdated.getDetails().getPrevious();
-        NodeRepresentation after = nodeUpdated.getDetails().getCurrent();
+    @Override
+    public List<BulkableAction<? extends JestResult>> updateNode(NodeRepresentation before, NodeRepresentation after) {
         return mappingRepresentation.updateNodeAndRemoveOldIndices(before, after);
     }
 
-    private List<BulkableAction<? extends JestResult>> deleteNode(NodeRepresentation node) {
+    public List<BulkableAction<? extends JestResult>> deleteNode(NodeRepresentation node) {
         return mappingRepresentation.getDeleteNodeActions(node);
     }
 
-    private List<BulkableAction<? extends JestResult>> deleteRelationship(RelationshipRepresentation relationship) {
+    public List<BulkableAction<? extends JestResult>> deleteRelationship(RelationshipRepresentation relationship) {
         return mappingRepresentation.getDeleteRelationshipActions(relationship);
     }
 

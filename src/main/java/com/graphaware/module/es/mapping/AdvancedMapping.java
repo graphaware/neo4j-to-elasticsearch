@@ -15,8 +15,8 @@
 package com.graphaware.module.es.mapping;
 
 import com.graphaware.common.log.LoggerFactory;
-import com.graphaware.common.representation.NodeRepresentation;
-import com.graphaware.common.representation.RelationshipRepresentation;
+import com.graphaware.module.es.mapping.json.NodeRepresentation;
+import com.graphaware.module.es.mapping.json.RelationshipRepresentation;
 import io.searchbox.action.BulkableAction;
 import io.searchbox.client.JestResult;
 import io.searchbox.core.Index;

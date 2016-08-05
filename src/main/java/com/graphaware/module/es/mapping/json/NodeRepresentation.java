@@ -13,39 +13,26 @@
  */
 package com.graphaware.module.es.mapping.json;
 
-import com.graphaware.common.representation.NodeRepresentation;
+import com.graphaware.common.representation.GraphDetachedNode;
+import org.neo4j.graphdb.Node;
 
-public class NodeExpression extends PropertyContainerExpression<NodeRepresentation> {
+public class NodeRepresentation extends GraphDetachedNode implements EnhancedPropertyContainerExpressions {
 
     private static final String GRAPH_TYPE_NODE = "node";
 
-    public NodeExpression(NodeRepresentation nodeRepresentation) {
-        super(nodeRepresentation);
+    public NodeRepresentation(Node node) {
+        super(node);
     }
 
-    public boolean hasLabel(String label) {
-        for (String s : propertyContainer.getLabels()) {
-            if (s.equals(label)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    public String[] getLabels() {
-        return propertyContainer.getLabels();
+    public NodeRepresentation(Node node, String[] properties) {
+        super(node, properties);
     }
 
     public boolean allNodes() {
         return true;
     }
-    
-    public String getGraphType() {
-        if (propertyContainer instanceof NodeRepresentation) {
-            return GRAPH_TYPE_NODE;
-        }
-        throw new RuntimeException("Property Container is not valid");
-    }
 
+    public String getGraphType() {
+        return GRAPH_TYPE_NODE;
+    }
 }

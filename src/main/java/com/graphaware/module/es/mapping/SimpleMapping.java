@@ -15,19 +15,7 @@
 package com.graphaware.module.es.mapping;
 
 import com.graphaware.common.log.LoggerFactory;
-import com.graphaware.common.representation.NodeRepresentation;
-import com.graphaware.common.representation.RelationshipRepresentation;
-import io.searchbox.action.BulkableAction;
-import io.searchbox.client.JestResult;
-import io.searchbox.core.Index;
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Relationship;
 import org.neo4j.logging.Log;
-
-import java.util.List;
-import java.util.Collections;
-import java.util.ArrayList;
-import java.util.Map;
 
 /**
  * This mapping indexes all documents in the same ElasticSearch index.
@@ -38,7 +26,6 @@ import java.util.Map;
  * Relationships are not indexed.
  */
 public class SimpleMapping extends DefaultMapping {
-    private static final Log LOG = LoggerFactory.getLogger(SimpleMapping.class);
 
     /**
      * Convert all property values to strings

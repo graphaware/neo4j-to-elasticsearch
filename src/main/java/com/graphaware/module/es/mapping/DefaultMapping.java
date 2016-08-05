@@ -15,8 +15,8 @@
 package com.graphaware.module.es.mapping;
 
 import com.graphaware.common.log.LoggerFactory;
-import com.graphaware.common.representation.NodeRepresentation;
-import com.graphaware.common.representation.RelationshipRepresentation;
+import com.graphaware.module.es.mapping.json.NodeRepresentation;
+import com.graphaware.module.es.mapping.json.RelationshipRepresentation;
 import io.searchbox.action.BulkableAction;
 import io.searchbox.client.JestResult;
 import io.searchbox.core.Delete;
@@ -48,7 +48,7 @@ public class DefaultMapping extends BaseMapping implements Mapping {
     }
 
     @Override
-    protected List<BulkableAction<? extends JestResult>> deleteNode(NodeRepresentation node) {
+    public List<BulkableAction<? extends JestResult>> deleteNode(NodeRepresentation node) {
         String id = getKey(node);
         List<BulkableAction<? extends JestResult>> actions = new ArrayList<>();
 
@@ -64,12 +64,12 @@ public class DefaultMapping extends BaseMapping implements Mapping {
     }
 
     @Override
-    protected List<BulkableAction<? extends JestResult>> updateNode(NodeRepresentation before, NodeRepresentation after) {
+    public List<BulkableAction<? extends JestResult>> updateNode(NodeRepresentation before, NodeRepresentation after) {
         return createOrUpdateNode(after);
     }
 
     @Override
-    protected List<BulkableAction<? extends JestResult>> createNode(NodeRepresentation node) {
+    public List<BulkableAction<? extends JestResult>> createNode(NodeRepresentation node) {
         return createOrUpdateNode(node);
     }
 
@@ -86,17 +86,17 @@ public class DefaultMapping extends BaseMapping implements Mapping {
     }
 
     @Override
-    protected List<BulkableAction<? extends JestResult>> createRelationship(RelationshipRepresentation relationship) {
+    public List<BulkableAction<? extends JestResult>> createRelationship(RelationshipRepresentation relationship) {
         return createOrUpdateRelationship(relationship);
     }
 
     @Override
-    protected List<BulkableAction<? extends JestResult>> updateRelationship(RelationshipRepresentation before, RelationshipRepresentation after) {
+    public List<BulkableAction<? extends JestResult>> updateRelationship(RelationshipRepresentation before, RelationshipRepresentation after) {
         return createOrUpdateRelationship(after);
     }
 
     @Override
-    protected List<BulkableAction<? extends JestResult>> deleteRelationship(RelationshipRepresentation r) {
+    public List<BulkableAction<? extends JestResult>> deleteRelationship(RelationshipRepresentation r) {
         return Collections.singletonList(
                 new Delete.Builder(getKey(r)).index(getIndexFor(Relationship.class)).type(r.getType()).build()
         );

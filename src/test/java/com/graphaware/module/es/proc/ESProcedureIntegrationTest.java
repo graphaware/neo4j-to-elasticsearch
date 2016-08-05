@@ -17,9 +17,6 @@ package com.graphaware.module.es.proc;
 import com.graphaware.integration.es.test.ElasticSearchServer;
 import com.graphaware.integration.es.test.EmbeddedElasticSearchServer;
 import com.graphaware.test.integration.GraphAwareIntegrationTest;
-import org.neo4j.kernel.api.exceptions.KernelException;
-import org.neo4j.kernel.impl.proc.Procedures;
-import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 public abstract class ESProcedureIntegrationTest extends GraphAwareIntegrationTest {
     private ElasticSearchServer esServer;
@@ -34,17 +31,7 @@ public abstract class ESProcedureIntegrationTest extends GraphAwareIntegrationTe
         esServer = new EmbeddedElasticSearchServer();
         esServer.start();
 
-        // start Neo4j server before registering procedures
         super.setUp();
-
-        registerProcedure();
-    }
-
-    private void registerProcedure() throws KernelException {
-        ((GraphDatabaseAPI) getDatabase())
-                .getDependencyResolver()
-                .resolveDependency(Procedures.class)
-                .register(ElasticSearchProcedures.class);
     }
 
     @Override

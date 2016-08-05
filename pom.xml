@@ -18,11 +18,11 @@
     <parent>
         <groupId>com.graphaware.neo4j</groupId>
         <artifactId>module-parent</artifactId>
-        <version>3.0.3.39</version>
+        <version>3.0.4.43</version>
     </parent>
 
     <artifactId>neo4j-to-elasticsearch</artifactId>
-    <version>3.0.3.39.6-SNAPSHOT</version>
+    <version>3.0.4.43.6-SNAPSHOT</version>
 
     <name>GraphAware Elasticsearch Integration for Neo4j</name>
     <description>GraphAware Framework Module for Integrating Neo4j with Elasticsearch</description>
@@ -77,6 +77,11 @@
 
         <dependency>
             <groupId>com.graphaware.neo4j</groupId>
+            <artifactId>common</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.graphaware.neo4j</groupId>
             <artifactId>runtime</artifactId>
         </dependency>
 
@@ -104,7 +109,7 @@
         <dependency>
             <groupId>com.graphaware.neo4j</groupId>
             <artifactId>uuid</artifactId>
-            <version>3.0.3.39.10</version>
+            <version>3.0.4.43.10</version>
             <scope>provided</scope>
         </dependency>
 

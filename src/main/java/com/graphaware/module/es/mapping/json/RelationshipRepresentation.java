@@ -13,37 +13,26 @@
  */
 package com.graphaware.module.es.mapping.json;
 
-import com.graphaware.common.representation.RelationshipRepresentation;
+import com.graphaware.common.representation.GraphDetachedRelationship;
+import org.neo4j.graphdb.Relationship;
 
-public class RelationshipExpression extends PropertyContainerExpression<RelationshipRepresentation> {
+public class RelationshipRepresentation extends GraphDetachedRelationship implements EnhancedPropertyContainerExpressions {
 
     private static final String GRAPH_TYPE_RELATIONSHIP = "relationship";
 
-    public RelationshipExpression(RelationshipRepresentation relationship) {
+    public RelationshipRepresentation(Relationship relationship) {
         super(relationship);
     }
 
-    public boolean hasType(String type) {
-        return getRelationship().getType().equals(type);
+    public RelationshipRepresentation(Relationship relationship, String[] properties) {
+        super(relationship, properties);
     }
 
     public boolean allRelationships() {
         return true;
     }
 
-    public String getType() {
-        return ((RelationshipRepresentation) propertyContainer).getType();
-    }
-
-    private RelationshipRepresentation getRelationship() {
-        return propertyContainer;
-    }
-
     public String getGraphType() {
-        if (propertyContainer instanceof RelationshipRepresentation) {
-            return GRAPH_TYPE_RELATIONSHIP;
-        }
-
-        throw new RuntimeException("Property Container is not valid");
+        return GRAPH_TYPE_RELATIONSHIP;
     }
 }

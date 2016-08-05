@@ -18,13 +18,15 @@ import com.graphaware.common.log.LoggerFactory;
 import com.graphaware.common.policy.*;
 import com.graphaware.common.policy.none.IncludeNoNodes;
 import com.graphaware.common.policy.none.IncludeNoRelationships;
-import com.graphaware.common.representation.NodeRepresentation;
-import com.graphaware.common.representation.RelationshipRepresentation;
+import com.graphaware.common.representation.DetachedNode;
+import com.graphaware.common.representation.DetachedRelationship;
+import com.graphaware.module.es.mapping.json.NodeRepresentation;
+import com.graphaware.module.es.mapping.json.RelationshipRepresentation;
 import com.graphaware.runtime.config.TxDrivenModuleConfiguration;
 import com.graphaware.runtime.metadata.TxDrivenModuleMetadata;
+import com.graphaware.runtime.module.thirdparty.DefaultThirdPartyIntegrationModule;
 import com.graphaware.runtime.module.thirdparty.WriterBasedThirdPartyIntegrationModule;
 import com.graphaware.tx.executor.batch.IterableInputBatchTransactionExecutor;
-import com.graphaware.tx.executor.batch.UnitOfWork;
 import com.graphaware.tx.executor.input.AllNodes;
 import com.graphaware.tx.executor.input.AllRelationships;
 import com.graphaware.writer.thirdparty.NodeCreated;
@@ -46,7 +48,7 @@ import static org.springframework.util.Assert.notNull;
 /**
  * A {@link WriterBasedThirdPartyIntegrationModule} that indexes Neo4j nodes and their properties in Elasticsearch.
  */
-public class ElasticSearchModule extends WriterBasedThirdPartyIntegrationModule {
+public class ElasticSearchModule extends DefaultThirdPartyIntegrationModule {
 
     private static final Log LOG = LoggerFactory.getLogger(ElasticSearchModuleBootstrapper.class);
     private static final int REINDEX_BATCH_SIZE = 1000;
@@ -161,22 +163,18 @@ public class ElasticSearchModule extends WriterBasedThirdPartyIntegrationModule 
                 database,
                 REINDEX_BATCH_SIZE,
                 new AllNodes(database, REINDEX_BATCH_SIZE),
-                new UnitOfWork<Node>() {
-                    @Override
-                    public void execute(GraphDatabaseService database, Node node, int batchNumber, int stepNumber) {
-                        if (!nodePolicy.include(node)) {
-                            return;
-                        }
+                (db, node, batchNumber, stepNumber) -> {
+                    if (!nodePolicy.include(node)) {
+                        return;
+                    }
 
-                        operations.add(new NodeCreated(
-                                new NodeRepresentation(node, propertiesToInclude(node, nodePropertyPolicy))
-                        ));
+                    operations.add(new NodeCreated<>(new NodeRepresentation(node, propertiesToInclude(node, nodePropertyPolicy))
+                    ));
 
-                        if (operations.size() >= REINDEX_BATCH_SIZE) {
-                            LOG.info("Done " + REINDEX_BATCH_SIZE);
-                            afterCommit(new HashSet<>(operations));
-                            operations.clear();
-                        }
+                    if (operations.size() >= REINDEX_BATCH_SIZE) {
+                        LOG.info("Done " + REINDEX_BATCH_SIZE);
+                        afterCommit(new HashSet<>(operations));
+                        operations.clear();
                     }
                 }
         ).execute();
@@ -198,22 +196,19 @@ public class ElasticSearchModule extends WriterBasedThirdPartyIntegrationModule 
                 database,
                 REINDEX_BATCH_SIZE,
                 new AllRelationships(database, REINDEX_BATCH_SIZE),
-                new UnitOfWork<Relationship>() {
-                    @Override
-                    public void execute(GraphDatabaseService database, Relationship rel, int batchNumber, int stepNumber) {
-                        if (!relPolicy.include(rel)) {
-                            return;
-                        }
+                (db, rel, batchNumber, stepNumber) -> {
+                    if (!relPolicy.include(rel)) {
+                        return;
+                    }
 
-                        operations.add(new RelationshipCreated(
-                                new RelationshipRepresentation(rel, propertiesToInclude(rel, relPropertyPolicy))
-                        ));
+                    operations.add(new RelationshipCreated<>(
+                            new RelationshipRepresentation(rel, propertiesToInclude(rel, relPropertyPolicy))
+                    ));
 
-                        if (operations.size() >= REINDEX_BATCH_SIZE) {
-                            LOG.info("Done " + REINDEX_BATCH_SIZE);
-                            afterCommit(new HashSet<>(operations));
-                            operations.clear();
-                        }
+                    if (operations.size() >= REINDEX_BATCH_SIZE) {
+                        LOG.info("Done " + REINDEX_BATCH_SIZE);
+                        afterCommit(new HashSet<>(operations));
+                        operations.clear();
                     }
                 }
         ).execute();
@@ -232,5 +227,15 @@ public class ElasticSearchModule extends WriterBasedThirdPartyIntegrationModule 
             }
         }
         return includedProps.toArray(new String[includedProps.size()]);
+    }
+
+    @Override
+    protected DetachedRelationship<Long, ? extends DetachedNode<Long>> relationshipRepresentation(Relationship relationship) {
+        return new RelationshipRepresentation(relationship);
+    }
+
+    @Override
+    protected DetachedNode<Long> nodeRepresentation(Node node) {
+        return new NodeRepresentation(node);
     }
 }

@@ -14,9 +14,7 @@
 package com.graphaware.module.es.mapping.json;
 
 import com.graphaware.common.log.LoggerFactory;
-import com.graphaware.common.representation.NodeRepresentation;
-import com.graphaware.common.representation.PropertyContainerRepresentation;
-import com.graphaware.common.representation.RelationshipRepresentation;
+import com.graphaware.common.representation.DetachedPropertyContainer;
 import org.neo4j.logging.Log;
 import org.springframework.expression.Expression;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
@@ -61,7 +59,7 @@ public class GraphDocumentMapper {
         return properties;
     }
 
-    public boolean supports(PropertyContainerRepresentation element) {
+    public boolean supports(DetachedPropertyContainer element) {
         if (null == condition) {
             return false;
         }
@@ -70,9 +68,9 @@ public class GraphDocumentMapper {
             Expression expression = getExpressionParser().parseExpression(condition);
 
             if (element instanceof NodeRepresentation) {
-                return (Boolean) expression.getValue(new NodeExpression((NodeRepresentation) element));
+                return (Boolean) expression.getValue(element);
             } else if (element instanceof RelationshipRepresentation) {
-                return (Boolean) expression.getValue(new RelationshipExpression((RelationshipRepresentation) element));
+                return (Boolean) expression.getValue(element);
             }
         } catch (Exception e) {
             LOG.error("Invalid condition expression {}", condition);
@@ -86,9 +84,8 @@ public class GraphDocumentMapper {
     }
 
     public DocumentRepresentation getDocumentRepresentation(NodeRepresentation node, DocumentMappingDefaults defaults, boolean buildSource) throws DocumentRepresentationException {
-        NodeExpression nodeExpression = new NodeExpression(node);
         Map<String, Object> source = new HashMap<>();
-        String i = getIndex(nodeExpression, defaults.getDefaultNodesIndex());
+        String i = getIndex(node, defaults.getDefaultNodesIndex());
         String id = getKeyProperty(node, defaults.getKeyProperty());
 
         if (buildSource) {
@@ -97,7 +94,7 @@ public class GraphDocumentMapper {
                     Expression exp = getExpression(s);
                     Object o;
                     try {
-                        o = exp.getValue(nodeExpression);
+                        o = exp.getValue(node);
                     } catch (Exception e) {
                         LOG.warn(e.getMessage());
                         o = null;
@@ -119,7 +116,7 @@ public class GraphDocumentMapper {
                 }
             }
         }
-        return new DocumentRepresentation(i, getType(nodeExpression), id, source);
+        return new DocumentRepresentation(i, getType(node), id, source);
     }
 
     private String getKeyProperty(NodeRepresentation node, String keyProperty) throws DocumentRepresentationException {
@@ -136,7 +133,7 @@ public class GraphDocumentMapper {
         return keyValue.toString();
     }
 
-    protected String getType(PropertyContainerExpression expression) {
+    protected String getType(DetachedPropertyContainer expression) {
         String t;
         if (getTypeExpression() != null)
             t = getTypeExpression().getValue(expression).toString();        
@@ -151,7 +148,7 @@ public class GraphDocumentMapper {
         return t;
     }
 
-    protected String getIndex(PropertyContainerExpression expression, String defaultIndex)
+    protected String getIndex(DetachedPropertyContainer expression, String defaultIndex)
     {
         String indexName;
         if (getIndexExpression(defaultIndex) != null)
@@ -172,14 +169,13 @@ public class GraphDocumentMapper {
     }
 
     public DocumentRepresentation getDocumentRepresentation(RelationshipRepresentation relationship, DocumentMappingDefaults defaults, boolean buildSource) throws DocumentRepresentationException {
-        RelationshipExpression relationshipExpression = new RelationshipExpression(relationship);
         Map<String, Object> source = new HashMap<>();
 
         if (buildSource) {
             if (null != properties) {
                 for (String s : properties.keySet()) {
                     Expression exp = getExpression(s);
-                    source.put(s, exp.getValue(relationshipExpression));
+                    source.put(s, exp.getValue(relationship));
                 }
             }
 
@@ -191,9 +187,9 @@ public class GraphDocumentMapper {
                 }
             }
         }
-        String i = getIndex(relationshipExpression, defaults.getDefaultRelationshipsIndex());
+        String i = getIndex(relationship, defaults.getDefaultRelationshipsIndex());
         String id = getKeyProperty(relationship, defaults.getKeyProperty());
-        return new DocumentRepresentation(i, getType(relationshipExpression), id, source);
+        return new DocumentRepresentation(i, getType(relationship), id, source);
 
     }
 
