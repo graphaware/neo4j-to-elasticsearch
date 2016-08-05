@@ -15,6 +15,8 @@ package com.graphaware.module.es.mapping.json;
 
 import com.graphaware.common.log.LoggerFactory;
 import com.graphaware.common.representation.DetachedPropertyContainer;
+import com.graphaware.module.es.mapping.expression.NodeExpressions;
+import com.graphaware.module.es.mapping.expression.RelationshipExpressions;
 import org.neo4j.logging.Log;
 import org.springframework.expression.Expression;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
@@ -67,9 +69,9 @@ public class GraphDocumentMapper {
         try {
             Expression expression = getExpressionParser().parseExpression(condition);
 
-            if (element instanceof NodeRepresentation) {
+            if (element instanceof NodeExpressions) {
                 return (Boolean) expression.getValue(element);
-            } else if (element instanceof RelationshipRepresentation) {
+            } else if (element instanceof RelationshipExpressions) {
                 return (Boolean) expression.getValue(element);
             }
         } catch (Exception e) {
@@ -79,11 +81,11 @@ public class GraphDocumentMapper {
         return false;
     }
 
-    public DocumentRepresentation getDocumentRepresentation(NodeRepresentation node, DocumentMappingDefaults defaults) throws DocumentRepresentationException {
+    public DocumentRepresentation getDocumentRepresentation(NodeExpressions node, DocumentMappingDefaults defaults) throws DocumentRepresentationException {
         return getDocumentRepresentation(node, defaults, true);
     }
 
-    public DocumentRepresentation getDocumentRepresentation(NodeRepresentation node, DocumentMappingDefaults defaults, boolean buildSource) throws DocumentRepresentationException {
+    public DocumentRepresentation getDocumentRepresentation(NodeExpressions node, DocumentMappingDefaults defaults, boolean buildSource) throws DocumentRepresentationException {
         Map<String, Object> source = new HashMap<>();
         String i = getIndex(node, defaults.getDefaultNodesIndex());
         String id = getKeyProperty(node, defaults.getKeyProperty());
@@ -119,14 +121,14 @@ public class GraphDocumentMapper {
         return new DocumentRepresentation(i, getType(node), id, source);
     }
 
-    private String getKeyProperty(NodeRepresentation node, String keyProperty) throws DocumentRepresentationException {
+    private String getKeyProperty(NodeExpressions node, String keyProperty) throws DocumentRepresentationException {
         Object keyValue = node.getProperties().get(keyProperty);
         if (keyValue == null)
             throw new DocumentRepresentationException(keyProperty);
         return keyValue.toString();
     }
     
-    private String getKeyProperty(RelationshipRepresentation relationship, String keyProperty) throws DocumentRepresentationException {
+    private String getKeyProperty(RelationshipExpressions relationship, String keyProperty) throws DocumentRepresentationException {
         Object keyValue = relationship.getProperties().get(keyProperty);
         if (keyValue == null)
             throw new DocumentRepresentationException(keyProperty);
@@ -164,11 +166,11 @@ public class GraphDocumentMapper {
         return indexName;
     }
 
-    public DocumentRepresentation getDocumentRepresentation(RelationshipRepresentation relationship, DocumentMappingDefaults defaults) throws DocumentRepresentationException {
+    public DocumentRepresentation getDocumentRepresentation(RelationshipExpressions relationship, DocumentMappingDefaults defaults) throws DocumentRepresentationException {
         return getDocumentRepresentation(relationship, defaults, true);
     }
 
-    public DocumentRepresentation getDocumentRepresentation(RelationshipRepresentation relationship, DocumentMappingDefaults defaults, boolean buildSource) throws DocumentRepresentationException {
+    public DocumentRepresentation getDocumentRepresentation(RelationshipExpressions relationship, DocumentMappingDefaults defaults, boolean buildSource) throws DocumentRepresentationException {
         Map<String, Object> source = new HashMap<>();
 
         if (buildSource) {

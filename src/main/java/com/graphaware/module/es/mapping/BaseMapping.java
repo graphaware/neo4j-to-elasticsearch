@@ -16,8 +16,8 @@ package com.graphaware.module.es.mapping;
 
 import com.graphaware.common.expression.PropertyContainerExpressions;
 import com.graphaware.common.log.LoggerFactory;
-import com.graphaware.module.es.mapping.json.NodeRepresentation;
-import com.graphaware.module.es.mapping.json.RelationshipRepresentation;
+import com.graphaware.module.es.mapping.expression.NodeExpressions;
+import com.graphaware.module.es.mapping.expression.RelationshipExpressions;
 import io.searchbox.client.JestClient;
 import io.searchbox.client.JestResult;
 import io.searchbox.indices.CreateIndex;
@@ -78,7 +78,7 @@ public abstract class BaseMapping implements Mapping {
     }
 
     /**
-     * Get the key under which the given {@link NodeRepresentation} or {@link RelationshipRepresentation} will be indexed in Elasticsearch.
+     * Get the key under which the given {@link NodeExpressions} or {@link RelationshipExpressions} will be indexed in Elasticsearch.
      *
      * @param propertyContainer Node or relationship to be indexed.
      * @return key of the node.
@@ -137,7 +137,7 @@ public abstract class BaseMapping implements Mapping {
      * @param node A Neo4j node
      * @return a map of fields to store in ElasticSearch
      */
-    protected Map<String, Object> map(NodeRepresentation node) {
+    protected Map<String, Object> map(NodeExpressions node) {
         Map<String, Object> source = commonMap(node);
         addExtra(source, node);
         return source;
@@ -149,15 +149,15 @@ public abstract class BaseMapping implements Mapping {
      * @param relationship A Neo4j relationship
      * @return a map of fields to store in ElasticSearch
      */
-    protected Map<String, Object> map(RelationshipRepresentation relationship) {
+    protected Map<String, Object> map(RelationshipExpressions relationship) {
         Map<String, Object> source = commonMap(relationship);
         addExtra(source, relationship);
         return source;
     }
 
-    protected void addExtra(Map<String, Object> data, NodeRepresentation node) { }
+    protected void addExtra(Map<String, Object> data, NodeExpressions node) { }
     
-    protected void addExtra(Map<String, Object> data, RelationshipRepresentation relationship) { }
+    protected void addExtra(Map<String, Object> data, RelationshipExpressions relationship) { }
 
     /**
      * Create the ElasticSearch index(es) and initialize the mapping

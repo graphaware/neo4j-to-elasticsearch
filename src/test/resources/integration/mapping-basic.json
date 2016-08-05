@@ -17,7 +17,7 @@
   ],
   "relationship_mappings": [
     {
-      "condition": "hasType('WORKS_FOR')",
+      "condition": "isType('WORKS_FOR')",
       "type": "workers"
     }
   ]

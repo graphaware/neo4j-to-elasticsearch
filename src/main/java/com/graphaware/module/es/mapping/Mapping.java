@@ -16,8 +16,8 @@ package com.graphaware.module.es.mapping;
 
 import com.graphaware.common.log.LoggerFactory;
 import com.graphaware.common.util.Change;
-import com.graphaware.module.es.mapping.json.NodeRepresentation;
-import com.graphaware.module.es.mapping.json.RelationshipRepresentation;
+import com.graphaware.module.es.mapping.expression.NodeExpressions;
+import com.graphaware.module.es.mapping.expression.RelationshipExpressions;
 import com.graphaware.writer.thirdparty.NodeUpdated;
 import com.graphaware.writer.thirdparty.RelationshipUpdated;
 import com.graphaware.writer.thirdparty.WriteOperation;
@@ -46,26 +46,22 @@ public interface Mapping {
     default List<BulkableAction<? extends JestResult>> getActions(WriteOperation<?> operation) {
         switch (operation.getType()) {
             case NODE_CREATED:
-                return createNode((NodeRepresentation) operation.getDetails());
+                return createNode((NodeExpressions) operation.getDetails());
 
             case NODE_UPDATED:
-                NodeUpdated nodeUpdated = (NodeUpdated) operation;
-                Change<NodeRepresentation> details = (Change<NodeRepresentation>) nodeUpdated.getDetails();
-                return updateNode(details.getPrevious(), details.getCurrent());
+                return updateNode(((Change<NodeExpressions>) ((NodeUpdated) operation).getDetails()).getPrevious(), ((Change<NodeExpressions>) ((NodeUpdated) operation).getDetails()).getCurrent());
 
             case NODE_DELETED:
-                return deleteNode((NodeRepresentation) operation.getDetails());
+                return deleteNode((NodeExpressions) operation.getDetails());
 
             case RELATIONSHIP_CREATED:
-                return createRelationship((RelationshipRepresentation) operation.getDetails());
+                return createRelationship((RelationshipExpressions) operation.getDetails());
 
             case RELATIONSHIP_UPDATED:
-                RelationshipUpdated relUpdated = (RelationshipUpdated) operation;
-                Change<RelationshipRepresentation> details1 = (Change<RelationshipRepresentation>) relUpdated.getDetails();
-                return updateRelationship(details1.getPrevious(), details1.getCurrent());
+                return updateRelationship(((Change<RelationshipExpressions>) ((RelationshipUpdated) operation).getDetails()).getPrevious(), ((Change<RelationshipExpressions>) ((RelationshipUpdated) operation).getDetails()).getCurrent());
 
             case RELATIONSHIP_DELETED:
-                return deleteRelationship((RelationshipRepresentation) operation.getDetails());
+                return deleteRelationship((RelationshipExpressions) operation.getDetails());
 
             default:
                 LOG.warn("Unsupported operation " + operation.getType());
@@ -73,16 +69,15 @@ public interface Mapping {
         }
     }
 
-    List<BulkableAction<? extends JestResult>> createNode(NodeRepresentation node);
+    List<BulkableAction<? extends JestResult>> createNode(NodeExpressions node);
 
-    List<BulkableAction<? extends JestResult>> updateNode(NodeRepresentation before, NodeRepresentation after);
+    List<BulkableAction<? extends JestResult>> updateNode(NodeExpressions before, NodeExpressions after);
 
-    List<BulkableAction<? extends JestResult>> deleteNode(NodeRepresentation node);
+    List<BulkableAction<? extends JestResult>> deleteNode(NodeExpressions node);
 
-    List<BulkableAction<? extends JestResult>> createRelationship(RelationshipRepresentation relationship);
+    List<BulkableAction<? extends JestResult>> createRelationship(RelationshipExpressions relationship);
 
-    List<BulkableAction<? extends JestResult>> updateRelationship(RelationshipRepresentation before, RelationshipRepresentation after);
+    List<BulkableAction<? extends JestResult>> updateRelationship(RelationshipExpressions before, RelationshipExpressions after);
 
-    List<BulkableAction<? extends JestResult>> deleteRelationship(RelationshipRepresentation relationship);
-
+    List<BulkableAction<? extends JestResult>> deleteRelationship(RelationshipExpressions relationship);
 }

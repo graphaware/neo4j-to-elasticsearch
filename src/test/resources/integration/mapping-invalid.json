@@ -21,10 +21,10 @@
   ],
   "relationship_mappings": [
     {
-      "condition": "hasType('WORKS_FOR')"
+      "condition": "isType('WORKS_FOR')"
     },
     {
-      "condition": "hasType('WORKED_AT')",
+      "condition": "isType('WORKED_AT')",
       "type": "old-workers"
     }
   ]

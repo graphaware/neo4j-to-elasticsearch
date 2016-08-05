@@ -15,8 +15,8 @@
 package com.graphaware.module.es.mapping;
 
 import com.graphaware.common.log.LoggerFactory;
-import com.graphaware.module.es.mapping.json.NodeRepresentation;
-import com.graphaware.module.es.mapping.json.RelationshipRepresentation;
+import com.graphaware.module.es.mapping.expression.NodeExpressions;
+import com.graphaware.module.es.mapping.expression.RelationshipExpressions;
 import io.searchbox.action.BulkableAction;
 import io.searchbox.client.JestResult;
 import io.searchbox.core.Index;
@@ -45,7 +45,7 @@ public class AdvancedMapping extends DefaultMapping {
     public static final String RELATIONSHIP_FIELD = "_relationship";
 
     @Override
-    protected List<BulkableAction<? extends JestResult>> createOrUpdateNode(NodeRepresentation node) {
+    protected List<BulkableAction<? extends JestResult>> createOrUpdateNode(NodeExpressions node) {
         Map<String, Object> source = map(node);
         List<BulkableAction<? extends JestResult>> actions = new ArrayList<>();
         actions.add(new Index.Builder(source).index(getIndexFor(Node.class)).type(NODE_TYPE).id(getKey(node)).build());
@@ -53,17 +53,17 @@ public class AdvancedMapping extends DefaultMapping {
     }
 
     @Override
-    protected List<BulkableAction<? extends JestResult>> createOrUpdateRelationship(RelationshipRepresentation r) {
+    protected List<BulkableAction<? extends JestResult>> createOrUpdateRelationship(RelationshipExpressions r) {
         return Collections.singletonList(
                 new Index.Builder(map(r)).index(getIndexFor(Relationship.class)).type(RELATIONSHIP_TYPE).id(getKey(r)).build()
         );
     }
      
-    protected void addExtra(Map<String, Object> data, NodeRepresentation node) {
+    protected void addExtra(Map<String, Object> data, NodeExpressions node) {
         data.put(LABELS_FIELD, Arrays.asList(node.getLabels()));
     }
     
-    protected void addExtra(Map<String, Object> data, RelationshipRepresentation relationship) {
+    protected void addExtra(Map<String, Object> data, RelationshipExpressions relationship) {
         data.put(RELATIONSHIP_FIELD, relationship.getType());
     }
 

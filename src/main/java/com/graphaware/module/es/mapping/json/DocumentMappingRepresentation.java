@@ -16,6 +16,8 @@ package com.graphaware.module.es.mapping.json;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphaware.common.log.LoggerFactory;
+import com.graphaware.module.es.mapping.expression.NodeExpressions;
+import com.graphaware.module.es.mapping.expression.RelationshipExpressions;
 import io.searchbox.action.BulkableAction;
 import io.searchbox.client.JestResult;
 import io.searchbox.core.Delete;
@@ -49,7 +51,7 @@ public class DocumentMappingRepresentation {
         return relationshipMappers;
     }
 
-    public List<BulkableAction<? extends JestResult>> createOrUpdateNode(NodeRepresentation node) {
+    public List<BulkableAction<? extends JestResult>> createOrUpdateNode(NodeExpressions node) {
         List<BulkableAction<? extends JestResult>> actions = new ArrayList<>();
 
         for (GraphDocumentMapper mapper : nodeMappers) {
@@ -68,7 +70,7 @@ public class DocumentMappingRepresentation {
         return actions;
     }
 
-    public List<BulkableAction<? extends JestResult>> createOrUpdateRelationship(RelationshipRepresentation relationship) {
+    public List<BulkableAction<? extends JestResult>> createOrUpdateRelationship(RelationshipExpressions relationship) {
         List<BulkableAction<? extends JestResult>> actions = new ArrayList<>();
 
         for (GraphDocumentMapper mapping : relationshipMappers) {
@@ -86,7 +88,7 @@ public class DocumentMappingRepresentation {
         return actions;
     }
 
-    public List<BulkableAction<? extends JestResult>> getDeleteRelationshipActions(RelationshipRepresentation relationship) {
+    public List<BulkableAction<? extends JestResult>> getDeleteRelationshipActions(RelationshipExpressions relationship) {
         List<BulkableAction<? extends JestResult>> actions = new ArrayList<>();
 
         for (GraphDocumentMapper mapping : relationshipMappers) {
@@ -103,7 +105,7 @@ public class DocumentMappingRepresentation {
         return actions;
     }
 
-    public List<BulkableAction<? extends JestResult>> updateNodeAndRemoveOldIndices(NodeRepresentation before, NodeRepresentation after) {
+    public List<BulkableAction<? extends JestResult>> updateNodeAndRemoveOldIndices(NodeExpressions before, NodeExpressions after) {
         List<BulkableAction<? extends JestResult>> actions = new ArrayList<>();
         List<String> afterIndices = new ArrayList<>();
         for (DocumentRepresentation action : getNodeMappingRepresentations(after, defaults)) {
@@ -125,7 +127,7 @@ public class DocumentMappingRepresentation {
         return actions;
     }
 
-    public List<BulkableAction<? extends JestResult>> updateRelationshipAndRemoveOldIndices(RelationshipRepresentation before, RelationshipRepresentation after) {
+    public List<BulkableAction<? extends JestResult>> updateRelationshipAndRemoveOldIndices(RelationshipExpressions before, RelationshipExpressions after) {
         List<BulkableAction<? extends JestResult>> actions = new ArrayList<>();
         List<String> afterIndices = new ArrayList<>();
 
@@ -148,7 +150,7 @@ public class DocumentMappingRepresentation {
         return actions;
     }
 
-    public List<BulkableAction<? extends JestResult>> getDeleteNodeActions(NodeRepresentation node) {
+    public List<BulkableAction<? extends JestResult>> getDeleteNodeActions(NodeExpressions node) {
         List<BulkableAction<? extends JestResult>> actions = new ArrayList<>();
         for (DocumentRepresentation documentRepresentation : getNodeMappingRepresentations(node, defaults)) {
             actions.add(new Delete.Builder(documentRepresentation.getId()).index(documentRepresentation.getIndex()).type(documentRepresentation.getType()).build());
@@ -157,15 +159,15 @@ public class DocumentMappingRepresentation {
         return actions;
     }
 
-    private List<DocumentRepresentation> getNodeMappingRepresentations(NodeRepresentation nodeRepresentation, DocumentMappingDefaults defaults) {
+    private List<DocumentRepresentation> getNodeMappingRepresentations(NodeExpressions nodeExpressions, DocumentMappingDefaults defaults) {
         List<DocumentRepresentation> docs = new ArrayList<>();
         for (GraphDocumentMapper mapper : getNodeMappers()) {
-            if (mapper.supports(nodeRepresentation)) {
+            if (mapper.supports(nodeExpressions)) {
                 try {
-                    DocumentRepresentation document = mapper.getDocumentRepresentation(nodeRepresentation, defaults);
+                    DocumentRepresentation document = mapper.getDocumentRepresentation(nodeExpressions, defaults);
                     docs.add(document);
                 } catch (Exception e) {
-                    LOG.error("Error while getting document for node: " + nodeRepresentation.toString(), e);
+                    LOG.error("Error while getting document for node: " + nodeExpressions.toString(), e);
                 }
             }
         }
@@ -173,15 +175,15 @@ public class DocumentMappingRepresentation {
         return docs;
     }
 
-    private List<DocumentRepresentation> getRelationshipMappingRepresentations(RelationshipRepresentation relationshipRepresentation, DocumentMappingDefaults defaults) {
+    private List<DocumentRepresentation> getRelationshipMappingRepresentations(RelationshipExpressions relationshipExpressions, DocumentMappingDefaults defaults) {
         List<DocumentRepresentation> docs = new ArrayList<>();
         for (GraphDocumentMapper mapper : getRelationshipMappers()) {
-            if (mapper.supports(relationshipRepresentation)) {
+            if (mapper.supports(relationshipExpressions)) {
                 try {
-                    DocumentRepresentation document = mapper.getDocumentRepresentation(relationshipRepresentation, defaults);
+                    DocumentRepresentation document = mapper.getDocumentRepresentation(relationshipExpressions, defaults);
                     docs.add(document);
                 } catch (Exception e) {
-                    LOG.error("Error while getting document for relationship: " + relationshipRepresentation.toString(), e);
+                    LOG.error("Error while getting document for relationship: " + relationshipExpressions.toString(), e);
                 }
             }
         }

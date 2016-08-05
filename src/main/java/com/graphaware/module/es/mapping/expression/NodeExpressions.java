@@ -11,28 +11,30 @@
  *
  * You should have received a copy of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.graphaware.module.es.mapping.json;
 
-import com.graphaware.common.representation.GraphDetachedRelationship;
-import org.neo4j.graphdb.Relationship;
+package com.graphaware.module.es.mapping.expression;
 
-public class RelationshipRepresentation extends GraphDetachedRelationship implements EnhancedPropertyContainerExpressions {
+import com.graphaware.common.representation.GraphDetachedNode;
+import com.graphaware.module.es.mapping.expression.ConvertingPropertyContainerExpressions;
+import org.neo4j.graphdb.Node;
 
-    private static final String GRAPH_TYPE_RELATIONSHIP = "relationship";
+public class NodeExpressions extends GraphDetachedNode implements ConvertingPropertyContainerExpressions {
 
-    public RelationshipRepresentation(Relationship relationship) {
-        super(relationship);
+    private static final String GRAPH_TYPE_NODE = "node";
+
+    public NodeExpressions(Node node) {
+        super(node);
     }
 
-    public RelationshipRepresentation(Relationship relationship, String[] properties) {
-        super(relationship, properties);
+    public NodeExpressions(Node node, String[] properties) {
+        super(node, properties);
     }
 
-    public boolean allRelationships() {
+    public boolean allNodes() {
         return true;
     }
 
     public String getGraphType() {
-        return GRAPH_TYPE_RELATIONSHIP;
+        return GRAPH_TYPE_NODE;
     }
 }

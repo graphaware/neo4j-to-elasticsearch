@@ -20,8 +20,8 @@ import com.graphaware.common.policy.none.IncludeNoNodes;
 import com.graphaware.common.policy.none.IncludeNoRelationships;
 import com.graphaware.common.representation.DetachedNode;
 import com.graphaware.common.representation.DetachedRelationship;
-import com.graphaware.module.es.mapping.json.NodeRepresentation;
-import com.graphaware.module.es.mapping.json.RelationshipRepresentation;
+import com.graphaware.module.es.mapping.expression.NodeExpressions;
+import com.graphaware.module.es.mapping.expression.RelationshipExpressions;
 import com.graphaware.runtime.config.TxDrivenModuleConfiguration;
 import com.graphaware.runtime.metadata.TxDrivenModuleMetadata;
 import com.graphaware.runtime.module.thirdparty.DefaultThirdPartyIntegrationModule;
@@ -168,7 +168,7 @@ public class ElasticSearchModule extends DefaultThirdPartyIntegrationModule {
                         return;
                     }
 
-                    operations.add(new NodeCreated<>(new NodeRepresentation(node, propertiesToInclude(node, nodePropertyPolicy))
+                    operations.add(new NodeCreated<>(new NodeExpressions(node, propertiesToInclude(node, nodePropertyPolicy))
                     ));
 
                     if (operations.size() >= REINDEX_BATCH_SIZE) {
@@ -202,7 +202,7 @@ public class ElasticSearchModule extends DefaultThirdPartyIntegrationModule {
                     }
 
                     operations.add(new RelationshipCreated<>(
-                            new RelationshipRepresentation(rel, propertiesToInclude(rel, relPropertyPolicy))
+                            new RelationshipExpressions(rel, propertiesToInclude(rel, relPropertyPolicy))
                     ));
 
                     if (operations.size() >= REINDEX_BATCH_SIZE) {
@@ -231,11 +231,11 @@ public class ElasticSearchModule extends DefaultThirdPartyIntegrationModule {
 
     @Override
     protected DetachedRelationship<Long, ? extends DetachedNode<Long>> relationshipRepresentation(Relationship relationship) {
-        return new RelationshipRepresentation(relationship);
+        return new RelationshipExpressions(relationship);
     }
 
     @Override
     protected DetachedNode<Long> nodeRepresentation(Node node) {
-        return new NodeRepresentation(node);
+        return new NodeExpressions(node);
     }
 }

@@ -59,7 +59,7 @@ Let's start with a default json mapping definition
   ],
   "relationship_mappings": [
     {
-      "condition": "hasType('WORKS_FOR')",
+      "condition": "isType('WORKS_FOR')",
       "type": "workers"
     }
   ]

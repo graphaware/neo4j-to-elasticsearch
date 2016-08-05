@@ -49,19 +49,19 @@
   ],
   "relationship_mappings": [
     {
-      "condition": "hasType('KNOWS')",
+      "condition": "isType('KNOWS')",
       "type": "knowers"
     },
     {
-      "condition": "hasType('WORKS_AT')",
+      "condition": "isType('WORKS_AT')",
       "type": "workers"
     },
     {
-      "condition": "hasType('CLICKS_ON') && hasProperty('count')",
+      "condition": "isType('CLICKS_ON') && hasProperty('count')",
       "type": "clicks"
     },
     {
-      "condition": "hasType('RELATED_TO')",
+      "condition": "isType('RELATED_TO')",
       "type": "getType()"
     }
   ]

@@ -14,9 +14,6 @@
 
 package com.graphaware.module.es.mapping;
 
-import com.graphaware.common.log.LoggerFactory;
-import org.neo4j.logging.Log;
-
 /**
  * This mapping indexes all documents in the same ElasticSearch index.
  *

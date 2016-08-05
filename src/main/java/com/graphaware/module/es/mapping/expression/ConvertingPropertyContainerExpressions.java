@@ -12,7 +12,7 @@
  * You should have received a copy of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.graphaware.module.es.mapping.json;
+package com.graphaware.module.es.mapping.expression;
 
 import com.graphaware.common.expression.PropertyContainerExpressions;
 
@@ -21,7 +21,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
-public interface EnhancedPropertyContainerExpressions extends PropertyContainerExpressions {
+public interface ConvertingPropertyContainerExpressions extends PropertyContainerExpressions {
 
     String DEFAULT_TIMEZONE = "UTC";
 

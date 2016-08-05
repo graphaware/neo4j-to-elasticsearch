@@ -17,9 +17,8 @@ package com.graphaware.module.es.mapping;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphaware.common.log.LoggerFactory;
 import com.graphaware.module.es.mapping.json.DocumentMappingRepresentation;
-import com.graphaware.module.es.mapping.json.NodeRepresentation;
-import com.graphaware.module.es.mapping.json.RelationshipRepresentation;
-import com.graphaware.writer.thirdparty.*;
+import com.graphaware.module.es.mapping.expression.NodeExpressions;
+import com.graphaware.module.es.mapping.expression.RelationshipExpressions;
 import io.searchbox.action.BulkableAction;
 import io.searchbox.client.JestClient;
 import io.searchbox.client.JestResult;
@@ -59,28 +58,28 @@ public class JsonFileMapping implements Mapping {
         return mappingRepresentation;
     }
 
-    public List<BulkableAction<? extends JestResult>> createNode(NodeRepresentation node) {
+    public List<BulkableAction<? extends JestResult>> createNode(NodeExpressions node) {
         return mappingRepresentation.createOrUpdateNode(node);
     }
 
-    public List<BulkableAction<? extends JestResult>> createRelationship(RelationshipRepresentation relationship) {
+    public List<BulkableAction<? extends JestResult>> createRelationship(RelationshipExpressions relationship) {
         return mappingRepresentation.createOrUpdateRelationship(relationship);
     }
 
-    public List<BulkableAction<? extends JestResult>> updateRelationship(RelationshipRepresentation before, RelationshipRepresentation after) {
+    public List<BulkableAction<? extends JestResult>> updateRelationship(RelationshipExpressions before, RelationshipExpressions after) {
         return mappingRepresentation.updateRelationshipAndRemoveOldIndices(before, after);
     }
 
     @Override
-    public List<BulkableAction<? extends JestResult>> updateNode(NodeRepresentation before, NodeRepresentation after) {
+    public List<BulkableAction<? extends JestResult>> updateNode(NodeExpressions before, NodeExpressions after) {
         return mappingRepresentation.updateNodeAndRemoveOldIndices(before, after);
     }
 
-    public List<BulkableAction<? extends JestResult>> deleteNode(NodeRepresentation node) {
+    public List<BulkableAction<? extends JestResult>> deleteNode(NodeExpressions node) {
         return mappingRepresentation.getDeleteNodeActions(node);
     }
 
-    public List<BulkableAction<? extends JestResult>> deleteRelationship(RelationshipRepresentation relationship) {
+    public List<BulkableAction<? extends JestResult>> deleteRelationship(RelationshipExpressions relationship) {
         return mappingRepresentation.getDeleteRelationshipActions(relationship);
     }
 
