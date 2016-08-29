@@ -20,6 +20,7 @@ import com.graphaware.module.es.mapping.expression.RelationshipExpressions;
 import io.searchbox.action.BulkableAction;
 import io.searchbox.client.JestClient;
 import io.searchbox.client.JestResult;
+import io.searchbox.core.Delete;
 import io.searchbox.core.Index;
 import io.searchbox.indices.mapping.PutMapping;
 import org.neo4j.graphdb.Node;
@@ -69,17 +70,44 @@ public class AdvancedMapping extends DefaultMapping {
     }
 
     @Override
+    public List<BulkableAction<? extends JestResult>> deleteNode(NodeExpressions node) {
+        return Collections.singletonList(
+                new Delete.Builder(getKey(node))
+                        .index(getIndexFor(Node.class))
+                        .type(NODE_TYPE)
+                        .build()
+        );
+    }
+
+    @Override
+    public List<BulkableAction<? extends JestResult>> deleteRelationship(RelationshipExpressions r) {
+        return Collections.singletonList(
+                new Delete.Builder(getKey(r))
+                        .index(getIndexFor(Relationship.class))
+                        .type(RELATIONSHIP_TYPE)
+                        .build()
+        );
+    }
+
+    @Override
     protected List<BulkableAction<? extends JestResult>> createOrUpdateNode(NodeExpressions node) {
-        Map<String, Object> source = map(node);
-        List<BulkableAction<? extends JestResult>> actions = new ArrayList<>();
-        actions.add(new Index.Builder(source).index(getIndexFor(Node.class)).type(NODE_TYPE).id(getKey(node)).build());
-        return actions;
+        return Collections.singletonList(
+                new Index.Builder(map(node))
+                        .index(getIndexFor(Node.class))
+                        .type(NODE_TYPE)
+                        .id(getKey(node))
+                        .build()
+        );
     }
 
     @Override
     protected List<BulkableAction<? extends JestResult>> createOrUpdateRelationship(RelationshipExpressions r) {
         return Collections.singletonList(
-                new Index.Builder(map(r)).index(getIndexFor(Relationship.class)).type(RELATIONSHIP_TYPE).id(getKey(r)).build()
+                new Index.Builder(map(r))
+                        .index(getIndexFor(Relationship.class))
+                        .type(RELATIONSHIP_TYPE)
+                        .id(getKey(r))
+                        .build()
         );
     }
      
