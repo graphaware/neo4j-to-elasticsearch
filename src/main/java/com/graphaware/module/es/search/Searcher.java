@@ -22,11 +22,11 @@ import com.graphaware.common.log.LoggerFactory;
 import com.graphaware.module.es.ElasticSearchConfiguration;
 import com.graphaware.module.es.ElasticSearchModule;
 import com.graphaware.module.es.mapping.Mapping;
+import com.graphaware.module.es.util.JestClientFactory2;
 import com.graphaware.module.uuid.UuidModule;
 import com.graphaware.module.uuid.read.DefaultUuidReader;
 import com.graphaware.module.uuid.read.UuidReader;
 import io.searchbox.client.JestClient;
-import io.searchbox.client.JestClientFactory;
 import io.searchbox.client.config.HttpClientConfig;
 import io.searchbox.core.Search;
 import io.searchbox.core.SearchResult;
@@ -149,7 +149,7 @@ public class Searcher {
 
         LOG.info("Creating Jest Client...");
 
-        JestClientFactory factory = new JestClientFactory();
+        JestClientFactory2 factory = new JestClientFactory2();
         String esHost = String.format("http://%s:%s", uri, port);
         HttpClientConfig.Builder clientConfigBuilder = new HttpClientConfig.Builder(esHost).multiThreaded(true);
 
