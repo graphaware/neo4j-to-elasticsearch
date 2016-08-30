@@ -26,10 +26,13 @@ import com.graphaware.module.es.util.JestClientFactory2;
 import com.graphaware.module.uuid.UuidModule;
 import com.graphaware.module.uuid.read.DefaultUuidReader;
 import com.graphaware.module.uuid.read.UuidReader;
+import io.searchbox.action.AbstractAction;
 import io.searchbox.client.JestClient;
+import io.searchbox.client.JestResult;
 import io.searchbox.client.config.HttpClientConfig;
 import io.searchbox.core.Search;
 import io.searchbox.core.SearchResult;
+import io.searchbox.indices.mapping.GetMapping;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.impl.client.BasicCredentialsProvider;
@@ -174,21 +177,29 @@ public class Searcher {
 
     /**
      *
-     * @param query The query to send to the index
-     * @param clazz {@link Node} or {@link Relationship}, to decide which index to send the query to.
-     * @param <T> {@link Node} or {@link Relationship}
+     * @param action The action to send to the index
+
      * @return the query response
      */
-    private <T extends PropertyContainer> SearchResult doQuery(String query, Class<T> clazz) {
-        Search search = new Search.Builder(query).addIndex(mapping.getIndexFor(clazz)).build();
-
-        SearchResult result;
+    private <R extends JestResult> R doQuery(AbstractAction<R> action) {
+        R result;
         try {
-            result = client.execute(search);
+            result = client.execute(action);
         } catch (IOException ex) {
             throw new RuntimeException("Error while performing query on ElasticSearch", ex);
         }
         return result;
+    }
+
+    /**
+     * @param query the search query to execute
+     * @param clazz {@link Node} or {@link Relationship}, to decide which index to send the query to.
+     * @param <T> {@link Node} or {@link Relationship}
+     * @return the search results
+     */
+    private <T extends PropertyContainer> SearchResult searchQuery(String query, Class<T> clazz) {
+        Search search = new Search.Builder(query).addIndex(mapping.getIndexFor(clazz)).build();
+        return doQuery(search);
     }
 
     /**
@@ -200,7 +211,7 @@ public class Searcher {
      * @return a list of matches (with node or a relationship)
      */
     public <T extends PropertyContainer> List<SearchMatch<T>> search(String query, Class<T> clazz) {
-        SearchResult result = doQuery(query, clazz);
+        SearchResult result = searchQuery(query, clazz);
 
         List<SearchMatch<T>> matches = buildSearchMatches(result);
         @SuppressWarnings("unchecked")
@@ -218,8 +229,25 @@ public class Searcher {
      * @return a JSON string
      */
     public <T extends PropertyContainer> String rawSearch(String query, Class<T> clazz) {
-        SearchResult r = doQuery(query, clazz);
+        SearchResult r = searchQuery(query, clazz);
         return r.getJsonString();
+    }
+
+    public String nodeMapping() {
+        return mappingQuery(Node.class);
+    }
+
+    public String relationshipMapping() {
+        return mappingQuery(Relationship.class);
+    }
+
+    private <T extends PropertyContainer> String mappingQuery(Class<T> clazz) {
+        String indexName = mapping.getIndexFor(clazz);
+        GetMapping getMapping = new GetMapping.Builder().addIndex(indexName).build();
+        return doQuery(getMapping)
+                .getJsonObject()
+                .get(indexName)
+                .toString();
     }
 
     @Override

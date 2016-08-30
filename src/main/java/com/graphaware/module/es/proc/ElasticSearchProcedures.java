@@ -75,9 +75,22 @@ public class ElasticSearchProcedures {
         return Stream.of(new JsonSearchResult(getSearcher(database).rawSearch(query, Relationship.class)));
     }
 
+    @Procedure("ga.es.nodeMapping")
+    @PerformsWrites
+    public Stream<JsonSearchResult> nodeMapping() {
+        return Stream.of(new JsonSearchResult(getSearcher(database).nodeMapping()));
+    }
+
+    @Procedure("ga.es.relationshipMapping")
+    @PerformsWrites
+    public Stream<JsonSearchResult> relationshipMapping() {
+        return Stream.of(new JsonSearchResult(getSearcher(database).relationshipMapping()));
+    }
+
     @Procedure("ga.es.initialized")
     public Stream<StatusResult> initialized() {
         return Stream.of(new StatusResult(getModule(database).isReindexCompleted()));
     }
+
 }
 
