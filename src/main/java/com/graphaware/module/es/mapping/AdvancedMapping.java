@@ -24,6 +24,7 @@ import io.searchbox.core.Delete;
 import io.searchbox.core.Index;
 import io.searchbox.indices.mapping.PutMapping;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.PropertyContainer;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.logging.Log;
 
@@ -124,35 +125,39 @@ public class AdvancedMapping extends DefaultMapping {
      * - `_labels.raw` field for node labels
      * - `_relationship.raw` field for relationship types
      *
-     * @param client The ElasticSearch client to use.
-     *
+     * @param client an ElasticSearch client
+     * @param indexType the name of the index to create
+     * @param <T> Node.class or Relationship.class
+     * @return true in case of success
      * @throws Exception
      */
     @Override
-    public void createIndexAndMapping(JestClient client) throws Exception {
-        super.createIndexAndMapping(client);
-
-        // node mapping
-        client.execute(new PutMapping.Builder(
-                getIndexFor(Node.class), NODE_TYPE, NODE_MAPPINGS
-        ).build());
-
-        // relationship mapping
-        client.execute(new PutMapping.Builder(
-                getIndexFor(Relationship.class), RELATIONSHIP_TYPE, RELATIONSHIP_MAPPINGS
-        ).build());
-    }
-
-    private static <T> Map.Entry<String, T> entry(String key, T value) {
-        return new AbstractMap.SimpleEntry<>(key, value);
-    }
-
-    @SafeVarargs
-    private static <T> Map<String, T> object(Map.Entry<String, T>... entries) {
-        HashMap<String, T> map = new HashMap<>();
-        for (Map.Entry<String, T> entry : entries) {
-            map.put(entry.getKey(), entry.getValue());
+    protected <T extends PropertyContainer> boolean createIndexAndMapping(JestClient client, Class<T> indexType) throws Exception {
+        boolean created = super.createIndexAndMapping(client, indexType);
+        if (!created) {
+            return false;
         }
-        return map;
+
+        Map<String, Object> mappings;
+        String esType;
+
+        if (indexType.equals(Node.class)) {
+            mappings = NODE_MAPPINGS;
+            esType = NODE_TYPE;
+        } else {
+            mappings = RELATIONSHIP_MAPPINGS;
+            esType = RELATIONSHIP_TYPE;
+        }
+
+        JestResult e = client.execute(
+                new PutMapping.Builder(getIndexFor(indexType), esType, mappings).build()
+        );
+
+        if (!e.isSucceeded()) {
+            LOG.warn("Mapping creation error: " + e.getErrorMessage());
+        }
+
+        return true;
     }
+
 }

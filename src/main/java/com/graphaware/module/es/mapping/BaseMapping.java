@@ -167,33 +167,43 @@ public abstract class BaseMapping implements Mapping {
      * @throws Exception
      */
     public void createIndexAndMapping(JestClient client) throws Exception {
-        List<String> indexes = Arrays.asList(
-                getIndexFor(Node.class),
-                getIndexFor(Relationship.class)
+        List<Class> indexes = Arrays.asList(
+                Node.class,
+                Relationship.class
         );
-        indexes.stream().distinct().forEach(index -> {
+        indexes.stream().distinct().forEach(indexType -> {
             try {
-                createIndexAndMapping(client, index);
+                createIndexAndMapping(client, indexType);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         });
     }
 
-    private void createIndexAndMapping(JestClient client, String index) throws Exception {
-        if (client.execute(new IndicesExists.Builder(index).build()).isSucceeded()) {
-            LOG.info("Index " + index + " already exists in ElasticSearch.");
-            return;
+    /**
+     * @param client an ElasticSearch client
+     * @param indexType the name of the index to create
+     * @return true when an index wa created (false if is already existed or failed to create)
+     * @throws Exception
+     */
+    protected <T extends PropertyContainer> boolean createIndexAndMapping(JestClient client, Class<T> indexType) throws Exception {
+        String indexName = getIndexFor(indexType);
+
+        if (client.execute(new IndicesExists.Builder(indexName).build()).isSucceeded()) {
+            LOG.info("Index " + indexName + " already exists in ElasticSearch.");
+            return false;
         }
 
-        LOG.info("Index " + index + " does not exist in ElasticSearch, creating...");
+        LOG.info("Index " + indexName + " does not exist in ElasticSearch, creating...");
 
-        final JestResult execute = client.execute(new CreateIndex.Builder(index).build());
+        final JestResult execute = client.execute(new CreateIndex.Builder(indexName).build());
 
         if (execute.isSucceeded()) {
             LOG.info("Created ElasticSearch index.");
+            return true;
         } else {
             LOG.error("Failed to create ElasticSearch index. Details: " + execute.getErrorMessage());
+            return false;
         }
     }
 
