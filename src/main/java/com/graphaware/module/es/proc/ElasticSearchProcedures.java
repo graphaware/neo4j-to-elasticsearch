@@ -36,6 +36,8 @@ import static com.graphaware.runtime.RuntimeRegistry.getStartedRuntime;
 
 public class ElasticSearchProcedures {
 
+    private static ThreadLocal<Searcher> searcher = new ThreadLocal<>();
+
     @Context
     public GraphDatabaseService database;
 
@@ -44,7 +46,10 @@ public class ElasticSearchProcedures {
     }
 
     private static Searcher getSearcher(GraphDatabaseService database) {
-        return new Searcher(database);
+        if (searcher.get() == null) {
+            searcher.set(new Searcher(database));
+        }
+        return searcher.get();
     }
 
     @Procedure("ga.es.queryNode")

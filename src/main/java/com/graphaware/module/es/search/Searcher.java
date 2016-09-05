@@ -49,7 +49,7 @@ import static org.springframework.util.Assert.notNull;
 public class Searcher {
     private static final Log LOG = LoggerFactory.getLogger(Searcher.class);
 
-    private final GraphDatabaseService database;
+    public final GraphDatabaseService database;
     private final JestClient client;
 
     private final String keyProperty;
