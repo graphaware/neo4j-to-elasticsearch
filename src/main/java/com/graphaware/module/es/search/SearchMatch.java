@@ -19,12 +19,12 @@ package com.graphaware.module.es.search;
 import org.neo4j.graphdb.PropertyContainer;
 
 public class SearchMatch<T extends PropertyContainer> {
-    public final String uuid;
+    public final String key;
     public final Double score;
     private T item;
 
-    public SearchMatch(String uuid, double score) {
-        this.uuid = uuid;
+    public SearchMatch(String key, double score) {
+        this.key = key;
         this.score = score;
     }
 

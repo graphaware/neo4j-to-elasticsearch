@@ -23,9 +23,6 @@ import com.graphaware.module.es.ElasticSearchConfiguration;
 import com.graphaware.module.es.ElasticSearchModule;
 import com.graphaware.module.es.mapping.Mapping;
 import com.graphaware.module.es.util.JestClientFactory2;
-import com.graphaware.module.uuid.UuidModule;
-import com.graphaware.module.uuid.read.DefaultUuidReader;
-import com.graphaware.module.uuid.read.UuidReader;
 import io.searchbox.action.AbstractAction;
 import io.searchbox.client.JestClient;
 import io.searchbox.client.JestResult;
@@ -57,35 +54,29 @@ public class Searcher {
 
     private final String keyProperty;
     private final Mapping mapping;
-    private final UuidReader uuidReader;
+    private final Key2IdResolver keyResolver;
 
     public Searcher(GraphDatabaseService database) {
         ElasticSearchConfiguration configuration = (ElasticSearchConfiguration) getStartedRuntime(database).getModule(ElasticSearchModule.class).getConfiguration();
 
         this.keyProperty = configuration.getKeyProperty();
         this.database = database;
-        this.uuidReader = createUuidReader(database);
-        this.client = createClient(configuration.getUri(), configuration.getPort(), configuration.getAuthUser(), configuration.getAuthPassword());
         this.mapping = configuration.getMapping();
-    }
-
-    private UuidReader createUuidReader(GraphDatabaseService database) {
-        return new DefaultUuidReader(
-                getStartedRuntime(database).getModule(UuidModule.class).getConfiguration(),
-                database
-        );
+        this.keyResolver = new Key2IdResolver(database, mapping.getKeyProperty());
+        this.client = createClient(configuration.getUri(), configuration.getPort(), configuration.getAuthUser(), configuration.getAuthPassword());
     }
 
     private Function<SearchMatch, Relationship> getRelationshipResolver() {
         return match -> {
             Relationship rel;
             try {
-                rel = database.getRelationshipById(uuidReader.getRelationshipIdByUuid(match.uuid));
+                long relId = keyResolver.getRelationshipID(match.key);
+                rel = database.getRelationshipById(relId);
             } catch(NotFoundException e) {
                 rel = null;
             }
             if (rel == null) {
-                LOG.warn("Could not find relationship with uuid (" + keyProperty + "): " + match.uuid);
+                LOG.warn("Could not find relationship with key (" + keyProperty + "): " + match.key);
             }
             return rel;
         };
@@ -95,12 +86,13 @@ public class Searcher {
         return match -> {
             Node node = null;
             try {
-                node = database.getNodeById(uuidReader.getNodeIdByUuid(match.uuid));
+                long nodeId = keyResolver.getNodeID(match.key);
+                node = database.getNodeById(nodeId);
             } catch (NotFoundException e){
                 node = null;
             }
             if (node == null) {
-                LOG.warn("Could not find node with uuid (" + keyProperty + "): " + match.uuid);
+                LOG.warn("Could not find node with key (" + keyProperty + "): " + match.key);
             }
             return node;
         };

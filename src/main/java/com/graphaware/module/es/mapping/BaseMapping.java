@@ -16,6 +16,7 @@ package com.graphaware.module.es.mapping;
 
 import com.graphaware.common.expression.PropertyContainerExpressions;
 import com.graphaware.common.log.LoggerFactory;
+import com.graphaware.common.representation.DetachedPropertyContainer;
 import com.graphaware.module.es.mapping.expression.NodeExpressions;
 import com.graphaware.module.es.mapping.expression.RelationshipExpressions;
 import io.searchbox.client.JestClient;
@@ -83,8 +84,12 @@ public abstract class BaseMapping implements Mapping {
      * @param propertyContainer Node or relationship to be indexed.
      * @return key of the node.
      */
-    protected final String getKey(PropertyContainerExpressions propertyContainer) {
-        return String.valueOf(propertyContainer.getProperties().get(getKeyProperty()));
+    protected final String getKey(DetachedPropertyContainer propertyContainer) {
+        if (getKeyProperty().equals("ID()")) {
+            return String.valueOf(propertyContainer.getGraphId());
+        } else {
+            return String.valueOf(propertyContainer.getProperties().get(getKeyProperty()));
+        }
     }
 
     /**
