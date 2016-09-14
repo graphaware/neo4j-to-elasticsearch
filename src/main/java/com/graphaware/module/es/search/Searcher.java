@@ -24,6 +24,8 @@ import com.graphaware.module.es.ElasticSearchModule;
 import com.graphaware.module.es.mapping.Mapping;
 import com.graphaware.module.es.util.JestClientFactory2;
 import io.searchbox.action.AbstractAction;
+import io.searchbox.action.AbstractMultiIndexActionBuilder;
+import io.searchbox.action.GenericResultAbstractAction;
 import io.searchbox.client.JestClient;
 import io.searchbox.client.JestResult;
 import io.searchbox.client.config.HttpClientConfig;
@@ -247,5 +249,27 @@ public class Searcher {
         super.finalize();
         if (client == null) { return; }
         client.shutdownClient();
+    }
+
+    /***
+     * @return the current ElasticSearch nodes information
+     */
+    public String getEsInfo() {
+        return doQuery(new GetVersion.Builder().build()).getJsonString();
+    }
+
+    private static class GetVersion extends GenericResultAbstractAction {
+        protected GetVersion(Builder builder) {
+            super(builder);
+            setURI(buildURI());
+        }
+
+        @Override
+        public String getRestMethodName() { return "GET"; }
+
+        public static class Builder extends AbstractAction.Builder<GetVersion, Builder> {
+            @Override
+            public GetVersion build() { return new GetVersion(this); }
+        }
     }
 }

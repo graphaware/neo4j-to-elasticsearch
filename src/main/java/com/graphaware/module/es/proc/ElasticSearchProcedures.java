@@ -97,5 +97,9 @@ public class ElasticSearchProcedures {
         return Stream.of(new StatusResult(getModule(database).isReindexCompleted()));
     }
 
+    @Procedure("ga.es.info")
+    public Stream<JsonSearchResult> info() {
+        return Stream.of(new JsonSearchResult(getSearcher(database).getEsInfo()));
+    }
 }
 
