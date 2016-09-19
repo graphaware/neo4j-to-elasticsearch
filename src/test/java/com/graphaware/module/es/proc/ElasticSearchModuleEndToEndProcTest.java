@@ -33,10 +33,26 @@ import static org.junit.Assert.assertTrue;
 
 public class ElasticSearchModuleEndToEndProcTest extends ESProcedureIntegrationTest {
 
+    protected static final int WAIT_TIME = 1500;
+
     @Test
+    public void totalTest() {
+        testNodeWorkflow();
+        cleanUpData();
+        testQueryNodeRawWorkflow();
+        cleanUpData();
+        testRelationshipWorkflow();
+        cleanUpData();
+        testQueryRelationshipRawWorkflow();
+        cleanUpData();
+        testIsReindexedProcedure();
+        cleanUpData();
+    }
+    
+    //@Test
     public void testNodeWorkflow() {
         writeSomeStuffToNeo4j();
-        waitFor(2000);
+        waitFor(WAIT_TIME);
 
         // match all nodes
         try (Transaction tx = getDatabase().beginTx()) {
@@ -74,10 +90,10 @@ public class ElasticSearchModuleEndToEndProcTest extends ESProcedureIntegrationT
         }
     }
 
-    @Test
+    //@Test
     public void testQueryNodeRawWorkflow() {
         writeSomeStuffToNeo4j();
-        waitFor(2000);
+        waitFor(WAIT_TIME);
 
         // count all nodes
         try(Transaction tx = getDatabase().beginTx()) {
@@ -93,10 +109,10 @@ public class ElasticSearchModuleEndToEndProcTest extends ESProcedureIntegrationT
         }
     }
 
-    @Test
+    //@Test
     public void testRelationshipWorkflow() {
         writeSomeStuffToNeo4j();
-        waitFor(2000);
+        waitFor(WAIT_TIME);
 
         // match all relationships
         try (Transaction tx = getDatabase().beginTx()) {
@@ -134,10 +150,10 @@ public class ElasticSearchModuleEndToEndProcTest extends ESProcedureIntegrationT
         }
     }
 
-    @Test
+    //@Test
     public void testQueryRelationshipRawWorkflow() {
         writeSomeStuffToNeo4j();
-        waitFor(2000);
+        waitFor(WAIT_TIME);
 
         // count all nodes
         try(Transaction tx = getDatabase().beginTx()) {
@@ -153,7 +169,7 @@ public class ElasticSearchModuleEndToEndProcTest extends ESProcedureIntegrationT
         }
     }
 
-    @Test
+    //@Test
     public void testIsReindexedProcedure() {
         boolean resultFound = false;
         try (Transaction tx = getDatabase().beginTx()) {
@@ -188,5 +204,10 @@ public class ElasticSearchModuleEndToEndProcTest extends ESProcedureIntegrationT
                 "MATCH (p:Person {name:'Michal'})-[r:WORKS_FOR]->() REMOVE r.role");
 
         return httpClient.executeCypher(baseNeoUrl(), "MATCH (p:Person {name:'Michal'}) RETURN p.uuid").replace("{\"results\":[{\"columns\":[\"p.uuid\"],\"data\":[{\"row\":[\"", "").replace("\"],\"meta\":[null]}]}],\"errors\":[]}", "");
+    }
+
+    private void cleanUpData() {
+        httpClient.executeCypher(baseNeoUrl(), "MATCH (p) DETACH DELETE p");
+        waitFor(WAIT_TIME);
     }
 }
