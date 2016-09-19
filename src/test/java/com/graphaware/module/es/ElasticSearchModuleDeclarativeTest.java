@@ -16,6 +16,7 @@ package com.graphaware.module.es;
 import com.graphaware.integration.es.test.EmbeddedElasticSearchServer;
 import com.graphaware.integration.es.test.JestElasticSearchClient;
 import com.graphaware.module.es.util.TestUtil;
+import static com.graphaware.module.es.util.TestUtil.waitFor;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -30,9 +31,9 @@ import org.neo4j.test.TestGraphDatabaseFactory;
 import java.io.IOException;
 
 import static com.graphaware.runtime.RuntimeRegistry.getRuntime;
+import io.searchbox.core.DeleteByQuery;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
 
 
 public class ElasticSearchModuleDeclarativeTest extends ElasticSearchModuleIntegrationTest {
@@ -51,8 +52,30 @@ public class ElasticSearchModuleDeclarativeTest extends ElasticSearchModuleInteg
         esServer.stop();
         esClient.shutdown();
     }
-
+    
     @Test
+    public void overAllTest() throws IOException {
+        dataShouldNotBeReplicatedWithModuleNotRegistered();
+        cleanUpData();
+        dataShouldBeCorrectlyReplicatedWithDefaultConfigEmptyDatabaseAndNoFailures();
+        cleanUpData();
+        dataShouldBeCorrectlyReplicatedWithPerRequestWriterAndNoFailures();
+        cleanUpData();
+        existingDatabaseShouldBeIndexedAndReIndexed();
+        cleanUpData();
+        existingDatabaseShouldBeIndexedAndReIndexed();
+        cleanUpData();
+        dataShouldBeCorrectlyReplicatedWithRetryAfterFailureBulk();
+        cleanUpData();
+        dataShouldBeCorrectlyReplicatedWithRetryAfterFailurePerRequest();
+        cleanUpData();
+        dataShouldBeCorrectlyReplicatedWithRetryWhenEsStartsLate();
+        cleanUpData();
+        stressTest();
+        cleanUpData();
+    }
+
+    //@Test
     public void dataShouldNotBeReplicatedWithModuleNotRegistered() {
         database = new TestGraphDatabaseFactory().newImpermanentDatabase();
 
@@ -62,7 +85,7 @@ public class ElasticSearchModuleDeclarativeTest extends ElasticSearchModuleInteg
         verifyEsEmpty();
     }
 
-    @Test
+    //@Test
     public void dataShouldBeCorrectlyReplicatedWithDefaultConfigEmptyDatabaseAndNoFailures() {
         database = new TestGraphDatabaseFactory().newImpermanentDatabaseBuilder()
                 .loadPropertiesFromFile(properties("integration/int-test-default.conf"))
@@ -77,7 +100,7 @@ public class ElasticSearchModuleDeclarativeTest extends ElasticSearchModuleInteg
         verifyEsReplication();
     }
 
-    @Test
+    //@Test
     public void dataShouldBeCorrectlyReplicatedWithCustomConfigEmptyDatabaseAndNoFailures() {
         database = new TestGraphDatabaseFactory().newImpermanentDatabaseBuilder()
                 .loadPropertiesFromFile(properties("integration/int-test-custom.conf"))
@@ -92,7 +115,7 @@ public class ElasticSearchModuleDeclarativeTest extends ElasticSearchModuleInteg
         verifyEsReplication("different-index-name");
     }
 
-    @Test
+    //@Test
     public void dataShouldBeCorrectlyReplicatedWithPerRequestWriterAndNoFailures() {
         database = new TestGraphDatabaseFactory().newImpermanentDatabaseBuilder()
                 .loadPropertiesFromFile(properties("integration/int-test-write-per-request.conf"))
@@ -107,7 +130,7 @@ public class ElasticSearchModuleDeclarativeTest extends ElasticSearchModuleInteg
         verifyEsReplication();
     }
 
-    @Test(timeout = 20_000)
+    //@Test(timeout = 20_000)
     public void existingDatabaseShouldBeIndexedAndReIndexed() throws IOException {
         TemporaryFolder folder = new TemporaryFolder();
         folder.create();
@@ -153,8 +176,8 @@ public class ElasticSearchModuleDeclarativeTest extends ElasticSearchModuleInteg
         verifyEventualEsReplication();
     }
 
-    @Test(timeout = 20_000)
-    @RepeatRule.Repeat(times = 5)
+//    @Test(timeout = 20_000)
+//    @RepeatRule.Repeat(times = 5)
     public void dataShouldBeCorrectlyReplicatedWithRetryAfterFailureBulk() {
         database = new TestGraphDatabaseFactory().newImpermanentDatabaseBuilder()
                 .loadPropertiesFromFile(properties("integration/int-test-default-with-fail-and-retry.conf"))
@@ -167,8 +190,8 @@ public class ElasticSearchModuleDeclarativeTest extends ElasticSearchModuleInteg
         verifyEventualEsReplication();
     }
 
-    @Test(timeout = 20_000)
-    @RepeatRule.Repeat(times = 5)
+//    @Test(timeout = 20_000)
+//    @RepeatRule.Repeat(times = 5)
     public void dataShouldBeCorrectlyReplicatedWithRetryAfterFailurePerRequest() {
         database = new TestGraphDatabaseFactory().newImpermanentDatabaseBuilder()
                 .loadPropertiesFromFile(properties("integration/int-test-default-with-fail-and-retry-per-request.conf"))
@@ -181,7 +204,7 @@ public class ElasticSearchModuleDeclarativeTest extends ElasticSearchModuleInteg
         verifyEventualEsReplication();
     }
 
-    @Test(timeout = 20_000)
+//    @Test(timeout = 20_000)
     public void dataShouldBeCorrectlyReplicatedWithRetryWhenEsStartsLate() {
         esServer.stop();
         esServer = new EmbeddedElasticSearchServer();
@@ -200,7 +223,7 @@ public class ElasticSearchModuleDeclarativeTest extends ElasticSearchModuleInteg
         verifyEventualEsReplication();
     }
 
-    @Test(timeout = 30_000)
+//    @Test(timeout = 30_000)
     public void stressTest() {
         database = new TestGraphDatabaseFactory().newImpermanentDatabaseBuilder()
                 .loadPropertiesFromFile(properties("integration/int-test-stress.conf"))
@@ -227,5 +250,20 @@ public class ElasticSearchModuleDeclarativeTest extends ElasticSearchModuleInteg
 
     private String properties(String name) {
         return this.getClass().getClassLoader().getResource(name).getPath();
+    }
+    
+    private void cleanUpData() {
+        try (Transaction tx = database.beginTx()) {
+            database.execute("MATCH ()-[r]-() DELETE r");
+            database.execute("MATCH (p) DETACH DELETE p");
+            tx.success();
+        }
+        
+        DeleteByQuery delete = new DeleteByQuery.Builder("{ \"match_all\": {} }").addIndex("*")
+            .addType("*")
+            .build();
+        esClient.execute(delete);
+        database.shutdown();
+        waitFor(1000);
     }
 }
