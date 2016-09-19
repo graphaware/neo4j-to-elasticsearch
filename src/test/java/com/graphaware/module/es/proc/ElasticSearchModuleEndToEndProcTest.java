@@ -36,7 +36,7 @@ public class ElasticSearchModuleEndToEndProcTest extends ESProcedureIntegrationT
     protected static final int WAIT_TIME = 1500;
 
     @Test
-    public void totalTest() {
+    public void overallTest() {
         testNodeWorkflow();
         cleanUpData();
         testQueryNodeRawWorkflow();
