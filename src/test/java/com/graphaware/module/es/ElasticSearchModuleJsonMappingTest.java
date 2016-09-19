@@ -13,12 +13,10 @@ import com.graphaware.module.uuid.UuidModule;
 import com.graphaware.runtime.GraphAwareRuntime;
 import com.graphaware.runtime.GraphAwareRuntimeFactory;
 import io.searchbox.client.JestResult;
-import io.searchbox.core.Delete;
 import io.searchbox.core.DeleteByQuery;
 import io.searchbox.core.Get;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Test;
 import org.neo4j.graphdb.*;
 import org.neo4j.test.TestGraphDatabaseFactory;
 

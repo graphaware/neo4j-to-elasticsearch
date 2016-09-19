@@ -17,8 +17,6 @@ import com.graphaware.integration.es.test.ElasticSearchClient;
 import com.graphaware.integration.es.test.ElasticSearchServer;
 import com.graphaware.integration.es.test.EmbeddedElasticSearchServer;
 import com.graphaware.integration.es.test.JestElasticSearchClient;
-import com.graphaware.module.es.mapping.Mapping;
-import com.graphaware.module.es.util.ServiceLoader;
 import org.junit.After;
 import org.junit.Before;
 import org.neo4j.graphdb.*;
