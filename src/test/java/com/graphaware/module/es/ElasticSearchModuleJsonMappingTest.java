@@ -44,7 +44,7 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         esClient.shutdown();
     }
     
-    @Test
+    //@Test
     public void overallTest() {
         testBasicJsonMappingModuleBootstrap();
         cleanUpData();
