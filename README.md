@@ -96,6 +96,9 @@ com.graphaware.module.UIDM.node=hasLabel('Label1') || hasLabel('Label2')
 #optional, default is uuidIndex
 com.graphaware.module.UIDM.uuidIndex=uuidIndex
 
+# prevent the whole db to be assigned a new uuid if the uuid module is settle up together with neo4j2es
+com.graphaware.module.UIDM.initializeUntil=0
+
 #ES becomes the module ID:
 com.graphaware.module.ES.2=com.graphaware.module.es.ElasticSearchModuleBootstrapper
 
