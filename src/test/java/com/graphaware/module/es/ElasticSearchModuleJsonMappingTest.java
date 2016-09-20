@@ -15,6 +15,7 @@ import com.graphaware.runtime.GraphAwareRuntimeFactory;
 import io.searchbox.client.JestResult;
 import io.searchbox.core.DeleteByQuery;
 import io.searchbox.core.Get;
+import java.io.IOException;
 import org.junit.After;
 import org.junit.Before;
 import org.neo4j.graphdb.*;
@@ -25,6 +26,8 @@ import java.util.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 
 public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleIntegrationTest {
 
@@ -44,7 +47,7 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
     }
     
     @Test
-    public void overallTest() {
+    public void overallTest() throws IOException {
         testBasicJsonMappingModuleBootstrap();
         cleanUpData();
         testBasicJsonMappingReplication();
@@ -65,8 +68,6 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         cleanUpData();
         testBlacklistedPropertiesAreNotIndexed();
         cleanUpData();
-//        testIndexWithAllNodesAndAllRelsExpression();
-//        cleanUpData();
         testRelationshipsAreUpdatedAndRemovedIfNeeded();
         cleanUpData();
         testDynamicTypesAreCorrectlyHandled();
@@ -76,6 +77,8 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         testTypeOfRelationshipCanBeUsedAsFieldContent();
         cleanUpData();
         testPropertyValuesTransformation();
+        cleanUpData();
+        testIndexWithAllNodesAndAllRelsExpression();
         cleanUpData();
     }
 
@@ -458,8 +461,16 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
     }
 
     //@Test
-    public void testIndexWithAllNodesAndAllRelsExpression() {
-        database = new TestGraphDatabaseFactory().newImpermanentDatabase();
+    public void testIndexWithAllNodesAndAllRelsExpression() throws IOException {
+        esServer.stop();
+        esServer = new EmbeddedElasticSearchServer();
+        esServer.start();
+
+        TemporaryFolder folder = new TemporaryFolder();
+        folder.create();
+        folder.getRoot().deleteOnExit();
+        
+        database = new GraphDatabaseFactory().newEmbeddedDatabase(folder.getRoot());
 
         GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database);
         runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration().withUuidProperty("uuid").with(IncludeAllRelationships.getInstance()), database));
@@ -490,12 +501,8 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
             });
 
             database.getAllRelationships().stream().forEach(r -> {
-                System.out.println("Testing " + r.getProperty("uuid").toString());
                 Get get = new Get.Builder("default-index-relationship", r.getProperty("uuid").toString()).type("relationships").build();
                 JestResult result = esClient.execute(get);
-                
-                if (!result.isSucceeded())
-                    System.out.println(result.getErrorMessage());
                 assertEquals(true, result.isSucceeded());
             });
 
