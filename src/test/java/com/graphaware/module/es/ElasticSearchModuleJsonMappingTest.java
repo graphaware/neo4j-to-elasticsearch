@@ -7,15 +7,17 @@ import com.graphaware.module.es.mapping.JsonFileMapping;
 import com.graphaware.module.es.mapping.Mapping;
 import com.graphaware.module.es.util.ServiceLoader;
 import com.graphaware.module.es.util.TestUtil;
+import static com.graphaware.module.es.util.TestUtil.waitFor;
 import com.graphaware.module.uuid.UuidConfiguration;
 import com.graphaware.module.uuid.UuidModule;
 import com.graphaware.runtime.GraphAwareRuntime;
 import com.graphaware.runtime.GraphAwareRuntimeFactory;
 import io.searchbox.client.JestResult;
+import io.searchbox.core.DeleteByQuery;
 import io.searchbox.core.Get;
+import java.io.IOException;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Test;
 import org.neo4j.graphdb.*;
 import org.neo4j.test.TestGraphDatabaseFactory;
 
@@ -23,6 +25,9 @@ import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 
 public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleIntegrationTest {
 
@@ -40,8 +45,44 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         esServer.stop();
         esClient.shutdown();
     }
-
+    
     @Test
+    public void overallTest() throws IOException {
+        testBasicJsonMappingModuleBootstrap();
+        cleanUpData();
+        testBasicJsonMappingReplication();
+        cleanUpData();
+        testJsonMappingWithMultipleMappingsAndMoreThanOneLabelAndIndex();
+        cleanUpData();
+        testShouldReplicateNodesWithoutLabels();
+        cleanUpData();
+        testNodesWithArrayPropertyValuesShouldBeReplicatedCorrectly();
+        cleanUpData();
+        testNodesWithMultipleLabelsAreUpdatedCorrectly();
+        cleanUpData();
+        testDeleteNodesAreDeletedFromIndices();
+        cleanUpData();
+        testDeletedRelationshipsAreDeletedFromIndices();
+        cleanUpData();
+        testTimeBasedIndex();
+        cleanUpData();
+        testBlacklistedPropertiesAreNotIndexed();
+        cleanUpData();
+        testRelationshipsAreUpdatedAndRemovedIfNeeded();
+        cleanUpData();
+        testDynamicTypesAreCorrectlyHandled();
+        cleanUpData();
+        testInvalidJsonMappingDoesNotFailTransaction();
+        cleanUpData();
+        testTypeOfRelationshipCanBeUsedAsFieldContent();
+        cleanUpData();
+        testPropertyValuesTransformation();
+        cleanUpData();
+        testIndexWithAllNodesAndAllRelsExpression();
+        cleanUpData();
+    }
+
+    //@Test
     public void testBasicJsonMappingModuleBootstrap() {
         database = new TestGraphDatabaseFactory().newImpermanentDatabase();
 
@@ -62,7 +103,7 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         assertEquals("default-index-relationship", ((JsonFileMapping)configuration.getMapping()).getMappingRepresentation().getDefaults().getDefaultRelationshipsIndex());
     }
 
-    @Test
+    //@Test
     public void testBasicJsonMappingReplication() {
         database = new TestGraphDatabaseFactory().newImpermanentDatabase();
 
@@ -95,7 +136,7 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         }
     }
 
-    @Test
+    //@Test
     public void testJsonMappingWithMultipleMappingsAndMoreThanOneLabelAndIndex() {
         database = new TestGraphDatabaseFactory().newImpermanentDatabase();
 
@@ -129,7 +170,7 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         }
     }
 
-    @Test
+    //@Test
     public void testShouldReplicateNodesWithoutLabels() {
         database = new TestGraphDatabaseFactory().newImpermanentDatabase();
 
@@ -164,7 +205,7 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         }
     }
 
-    @Test
+    //@Test
     public void testNodesWithArrayPropertyValuesShouldBeReplicatedCorrectly() {
         database = new TestGraphDatabaseFactory().newImpermanentDatabase();
 
@@ -199,7 +240,7 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         }
     }
 
-    @Test
+    //@Test
     public void testNodesWithMultipleLabelsAreUpdatedCorrectly() {
         database = new TestGraphDatabaseFactory().newImpermanentDatabase();
 
@@ -237,7 +278,7 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
 
     }
 
-    @Test
+    //@Test
     public void testDeleteNodesAreDeletedFromIndices() {
         database = new TestGraphDatabaseFactory().newImpermanentDatabase();
 
@@ -284,7 +325,7 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
 
     }
 
-    @Test
+    //@Test
     public void testDeletedRelationshipsAreDeletedFromIndices() {
         database = new TestGraphDatabaseFactory().newImpermanentDatabase();
 
@@ -336,7 +377,7 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
 
     }
 
-    @Test
+    //@Test
     public void testTimeBasedIndex() {
         database = new TestGraphDatabaseFactory().newImpermanentDatabase();
 
@@ -372,7 +413,7 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         }
     }
 
-    @Test
+    //@Test
     public void testBlacklistedPropertiesAreNotIndexed() {
         database = new TestGraphDatabaseFactory().newImpermanentDatabase();
 
@@ -419,9 +460,17 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         }
     }
 
-    @Test
-    public void testIndexWithAllNodesAndAllRelsExpression() {
-        database = new TestGraphDatabaseFactory().newImpermanentDatabase();
+    //@Test
+    public void testIndexWithAllNodesAndAllRelsExpression() throws IOException {
+        esServer.stop();
+        esServer = new EmbeddedElasticSearchServer();
+        esServer.start();
+
+        TemporaryFolder folder = new TemporaryFolder();
+        folder.create();
+        folder.getRoot().deleteOnExit();
+        
+        database = new GraphDatabaseFactory().newEmbeddedDatabase(folder.getRoot());
 
         GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database);
         runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration().withUuidProperty("uuid").with(IncludeAllRelationships.getInstance()), database));
@@ -441,7 +490,7 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         runtime.start();
         runtime.waitUntilStarted();
         database.execute("CREATE (n:User {login: 'ikwattro', password:'s3cr3t'})-[:WORKS_AT {since:'2014-11-15'}]->(c:Company {name:'GraphAware'})");
-        TestUtil.waitFor(1500);
+        TestUtil.waitFor(2000);
 
         try (Transaction tx = database.beginTx()) {
             database.findNodes(Label.label("User")).stream().forEach(n -> {
@@ -454,14 +503,14 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
             database.getAllRelationships().stream().forEach(r -> {
                 Get get = new Get.Builder("default-index-relationship", r.getProperty("uuid").toString()).type("relationships").build();
                 JestResult result = esClient.execute(get);
-                assertTrue(result.isSucceeded());
+                assertEquals(true, result.isSucceeded());
             });
 
             tx.success();
         }
     }
 
-    @Test
+    //@Test
     public void testRelationshipsAreUpdatedAndRemovedIfNeeded() {
         database = new TestGraphDatabaseFactory().newImpermanentDatabase();
 
@@ -506,7 +555,7 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         }
     }
 
-    @Test
+    //@Test
     public void testDynamicTypesAreCorrectlyHandled() {
         database = new TestGraphDatabaseFactory().newImpermanentDatabase();
 
@@ -543,7 +592,7 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         }
     }
 
-    @Test
+    //@Test
     public void testInvalidJsonMappingDoesNotFailTransaction() {
         database = new TestGraphDatabaseFactory().newImpermanentDatabase();
 
@@ -596,7 +645,7 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
 
     }
 
-    @Test
+    //@Test
     public void testTypeOfRelationshipCanBeUsedAsFieldContent() {
         database = new TestGraphDatabaseFactory().newImpermanentDatabase();
 
@@ -632,7 +681,7 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         }
     }
 
-    @Test
+    //@Test
     public void testPropertyValuesTransformation() {
         database = new TestGraphDatabaseFactory().newImpermanentDatabase();
 
@@ -708,5 +757,21 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
             tx.success();
         }
     }
+    
+    private void cleanUpData() {
+        try (Transaction tx = database.beginTx()) {
+            database.execute("MATCH ()-[r]-() DELETE r");
+            database.execute("MATCH (p) DETACH DELETE p");
+            tx.success();
+        }
+        
+        DeleteByQuery delete = new DeleteByQuery.Builder("{ \"match_all\": {} }").addIndex("*")
+            .addType("*")
+            .build();
+        esClient.execute(delete);
+        database.shutdown();
+        waitFor(1000);
+    }
+
 
 }

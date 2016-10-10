@@ -18,6 +18,7 @@ import com.graphaware.common.policy.NodePropertyInclusionPolicy;
 import com.graphaware.integration.es.test.EmbeddedElasticSearchServer;
 import com.graphaware.integration.es.test.JestElasticSearchClient;
 import com.graphaware.module.es.util.ServiceLoader;
+import static com.graphaware.module.es.util.TestUtil.waitFor;
 import com.graphaware.module.uuid.UuidConfiguration;
 import com.graphaware.module.uuid.UuidModule;
 import com.graphaware.runtime.GraphAwareRuntime;
@@ -32,9 +33,9 @@ import org.neo4j.test.RepeatRule;
 import org.neo4j.test.TestGraphDatabaseFactory;
 
 import java.io.IOException;
-import java.util.HashMap;
 
-import static com.graphaware.module.es.util.TestUtil.waitFor;
+import io.searchbox.core.DeleteByQuery;
+import org.neo4j.graphdb.Transaction;
 
 public class ElasticSearchModuleProgrammaticTest extends ElasticSearchModuleIntegrationTest {
 
@@ -53,17 +54,41 @@ public class ElasticSearchModuleProgrammaticTest extends ElasticSearchModuleInte
         esServer.stop();
         esClient.shutdown();
     }
+    
+    @Test 
+    public void overallTest() throws IOException {
+        dataShouldNotBeReplicatedWithModuleNotRegistered();
+        cleanUpData();
+        dataShouldBeCorrectlyReplicatedWithDefaultConfigEmptyDatabaseAndNoFailures();
+        cleanUpData();
+        dataShouldBeCorrectlyReplicatedWithCustomConfigEmptyDatabaseAndNoFailures();
+        cleanUpData();
+        dataShouldBeCorrectlyReplicatedWithPerRequestWriterAndNoFailures();
+        cleanUpData();
+        existingDatabaseShouldBeIndexedAndReIndexed();
+        cleanUpData();
+        dataShouldBeCorrectlyReplicatedWithRetryAfterFailureBulk();
+        cleanUpData();
+        dataShouldBeCorrectlyReplicatedWithRetryAfterFailurePerRequest();
+        cleanUpData();
+        dataShouldBeCorrectlyReplicatedWithRetryWhenEsStartsLate();
+        cleanUpData();
+    }
 
-    @Test
+    //@Test
     public void dataShouldNotBeReplicatedWithModuleNotRegistered() {
+        database = new TestGraphDatabaseFactory().newImpermanentDatabase();
+
         writeSomeStuffToNeo4j();
         waitFor(200);
         verifyNoEsReplication();
         verifyEsEmpty();
     }
 
-    @Test
+    //@Test
     public void dataShouldBeCorrectlyReplicatedWithDefaultConfigEmptyDatabaseAndNoFailures() {
+        database = new TestGraphDatabaseFactory().newImpermanentDatabase();
+
         //Framework & Modules setup:
         GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database);
         runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration(), database));
@@ -80,8 +105,10 @@ public class ElasticSearchModuleProgrammaticTest extends ElasticSearchModuleInte
         verifyEsReplication();
     }
 
-    @Test
+    //@Test
     public void dataShouldBeCorrectlyReplicatedWithCustomConfigEmptyDatabaseAndNoFailures() {
+        database = new TestGraphDatabaseFactory().newImpermanentDatabase();
+
         //Framework & Modules setup:
         GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database);
         runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration().withUuidProperty("id"), database));
@@ -113,8 +140,10 @@ public class ElasticSearchModuleProgrammaticTest extends ElasticSearchModuleInte
         verifyEsReplication("different-index-name");
     }
 
-    @Test
+    //@Test
     public void dataShouldBeCorrectlyReplicatedWithPerRequestWriterAndNoFailures() {
+        database = new TestGraphDatabaseFactory().newImpermanentDatabase();
+
         //Framework & Modules setup:
         GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database);
         runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration(), database));
@@ -131,13 +160,13 @@ public class ElasticSearchModuleProgrammaticTest extends ElasticSearchModuleInte
         verifyEsReplication();
     }
 
-    @Test
+    //@Test
     public void existingDatabaseShouldBeIndexedAndReIndexed() throws IOException {
         TemporaryFolder folder = new TemporaryFolder();
         folder.create();
         folder.getRoot().deleteOnExit();
 
-        database.shutdown();
+        //database.shutdown();
         database = new GraphDatabaseFactory().newEmbeddedDatabase(folder.getRoot());
 
         writeSomeStuffToNeo4j();
@@ -183,9 +212,11 @@ public class ElasticSearchModuleProgrammaticTest extends ElasticSearchModuleInte
         verifyEsReplication();
     }
 
-    @Test(timeout = 10_000)
-    @RepeatRule.Repeat(times = 5)
+//    @Test(timeout = 10_000)
+//    @RepeatRule.Repeat(times = 5)
     public void dataShouldBeCorrectlyReplicatedWithRetryAfterFailureBulk() {
+        database = new TestGraphDatabaseFactory().newImpermanentDatabase();
+
         //Framework & Modules setup:
         GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database);
         runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration(), database));
@@ -201,9 +232,11 @@ public class ElasticSearchModuleProgrammaticTest extends ElasticSearchModuleInte
         verifyEventualEsReplication();
     }
 
-    @Test(timeout = 40_000)
-    @RepeatRule.Repeat(times = 5)
+//    @Test(timeout = 40_000)
+//    @RepeatRule.Repeat(times = 5)
     public void dataShouldBeCorrectlyReplicatedWithRetryAfterFailurePerRequest() {
+        database = new TestGraphDatabaseFactory().newImpermanentDatabase();
+
         //Framework & Modules setup:
         GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database);
         runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration(), database));
@@ -219,10 +252,12 @@ public class ElasticSearchModuleProgrammaticTest extends ElasticSearchModuleInte
         verifyEventualEsReplication();
     }
 
-    @Test(timeout = 20_000)
+//    @Test(timeout = 20_000)
     public void dataShouldBeCorrectlyReplicatedWithRetryWhenEsStartsLate() {
         esServer.stop();
         esServer = new EmbeddedElasticSearchServer();
+
+        database = new TestGraphDatabaseFactory().newImpermanentDatabase();
 
         //Framework & Modules setup:
         GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database);
@@ -240,5 +275,20 @@ public class ElasticSearchModuleProgrammaticTest extends ElasticSearchModuleInte
 
         esServer.start();
         verifyEventualEsReplication();
+    }
+    
+    private void cleanUpData() {
+        try (Transaction tx = database.beginTx()) {
+            database.execute("MATCH ()-[r]-() DELETE r");
+            database.execute("MATCH (p) DETACH DELETE p");
+            tx.success();
+        }
+        
+        DeleteByQuery delete = new DeleteByQuery.Builder("{ \"match_all\": {} }").addIndex("*")
+            .addType("*")
+            .build();
+        esClient.execute(delete);
+        database.shutdown();
+        waitFor(1000);
     }
 }
