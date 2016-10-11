@@ -24,7 +24,6 @@ import com.graphaware.module.es.ElasticSearchModule;
 import com.graphaware.module.es.mapping.Mapping;
 import com.graphaware.module.es.util.JestClientFactory2;
 import io.searchbox.action.AbstractAction;
-import io.searchbox.action.AbstractMultiIndexActionBuilder;
 import io.searchbox.action.GenericResultAbstractAction;
 import io.searchbox.client.JestClient;
 import io.searchbox.client.JestResult;
