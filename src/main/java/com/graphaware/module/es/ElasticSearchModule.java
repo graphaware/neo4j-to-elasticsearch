@@ -33,15 +33,15 @@ import com.graphaware.writer.thirdparty.NodeCreated;
 import com.graphaware.writer.thirdparty.RelationshipCreated;
 import com.graphaware.writer.thirdparty.ThirdPartyWriter;
 import com.graphaware.writer.thirdparty.WriteOperation;
+import io.searchbox.action.BulkableAction;
+import io.searchbox.client.JestResult;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.PropertyContainer;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.logging.Log;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import static org.springframework.util.Assert.notNull;
 
@@ -51,11 +51,12 @@ import static org.springframework.util.Assert.notNull;
 public class ElasticSearchModule extends DefaultThirdPartyIntegrationModule {
 
     private static final Log LOG = LoggerFactory.getLogger(ElasticSearchModuleBootstrapper.class);
-    private static final int REINDEX_BATCH_SIZE = 1000;
 
     private final ElasticSearchConfiguration config;
     private boolean reindex = false; //this is checked in a single thread
     private boolean isReindexed = false;
+    private final ElasticSearchWriter writer;
+    private final int reindexBatchSize;
 
     /**
      * Create a new module.
@@ -68,6 +69,8 @@ public class ElasticSearchModule extends DefaultThirdPartyIntegrationModule {
         super(moduleId, writer);
         notNull(config);
         this.config = config;
+        this.writer = (ElasticSearchWriter) writer;
+        this.reindexBatchSize = config.getReindexBatchSize();
     }
 
     /**
@@ -153,62 +156,49 @@ public class ElasticSearchModule extends DefaultThirdPartyIntegrationModule {
     }
 
     private void reindexNodes(GraphDatabaseService database) {
-        final InclusionPolicies policies = getConfiguration().getInclusionPolicies();
-        final NodeInclusionPolicy nodePolicy = policies.getNodeInclusionPolicy();
-        final NodePropertyInclusionPolicy nodePropertyPolicy = policies.getNodePropertyInclusionPolicy();
 
         final Collection<WriteOperation<?>> operations = new HashSet<>();
 
         new IterableInputBatchTransactionExecutor<>(
                 database,
-                REINDEX_BATCH_SIZE,
-                new AllNodes(database, REINDEX_BATCH_SIZE),
+                reindexBatchSize,
+                new AllNodes(database, reindexBatchSize),
                 (db, node, batchNumber, stepNumber) -> {
-                    if (!nodePolicy.include(node)) {
-                        return;
-                    }
 
-                    operations.add(new NodeCreated<>(new NodeExpressions(node, propertiesToInclude(node, nodePropertyPolicy))
-                    ));
+                    operations.add(new NodeCreated<>(new NodeExpressions(node)));
 
-                    if (operations.size() >= REINDEX_BATCH_SIZE) {
-                        LOG.info("Done " + REINDEX_BATCH_SIZE);
-                        afterCommit(new HashSet<>(operations));
+                    if (operations.size() >= reindexBatchSize) {
+                        writer.processOperations(Arrays.asList(operations));
                         operations.clear();
+                        LOG.info("Done " + reindexBatchSize);
                     }
                 }
         ).execute();
 
         if (operations.size() > 0) {
-            afterCommit(new HashSet<>(operations));
+            writer.processOperations(Arrays.asList(operations));
             operations.clear();
         }
     }
 
     private void reindexRelationships(GraphDatabaseService database) {
-        final InclusionPolicies policies = getConfiguration().getInclusionPolicies();
-        final RelationshipInclusionPolicy relPolicy = policies.getRelationshipInclusionPolicy();
-        final RelationshipPropertyInclusionPolicy relPropertyPolicy = policies.getRelationshipPropertyInclusionPolicy();
 
         final Collection<WriteOperation<?>> operations = new HashSet<>();
 
         new IterableInputBatchTransactionExecutor<>(
                 database,
-                REINDEX_BATCH_SIZE,
-                new AllRelationships(database, REINDEX_BATCH_SIZE),
+                reindexBatchSize,
+                new AllRelationships(database, reindexBatchSize),
                 (db, rel, batchNumber, stepNumber) -> {
-                    if (!relPolicy.include(rel)) {
-                        return;
-                    }
 
                     operations.add(new RelationshipCreated<>(
-                            new RelationshipExpressions(rel, propertiesToInclude(rel, relPropertyPolicy))
+                            new RelationshipExpressions(rel)
                     ));
 
-                    if (operations.size() >= REINDEX_BATCH_SIZE) {
-                        LOG.info("Done " + REINDEX_BATCH_SIZE);
-                        afterCommit(new HashSet<>(operations));
+                    if (operations.size() >= reindexBatchSize) {
+                        writer.processOperations(Arrays.asList(operations));
                         operations.clear();
+                        LOG.info("Done " + reindexBatchSize);
                     }
                 }
         ).execute();
@@ -217,16 +207,6 @@ public class ElasticSearchModule extends DefaultThirdPartyIntegrationModule {
             afterCommit(new HashSet<>(operations));
             operations.clear();
         }
-    }
-
-    private <T extends PropertyContainer> String[] propertiesToInclude(T item, PropertyInclusionPolicy<T> propertyInclusionPolicy) {
-        Set<String> includedProps = new HashSet<>();
-        for (String key : item.getPropertyKeys()) {
-            if (propertyInclusionPolicy.include(key, item)) {
-                includedProps.add(key);
-            }
-        }
-        return includedProps.toArray(new String[includedProps.size()]);
     }
 
     @Override
