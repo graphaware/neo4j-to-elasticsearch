@@ -37,6 +37,7 @@ import org.neo4j.graphdb.PropertyContainer;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.logging.Log;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -54,6 +55,7 @@ public class ElasticSearchModule extends WriterBasedThirdPartyIntegrationModule 
     private final ElasticSearchConfiguration config;
     private boolean reindex = false; //this is checked in a single thread
     private boolean isReindexed = false;
+    private final ElasticSearchWriter writer;
 
     /**
      * Create a new module.
@@ -66,6 +68,7 @@ public class ElasticSearchModule extends WriterBasedThirdPartyIntegrationModule 
         super(moduleId, writer);
         notNull(config);
         this.config = config;
+        this.writer = (ElasticSearchWriter) writer;
     }
 
     /**
@@ -151,9 +154,6 @@ public class ElasticSearchModule extends WriterBasedThirdPartyIntegrationModule 
     }
 
     private void reindexNodes(GraphDatabaseService database) {
-        final InclusionPolicies policies = getConfiguration().getInclusionPolicies();
-        final NodeInclusionPolicy nodePolicy = policies.getNodeInclusionPolicy();
-        final NodePropertyInclusionPolicy nodePropertyPolicy = policies.getNodePropertyInclusionPolicy();
 
         final Collection<WriteOperation<?>> operations = new HashSet<>();
 
@@ -164,17 +164,14 @@ public class ElasticSearchModule extends WriterBasedThirdPartyIntegrationModule 
                 new UnitOfWork<Node>() {
                     @Override
                     public void execute(GraphDatabaseService database, Node node, int batchNumber, int stepNumber) {
-                        if (!nodePolicy.include(node)) {
-                            return;
-                        }
 
                         operations.add(new NodeCreated(
-                                new NodeRepresentation(node, propertiesToInclude(node, nodePropertyPolicy))
+                                new NodeRepresentation(node)
                         ));
 
                         if (operations.size() >= REINDEX_BATCH_SIZE) {
                             LOG.info("Done " + REINDEX_BATCH_SIZE);
-                            afterCommit(new HashSet<>(operations));
+                            writer.processOperations(Arrays.asList(operations));
                             operations.clear();
                         }
                     }
@@ -182,15 +179,12 @@ public class ElasticSearchModule extends WriterBasedThirdPartyIntegrationModule 
         ).execute();
 
         if (operations.size() > 0) {
-            afterCommit(new HashSet<>(operations));
+            writer.processOperations(Arrays.asList(operations));
             operations.clear();
         }
     }
 
     private void reindexRelationships(GraphDatabaseService database) {
-        final InclusionPolicies policies = getConfiguration().getInclusionPolicies();
-        final RelationshipInclusionPolicy relPolicy = policies.getRelationshipInclusionPolicy();
-        final RelationshipPropertyInclusionPolicy relPropertyPolicy = policies.getRelationshipPropertyInclusionPolicy();
 
         final Collection<WriteOperation<?>> operations = new HashSet<>();
 
@@ -201,17 +195,14 @@ public class ElasticSearchModule extends WriterBasedThirdPartyIntegrationModule 
                 new UnitOfWork<Relationship>() {
                     @Override
                     public void execute(GraphDatabaseService database, Relationship rel, int batchNumber, int stepNumber) {
-                        if (!relPolicy.include(rel)) {
-                            return;
-                        }
 
                         operations.add(new RelationshipCreated(
-                                new RelationshipRepresentation(rel, propertiesToInclude(rel, relPropertyPolicy))
+                                new RelationshipRepresentation(rel)
                         ));
 
                         if (operations.size() >= REINDEX_BATCH_SIZE) {
                             LOG.info("Done " + REINDEX_BATCH_SIZE);
-                            afterCommit(new HashSet<>(operations));
+                            writer.processOperations(Arrays.asList(operations));
                             operations.clear();
                         }
                     }
@@ -219,18 +210,8 @@ public class ElasticSearchModule extends WriterBasedThirdPartyIntegrationModule 
         ).execute();
 
         if (operations.size() > 0) {
-            afterCommit(new HashSet<>(operations));
+            writer.processOperations(Arrays.asList(operations));
             operations.clear();
         }
-    }
-
-    private <T extends PropertyContainer> String[] propertiesToInclude(T item, PropertyInclusionPolicy<T> propertyInclusionPolicy) {
-        Set<String> includedProps = new HashSet<>();
-        for (String key : item.getPropertyKeys()) {
-            if (propertyInclusionPolicy.include(key, item)) {
-                includedProps.add(key);
-            }
-        }
-        return includedProps.toArray(new String[includedProps.size()]);
     }
 }
