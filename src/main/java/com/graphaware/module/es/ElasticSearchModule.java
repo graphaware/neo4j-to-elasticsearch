@@ -33,11 +33,8 @@ import com.graphaware.writer.thirdparty.NodeCreated;
 import com.graphaware.writer.thirdparty.RelationshipCreated;
 import com.graphaware.writer.thirdparty.ThirdPartyWriter;
 import com.graphaware.writer.thirdparty.WriteOperation;
-import io.searchbox.action.BulkableAction;
-import io.searchbox.client.JestResult;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.PropertyContainer;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.logging.Log;
 
