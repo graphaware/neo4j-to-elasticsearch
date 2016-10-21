@@ -37,8 +37,6 @@ public class BulkOperationExecutor extends BaseOperationExecutor {
 
     private Bulk.Builder bulkBuilder;
 
-    private static final int BULK_PARTITION_SIZE = 1000;
-
     /**
      * Construct a new executor.
      *
