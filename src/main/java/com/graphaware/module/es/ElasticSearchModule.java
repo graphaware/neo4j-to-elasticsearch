@@ -30,7 +30,6 @@ import com.graphaware.tx.executor.batch.IterableInputBatchTransactionExecutor;
 import com.graphaware.tx.executor.input.AllNodes;
 import com.graphaware.tx.executor.input.AllRelationships;
 import com.graphaware.writer.thirdparty.NodeCreated;
-import com.graphaware.writer.thirdparty.RelationshipCreated;
 import com.graphaware.writer.thirdparty.ThirdPartyWriter;
 import com.graphaware.writer.thirdparty.WriteOperation;
 import org.neo4j.graphdb.GraphDatabaseService;

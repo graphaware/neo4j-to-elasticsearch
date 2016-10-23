@@ -81,5 +81,11 @@ public interface Mapping {
 
     List<BulkableAction<? extends JestResult>> deleteRelationship(RelationshipExpressions relationship);
 
+    /**
+     * Determines whether or not the concrete Mapping implementation bypass the node inclusion policies.
+     * This method is checked during the initialize step of the Elasticsearch module.
+     *
+     * @return boolean
+     */
     boolean bypassInclusionPolicies();
 }
