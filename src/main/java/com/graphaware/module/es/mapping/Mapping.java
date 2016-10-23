@@ -80,4 +80,6 @@ public interface Mapping {
     List<BulkableAction<? extends JestResult>> updateRelationship(RelationshipExpressions before, RelationshipExpressions after);
 
     List<BulkableAction<? extends JestResult>> deleteRelationship(RelationshipExpressions relationship);
+
+    boolean bypassInclusionPolicies();
 }

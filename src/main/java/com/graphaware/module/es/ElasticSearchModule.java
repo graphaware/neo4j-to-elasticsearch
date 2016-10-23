@@ -153,7 +153,6 @@ public class ElasticSearchModule extends DefaultThirdPartyIntegrationModule {
     }
 
     private void reindexNodes(GraphDatabaseService database) {
-
         final Collection<WriteOperation<?>> operations = new HashSet<>();
 
         new IterableInputBatchTransactionExecutor<>(
@@ -162,7 +161,9 @@ public class ElasticSearchModule extends DefaultThirdPartyIntegrationModule {
                 new AllNodes(database, reindexBatchSize),
                 (db, node, batchNumber, stepNumber) -> {
 
-                    operations.add(new NodeCreated<>(new NodeExpressions(node)));
+                    if (shouldReindexNode(node)) {
+                        operations.add(new NodeCreated<>(new NodeExpressions(node)));
+                    }
 
                     if (operations.size() >= reindexBatchSize) {
                         writer.processOperations(Arrays.asList(operations));
@@ -188,9 +189,9 @@ public class ElasticSearchModule extends DefaultThirdPartyIntegrationModule {
                 new AllRelationships(database, reindexBatchSize),
                 (db, rel, batchNumber, stepNumber) -> {
 
-                    operations.add(new RelationshipCreated<>(
-                            new RelationshipExpressions(rel)
-                    ));
+                    if (shouldReindexRelationship(rel)) {
+
+                    }
 
                     if (operations.size() >= reindexBatchSize) {
                         writer.processOperations(Arrays.asList(operations));
@@ -214,5 +215,13 @@ public class ElasticSearchModule extends DefaultThirdPartyIntegrationModule {
     @Override
     protected DetachedNode<Long> nodeRepresentation(Node node) {
         return new NodeExpressions(node);
+    }
+
+    private boolean shouldReindexNode(Node node) {
+        return !config.getMapping().bypassInclusionPolicies() && config.getInclusionPolicies().getNodeInclusionPolicy().include(node);
+    }
+
+    private boolean shouldReindexRelationship(Relationship relationship) {
+        return !config.getMapping().bypassInclusionPolicies() && config.getInclusionPolicies().getRelationshipInclusionPolicy().include(relationship);
     }
 }
