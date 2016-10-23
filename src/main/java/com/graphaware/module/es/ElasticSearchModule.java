@@ -217,10 +217,10 @@ public class ElasticSearchModule extends DefaultThirdPartyIntegrationModule {
     }
 
     private boolean shouldReindexNode(Node node) {
-        return !config.getMapping().bypassInclusionPolicies() && config.getInclusionPolicies().getNodeInclusionPolicy().include(node);
+        return config.getMapping().bypassInclusionPolicies() || config.getInclusionPolicies().getNodeInclusionPolicy().include(node);
     }
 
     private boolean shouldReindexRelationship(Relationship relationship) {
-        return !config.getMapping().bypassInclusionPolicies() && config.getInclusionPolicies().getRelationshipInclusionPolicy().include(relationship);
+        return config.getMapping().bypassInclusionPolicies() || config.getInclusionPolicies().getRelationshipInclusionPolicy().include(relationship);
     }
 }
