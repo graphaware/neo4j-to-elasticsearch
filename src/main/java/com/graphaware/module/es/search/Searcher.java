@@ -131,7 +131,7 @@ public class Searcher {
                 .forEach((hitsArray) -> {
                     for (JsonElement element : hitsArray) {
                         JsonObject obj = (JsonObject) element;
-                        Double score = obj.get("_score").getAsDouble();
+                        Double score = obj.get("_score") != null && !obj.get("_score").toString().equals("null") ? Double.valueOf(obj.get("_score").toString()) : null;
                         String keyValue = obj.get("_id") != null ? obj.get("_id").getAsString() : null;
                         if (keyValue == null) {
                             LOG.warn("No key found in search result: " + obj.getAsString());
