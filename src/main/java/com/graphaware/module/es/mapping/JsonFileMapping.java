@@ -97,4 +97,9 @@ public class JsonFileMapping implements Mapping {
     public String getKeyProperty() {
         return mappingRepresentation.getDefaults().getKeyProperty() != null ? mappingRepresentation.getDefaults().getKeyProperty() : DEFAULT_KEY_PROPERTY;
     }
+
+    @Override
+    public boolean bypassInclusionPolicies() {
+        return true;
+    }
 }

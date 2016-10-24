@@ -79,9 +79,13 @@ from Neo4j.
 
 ##### Server Mode
 
-Edit `neo4j.properties` to register the required modules:
+Edit `neo4j.conf` to register the required modules:
 
 ```
+
+# This setting should only be set once for registering the framework and all the used submodules
+dbms.unmanaged_extension_classes=com.graphaware.server=/graphaware
+
 com.graphaware.runtime.enabled=true
 
 #UIDM becomes the module ID:
@@ -119,6 +123,9 @@ com.graphaware.module.ES.retryOnError=false
 
 #optional, size of the in-memory queue that queues up operations to be synchronised to Elasticsearch, defaults to 10000
 com.graphaware.module.ES.queueSize=10000
+
+#optional, size of the batch size to use during re-initialization, defaults to 1000
+com.graphaware.module.ES.reindexBatchSize=2000
 
 #optional, specify which nodes to index in Elasticsearch, defaults to all nodes
 com.graphaware.module.ES.node=hasLabel('Person')

@@ -38,6 +38,7 @@ public class ElasticSearchModuleBootstrapper extends BaseRuntimeModuleBootstrapp
     private static final String KEY_PROPERTY = "keyProperty";
     private static final String RETRY_ON_ERROR = "retryOnError";
     private static final String QUEUE_CAPACITY = "queueSize";
+    private static final String REINDEX_BATCH_SIZE = "reindexBatchSize";
     private static final String BULK = "bulk";
     private static final String AUTH_USER = "authUser";
     private static final String AUTH_PASSWORD = "authPassword";
@@ -79,6 +80,11 @@ public class ElasticSearchModuleBootstrapper extends BaseRuntimeModuleBootstrapp
         if (configExists(config, QUEUE_CAPACITY)) {
             configuration = configuration.withQueueCapacity(Integer.valueOf(config.get(QUEUE_CAPACITY)));
             LOG.info("Elasticsearch module queue capacity set to %s", configuration.getQueueCapacity());
+        }
+
+        if (configExists(config, REINDEX_BATCH_SIZE)) {
+            configuration = configuration.withReindexBatchSize(Integer.valueOf(config.get(REINDEX_BATCH_SIZE)));
+            LOG.info("Elasticsearch module reindex batch size set to %s", configuration.getReindexBatchSize());
         }
 
         if (configExists(config, BULK)) {
