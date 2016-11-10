@@ -17,6 +17,7 @@ package com.graphaware.module.es;
 import com.graphaware.common.log.LoggerFactory;
 import com.graphaware.module.es.mapping.DefaultMapping;
 import com.graphaware.module.es.mapping.Mapping;
+import com.graphaware.module.es.mapping.TransactionAwareMapping;
 import com.graphaware.module.es.util.ServiceLoader;
 import com.graphaware.runtime.module.BaseRuntimeModuleBootstrapper;
 import com.graphaware.runtime.module.RuntimeModule;
@@ -99,6 +100,9 @@ public class ElasticSearchModuleBootstrapper extends BaseRuntimeModuleBootstrapp
 
         String mappingClass = configExists(config, MAPPING) ? config.get(MAPPING) : "com.graphaware.module.es.mapping.DefaultMapping";
         Mapping mapping = ServiceLoader.loadMapping(mappingClass);
+        if (mapping instanceof TransactionAwareMapping) {
+            ((TransactionAwareMapping) mapping).setGraphDatabaseService(database);
+        }
         configuration = configuration.withMapping(mapping, config);
         LOG.info("Elasticsearch mapping configured with %s", mapping.getClass());
 
