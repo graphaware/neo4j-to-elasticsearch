@@ -18,6 +18,7 @@ package com.graphaware.module.es.search;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.graphaware.common.log.LoggerFactory;
 import com.graphaware.module.es.ElasticSearchConfiguration;
 import com.graphaware.module.es.ElasticSearchModule;
@@ -127,7 +128,15 @@ public class Searcher {
                 .forEach((hitsArray) -> {
                     for (JsonElement element : hitsArray) {
                         JsonObject obj = (JsonObject) element;
-                        Double score = obj.get("_score") != null && !obj.get("_score").toString().equals("null") ? Double.valueOf(obj.get("_score").toString()) : null;
+
+                        // extract the result score
+                        JsonElement _score = obj.get("_score");
+                        Double score = null;
+                        if (_score != null && !_score.isJsonNull() && _score.isJsonPrimitive() && ((JsonPrimitive) _score).isNumber()) {
+                            score = _score.getAsDouble();
+                        }
+
+                        // extract the result id
                         String keyValue = obj.get("_id") != null ? obj.get("_id").getAsString() : null;
                         if (keyValue == null) {
                             LOG.warn("No key found in search result: " + obj.getAsString());

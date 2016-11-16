@@ -23,9 +23,9 @@ public class SearchMatch<T extends PropertyContainer> {
     public final Double score;
     private T item;
 
-    public SearchMatch(String key, Object score) {
+    public SearchMatch(String key, Double score) {
         this.key = key;
-        this.score = score instanceof Double ? (Double) score : null;
+        this.score = score;
     }
 
     public T getItem() {
