@@ -40,8 +40,6 @@ public abstract class BaseMapping implements Mapping {
     private static final String DEFAULT_KEY_PROPERTY = "uuid";
     private static final String DEFAULT_FORCE_STRINGS = "false";
 
-    protected ElasticSearchConfiguration configuration;
-
     protected String keyProperty;
     protected String indexPrefix;
     protected boolean forceStrings;
@@ -61,8 +59,6 @@ public abstract class BaseMapping implements Mapping {
 
         forceStrings = config.getOrDefault("forceStrings", DEFAULT_FORCE_STRINGS).trim().toLowerCase().equals("true");
         LOG.info("ElasticSearch force-strings set to %s", forceStrings);
-
-        this.configuration = configuration;
     }
 
     /**
@@ -201,10 +197,6 @@ public abstract class BaseMapping implements Mapping {
     }
 
     public abstract <T extends PropertyContainer> String getIndexFor(Class<T> searchedType);
-
-    protected ElasticSearchConfiguration getConfiguration() {
-        return configuration;
-    }
 
     protected List<BulkableAction<? extends JestResult>> emptyActions() {
         return new ArrayList<>();
