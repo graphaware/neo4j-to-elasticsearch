@@ -17,8 +17,10 @@ package com.graphaware.module.es.mapping;
 import com.graphaware.common.expression.PropertyContainerExpressions;
 import com.graphaware.common.log.LoggerFactory;
 import com.graphaware.common.representation.DetachedPropertyContainer;
+import com.graphaware.module.es.ElasticSearchConfiguration;
 import com.graphaware.module.es.mapping.expression.NodeExpressions;
 import com.graphaware.module.es.mapping.expression.RelationshipExpressions;
+import io.searchbox.action.BulkableAction;
 import io.searchbox.client.JestClient;
 import io.searchbox.client.JestResult;
 import io.searchbox.indices.CreateIndex;
@@ -29,10 +31,7 @@ import org.neo4j.graphdb.Relationship;
 import org.neo4j.logging.Log;
 
 import java.lang.reflect.Array;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public abstract class BaseMapping implements Mapping {
 
@@ -41,6 +40,8 @@ public abstract class BaseMapping implements Mapping {
     private static final String DEFAULT_INDEX = "neo4j-index";
     private static final String DEFAULT_KEY_PROPERTY = "uuid";
     private static final String DEFAULT_FORCE_STRINGS = "false";
+
+    protected ElasticSearchConfiguration configuration;
 
     protected String keyProperty;
     protected String indexPrefix;
@@ -61,6 +62,8 @@ public abstract class BaseMapping implements Mapping {
 
         forceStrings = config.getOrDefault("forceStrings", DEFAULT_FORCE_STRINGS).trim().toLowerCase().equals("true");
         LOG.info("ElasticSearch force-strings set to %s", forceStrings);
+
+        this.configuration = configuration;
     }
 
     /**
@@ -161,7 +164,7 @@ public abstract class BaseMapping implements Mapping {
     }
 
     protected void addExtra(Map<String, Object> data, NodeExpressions node) { }
-    
+
     protected void addExtra(Map<String, Object> data, RelationshipExpressions relationship) { }
 
     /**
@@ -213,4 +216,17 @@ public abstract class BaseMapping implements Mapping {
     }
 
     public abstract <T extends PropertyContainer> String getIndexFor(Class<T> searchedType);
+
+    protected ElasticSearchConfiguration getConfiguration() {
+        return configuration;
+    }
+
+    protected List<BulkableAction<? extends JestResult>> emptyActions() {
+        return new ArrayList<>();
+    }
+
+    @Override
+    public boolean bypassInclusionPolicies() {
+        return false;
+    }
 }

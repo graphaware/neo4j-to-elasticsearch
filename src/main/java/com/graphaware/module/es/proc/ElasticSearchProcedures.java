@@ -16,6 +16,7 @@
 
 package com.graphaware.module.es.proc;
 
+import com.graphaware.common.log.LoggerFactory;
 import com.graphaware.module.es.ElasticSearchModule;
 import com.graphaware.module.es.proc.result.JsonSearchResult;
 import com.graphaware.module.es.proc.result.NodeSearchResult;
@@ -25,6 +26,8 @@ import com.graphaware.module.es.search.Searcher;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
+import org.neo4j.logging.Log;
+import org.neo4j.logging.Logger;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.PerformsWrites;
@@ -35,6 +38,8 @@ import java.util.stream.Stream;
 import static com.graphaware.runtime.RuntimeRegistry.getStartedRuntime;
 
 public class ElasticSearchProcedures {
+
+    private static final Log LOG = LoggerFactory.getLogger(ElasticSearchProcedures.class);
 
     private static ThreadLocal<Searcher> searcher = new ThreadLocal<>();
 
@@ -55,9 +60,15 @@ public class ElasticSearchProcedures {
     @Procedure("ga.es.queryNode")
     @PerformsWrites
     public Stream<NodeSearchResult> queryNode(@Name("query") String query) {
-        return getSearcher(database).search(query, Node.class).stream().map(match -> {
-            return new NodeSearchResult(match.getItem(), match.score);
-        });
+        try {
+            return getSearcher(database).search(query, Node.class).stream().map(match -> {
+                return new NodeSearchResult(match.getItem(), match.score);
+            });
+        } catch (Exception e) {
+            LOG.error("", e);
+
+            return Stream.empty();
+        }
     }
 
     @Procedure("ga.es.queryRelationship")

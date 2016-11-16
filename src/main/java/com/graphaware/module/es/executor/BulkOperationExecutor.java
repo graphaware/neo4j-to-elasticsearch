@@ -80,6 +80,7 @@ public class BulkOperationExecutor extends BaseOperationExecutor {
             if (execute.isSucceeded()) {
                 // Removing all operation from the failed list if the bulk execution succeeded.
                 clearFailed();
+                LOG.info("Bulk operation succeeded");
             } else {
                 LOG.warn("Failed to execute bulk action against ElasticSearch. Details: " + execute.getErrorMessage());
             }
