@@ -35,13 +35,13 @@ import java.util.*;
 
 public abstract class BaseMapping implements Mapping {
 
+    public static final String NATIVE_ID = "ID()";
+
     private static final Log LOG = LoggerFactory.getLogger(BaseMapping.class);
 
     private static final String DEFAULT_INDEX = "neo4j-index";
     private static final String DEFAULT_KEY_PROPERTY = "uuid";
     private static final String DEFAULT_FORCE_STRINGS = "false";
-
-    protected ElasticSearchConfiguration configuration;
 
     protected String keyProperty;
     protected String indexPrefix;
@@ -62,8 +62,6 @@ public abstract class BaseMapping implements Mapping {
 
         forceStrings = config.getOrDefault("forceStrings", DEFAULT_FORCE_STRINGS).trim().toLowerCase().equals("true");
         LOG.info("ElasticSearch force-strings set to %s", forceStrings);
-
-        this.configuration = configuration;
     }
 
     /**
@@ -88,7 +86,7 @@ public abstract class BaseMapping implements Mapping {
      * @return key of the node.
      */
     protected final String getKey(DetachedPropertyContainer propertyContainer) {
-        if (getKeyProperty().equals("ID()")) {
+        if (getKeyProperty().equals(NATIVE_ID)) {
             return String.valueOf(propertyContainer.getGraphId());
         } else {
             return String.valueOf(propertyContainer.getProperties().get(getKeyProperty()));
@@ -216,10 +214,6 @@ public abstract class BaseMapping implements Mapping {
     }
 
     public abstract <T extends PropertyContainer> String getIndexFor(Class<T> searchedType);
-
-    protected ElasticSearchConfiguration getConfiguration() {
-        return configuration;
-    }
 
     protected List<BulkableAction<? extends JestResult>> emptyActions() {
         return new ArrayList<>();

@@ -23,7 +23,9 @@ import com.graphaware.common.log.LoggerFactory;
 import com.graphaware.module.es.ElasticSearchConfiguration;
 import com.graphaware.module.es.ElasticSearchModule;
 import com.graphaware.module.es.mapping.Mapping;
-import com.graphaware.module.es.util.JestClientFactory2;
+import com.graphaware.module.es.search.resolver.KeyToIdResolver;
+import com.graphaware.module.es.search.resolver.ResolverStore;
+import com.graphaware.module.es.util.CustomJestClientFactory;
 import io.searchbox.action.AbstractAction;
 import io.searchbox.action.GenericResultAbstractAction;
 import io.searchbox.client.JestClient;
@@ -56,7 +58,7 @@ public class Searcher {
 
     private final String keyProperty;
     private final Mapping mapping;
-    private final Key2IdResolver keyResolver;
+    private final KeyToIdResolver keyResolver;
 
     public Searcher(GraphDatabaseService database) {
         ElasticSearchConfiguration configuration = (ElasticSearchConfiguration) getStartedRuntime(database).getModule(ElasticSearchModule.class).getConfiguration();
@@ -64,7 +66,7 @@ public class Searcher {
         this.keyProperty = configuration.getKeyProperty();
         this.database = database;
         this.mapping = configuration.getMapping();
-        this.keyResolver = new Key2IdResolver(database, mapping.getKeyProperty());
+        this.keyResolver = ResolverStore.getResolver(database, mapping.getKeyProperty());
         this.client = createClient(configuration.getUri(), configuration.getPort(), configuration.getAuthUser(), configuration.getAuthPassword());
     }
 
@@ -154,7 +156,7 @@ public class Searcher {
 
         LOG.info("Creating Jest Client...");
 
-        JestClientFactory2 factory = new JestClientFactory2();
+        CustomJestClientFactory factory = new CustomJestClientFactory();
         String esHost = String.format("http://%s:%s", uri, port);
         HttpClientConfig.Builder clientConfigBuilder = new HttpClientConfig.Builder(esHost).multiThreaded(true);
 
