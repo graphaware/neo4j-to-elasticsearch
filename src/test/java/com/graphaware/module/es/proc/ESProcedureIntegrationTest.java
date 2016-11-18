@@ -33,7 +33,7 @@ import static org.junit.Assert.assertTrue;
 public abstract class ESProcedureIntegrationTest extends GraphAwareIntegrationTest {
     private ElasticSearchServer esServer;
 
-    protected static final int WAIT_TIME = 1300;
+    protected static final int WAIT_TIME = 1500;
 
     @Override
     public void setUp() throws Exception {
