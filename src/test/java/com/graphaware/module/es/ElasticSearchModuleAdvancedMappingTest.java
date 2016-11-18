@@ -41,7 +41,6 @@ public class ElasticSearchModuleAdvancedMappingTest extends ElasticSearchModuleI
         esServer = new EmbeddedElasticSearchServer();
         esServer.start();
         esClient = new JestElasticSearchClient(HOST, PORT);
-
     }
 
     @After

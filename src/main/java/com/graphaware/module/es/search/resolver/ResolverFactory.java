@@ -16,27 +16,11 @@
 
 package com.graphaware.module.es.search.resolver;
 
-import com.graphaware.common.log.LoggerFactory;
 import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.logging.Log;
 
-public final class ResolverStore {
+public final class ResolverFactory {
 
-    private static final Log LOG = LoggerFactory.getLogger(ResolverStore.class);
-
-    private static boolean initialized = false;
-    private static KeyToIdResolver resolver;
-
-    public static KeyToIdResolver getResolver(GraphDatabaseService database, String keyProperty) {
-        if (!initialized) {
-            resolver = initResolver(database, keyProperty);
-            initialized = true;
-        }
-
-        return resolver;
-    }
-
-    private static KeyToIdResolver initResolver(GraphDatabaseService database, String keyProperty) {
+    public static KeyToIdResolver createResolver(GraphDatabaseService database, String keyProperty) {
         try {
             return new NativeIdResolver(database, keyProperty);
         } catch (ResolverNotApplicable e) {

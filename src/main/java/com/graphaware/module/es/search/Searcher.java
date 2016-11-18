@@ -24,7 +24,7 @@ import com.graphaware.module.es.ElasticSearchConfiguration;
 import com.graphaware.module.es.ElasticSearchModule;
 import com.graphaware.module.es.mapping.Mapping;
 import com.graphaware.module.es.search.resolver.KeyToIdResolver;
-import com.graphaware.module.es.search.resolver.ResolverStore;
+import com.graphaware.module.es.search.resolver.ResolverFactory;
 import com.graphaware.module.es.util.CustomJestClientFactory;
 import io.searchbox.action.AbstractAction;
 import io.searchbox.action.GenericResultAbstractAction;
@@ -66,7 +66,7 @@ public class Searcher {
         this.keyProperty = configuration.getKeyProperty();
         this.database = database;
         this.mapping = configuration.getMapping();
-        this.keyResolver = ResolverStore.getResolver(database, mapping.getKeyProperty());
+        this.keyResolver = ResolverFactory.createResolver(database, mapping.getKeyProperty());
         this.client = createClient(configuration.getUri(), configuration.getPort(), configuration.getAuthUser(), configuration.getAuthPassword());
     }
 
@@ -102,7 +102,7 @@ public class Searcher {
         };
     }
 
-    private <T extends PropertyContainer> List<SearchMatch<T>> resolveMatchItems(List<SearchMatch<T>> searchMatches, Function<SearchMatch, T> resolver) {
+    private <T extends PropertyContainer> List<SearchMatch<T>> resolveMatchItems(final List<SearchMatch<T>> searchMatches, final Function<SearchMatch, T> resolver) {
         List<SearchMatch<T>> resolvedResults = new ArrayList<>();
 
         try (Transaction tx = database.beginTx()) {

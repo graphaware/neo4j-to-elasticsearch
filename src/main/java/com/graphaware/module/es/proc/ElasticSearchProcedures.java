@@ -40,7 +40,7 @@ public class ElasticSearchProcedures {
 
     private static final Log LOG = LoggerFactory.getLogger(ElasticSearchProcedures.class);
 
-    private static ThreadLocal<Searcher> searcher = new ThreadLocal<>();
+    private static ThreadLocal<Searcher> searcherCache = new ThreadLocal<>();
 
     @Context
     public GraphDatabaseService database;
@@ -49,11 +49,18 @@ public class ElasticSearchProcedures {
         return getStartedRuntime(database).getModule(ElasticSearchModule.class);
     }
 
+    /**
+     * Needed to reset searcher cache during tests.
+     */
+    static void resetSearcherCache() {
+        searcherCache = new ThreadLocal<>();
+    }
+
     private static Searcher getSearcher(GraphDatabaseService database) {
-        if (searcher.get() == null) {
-            searcher.set(new Searcher(database));
+        if (searcherCache.get() == null) {
+            searcherCache.set(new Searcher(database));
         }
-        return searcher.get();
+        return searcherCache.get();
     }
 
     @Procedure("ga.es.queryNode")
