@@ -64,7 +64,6 @@ public class ElasticSearchProcedures {
     }
 
     @Procedure("ga.es.queryNode")
-    @PerformsWrites
     public Stream<NodeSearchResult> queryNode(@Name("query") String query) {
         try {
             return getSearcher(database).search(query, Node.class).stream().map(match -> {
@@ -78,7 +77,6 @@ public class ElasticSearchProcedures {
     }
 
     @Procedure("ga.es.queryRelationship")
-    @PerformsWrites
     public Stream<RelationshipSearchResult> queryRelationship(@Name("query") String query) {
         return getSearcher(database).search(query, Relationship.class).stream().map(match -> {
             return new RelationshipSearchResult(match.getItem(), match.score);
@@ -86,25 +84,21 @@ public class ElasticSearchProcedures {
     }
 
     @Procedure("ga.es.queryNodeRaw")
-    @PerformsWrites
     public Stream<JsonSearchResult> queryNodeRaw(@Name("query") String query) {
         return Stream.of(new JsonSearchResult(getSearcher(database).rawSearch(query, Node.class)));
     }
 
     @Procedure("ga.es.queryRelationshipRaw")
-    @PerformsWrites
     public Stream<JsonSearchResult> queryRelationshipRaw(@Name("query") String query) {
         return Stream.of(new JsonSearchResult(getSearcher(database).rawSearch(query, Relationship.class)));
     }
 
     @Procedure("ga.es.nodeMapping")
-    @PerformsWrites
     public Stream<JsonSearchResult> nodeMapping() {
         return Stream.of(new JsonSearchResult(getSearcher(database).nodeMapping()));
     }
 
     @Procedure("ga.es.relationshipMapping")
-    @PerformsWrites
     public Stream<JsonSearchResult> relationshipMapping() {
         return Stream.of(new JsonSearchResult(getSearcher(database).relationshipMapping()));
     }
