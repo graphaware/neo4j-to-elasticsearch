@@ -18,18 +18,22 @@ package com.graphaware.module.es.search;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.graphaware.common.log.LoggerFactory;
 import com.graphaware.module.es.ElasticSearchConfiguration;
 import com.graphaware.module.es.ElasticSearchModule;
 import com.graphaware.module.es.mapping.Mapping;
-import com.graphaware.module.uuid.UuidModule;
-import com.graphaware.module.uuid.read.DefaultUuidReader;
-import com.graphaware.module.uuid.read.UuidReader;
+import com.graphaware.module.es.search.resolver.KeyToIdResolver;
+import com.graphaware.module.es.search.resolver.ResolverFactory;
+import com.graphaware.module.es.util.CustomJestClientFactory;
+import io.searchbox.action.AbstractAction;
+import io.searchbox.action.GenericResultAbstractAction;
 import io.searchbox.client.JestClient;
-import io.searchbox.client.JestClientFactory;
+import io.searchbox.client.JestResult;
 import io.searchbox.client.config.HttpClientConfig;
 import io.searchbox.core.Search;
 import io.searchbox.core.SearchResult;
+import io.searchbox.indices.mapping.GetMapping;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.impl.client.BasicCredentialsProvider;
@@ -49,40 +53,34 @@ import static org.springframework.util.Assert.notNull;
 public class Searcher {
     private static final Log LOG = LoggerFactory.getLogger(Searcher.class);
 
-    private final GraphDatabaseService database;
+    public final GraphDatabaseService database;
     private final JestClient client;
 
     private final String keyProperty;
     private final Mapping mapping;
-    private final UuidReader uuidReader;
+    private final KeyToIdResolver keyResolver;
 
     public Searcher(GraphDatabaseService database) {
         ElasticSearchConfiguration configuration = (ElasticSearchConfiguration) getStartedRuntime(database).getModule(ElasticSearchModule.class).getConfiguration();
 
         this.keyProperty = configuration.getKeyProperty();
         this.database = database;
-        this.uuidReader = createUuidReader(database);
-        this.client = createClient(configuration.getUri(), configuration.getPort(), configuration.getAuthUser(), configuration.getAuthPassword());
         this.mapping = configuration.getMapping();
-    }
-
-    private UuidReader createUuidReader(GraphDatabaseService database) {
-        return new DefaultUuidReader(
-                getStartedRuntime(database).getModule(UuidModule.class).getConfiguration(),
-                database
-        );
+        this.keyResolver = ResolverFactory.createResolver(database, mapping.getKeyProperty());
+        this.client = createClient(configuration.getUri(), configuration.getPort(), configuration.getAuthUser(), configuration.getAuthPassword());
     }
 
     private Function<SearchMatch, Relationship> getRelationshipResolver() {
         return match -> {
             Relationship rel;
             try {
-                rel = database.getRelationshipById(uuidReader.getRelationshipIdByUuid(match.uuid));
+                long relId = keyResolver.getRelationshipID(match.key);
+                rel = database.getRelationshipById(relId);
             } catch(NotFoundException e) {
                 rel = null;
             }
             if (rel == null) {
-                LOG.warn("Could not find relationship with uuid (" + keyProperty + "): " + match.uuid);
+                LOG.warn("Could not find relationship with key (" + keyProperty + "): " + match.key);
             }
             return rel;
         };
@@ -92,18 +90,19 @@ public class Searcher {
         return match -> {
             Node node = null;
             try {
-                node = database.getNodeById(uuidReader.getNodeIdByUuid(match.uuid));
+                long nodeId = keyResolver.getNodeID(match.key);
+                node = database.getNodeById(nodeId);
             } catch (NotFoundException e){
                 node = null;
             }
             if (node == null) {
-                LOG.warn("Could not find node with uuid (" + keyProperty + "): " + match.uuid);
+                LOG.warn("Could not find node with key (" + keyProperty + "): " + match.key);
             }
             return node;
         };
     }
 
-    private <T extends PropertyContainer> List<SearchMatch<T>> resolveMatchItems(List<SearchMatch<T>> searchMatches, Function<SearchMatch, T> resolver) {
+    private <T extends PropertyContainer> List<SearchMatch<T>> resolveMatchItems(final List<SearchMatch<T>> searchMatches, final Function<SearchMatch, T> resolver) {
         List<SearchMatch<T>> resolvedResults = new ArrayList<>();
 
         try (Transaction tx = database.beginTx()) {
@@ -131,7 +130,15 @@ public class Searcher {
                 .forEach((hitsArray) -> {
                     for (JsonElement element : hitsArray) {
                         JsonObject obj = (JsonObject) element;
-                        Double score = obj.get("_score") != null && !obj.get("_score").toString().equals("null") ? Double.valueOf(obj.get("_score").toString()) : null;
+
+                        // extract the result score
+                        JsonElement _score = obj.get("_score");
+                        Double score = null;
+                        if (_score != null && !_score.isJsonNull() && _score.isJsonPrimitive() && ((JsonPrimitive) _score).isNumber()) {
+                            score = _score.getAsDouble();
+                        }
+
+                        // extract the result id
                         String keyValue = obj.get("_id") != null ? obj.get("_id").getAsString() : null;
                         if (keyValue == null) {
                             LOG.warn("No key found in search result: " + obj.getAsString());
@@ -149,7 +156,7 @@ public class Searcher {
 
         LOG.info("Creating Jest Client...");
 
-        JestClientFactory factory = new JestClientFactory();
+        CustomJestClientFactory factory = new CustomJestClientFactory();
         String esHost = String.format("http://%s:%s", uri, port);
         HttpClientConfig.Builder clientConfigBuilder = new HttpClientConfig.Builder(esHost).multiThreaded(true);
 
@@ -174,21 +181,29 @@ public class Searcher {
 
     /**
      *
-     * @param query The query to send to the index
-     * @param clazz {@link Node} or {@link Relationship}, to decide which index to send the query to.
-     * @param <T> {@link Node} or {@link Relationship}
+     * @param action The action to send to the index
+
      * @return the query response
      */
-    private <T extends PropertyContainer> SearchResult doQuery(String query, Class<T> clazz) {
-        Search search = new Search.Builder(query).addIndex(mapping.getIndexFor(clazz)).build();
-
-        SearchResult result;
+    private <R extends JestResult> R doQuery(AbstractAction<R> action) {
+        R result;
         try {
-            result = client.execute(search);
+            result = client.execute(action);
         } catch (IOException ex) {
             throw new RuntimeException("Error while performing query on ElasticSearch", ex);
         }
         return result;
+    }
+
+    /**
+     * @param query the search query to execute
+     * @param clazz {@link Node} or {@link Relationship}, to decide which index to send the query to.
+     * @param <T> {@link Node} or {@link Relationship}
+     * @return the search results
+     */
+    private <T extends PropertyContainer> SearchResult searchQuery(String query, Class<T> clazz) {
+        Search search = new Search.Builder(query).addIndex(mapping.getIndexFor(clazz)).build();
+        return doQuery(search);
     }
 
     /**
@@ -200,7 +215,7 @@ public class Searcher {
      * @return a list of matches (with node or a relationship)
      */
     public <T extends PropertyContainer> List<SearchMatch<T>> search(String query, Class<T> clazz) {
-        SearchResult result = doQuery(query, clazz);
+        SearchResult result = searchQuery(query, clazz);
 
         List<SearchMatch<T>> matches = buildSearchMatches(result);
         @SuppressWarnings("unchecked")
@@ -218,8 +233,25 @@ public class Searcher {
      * @return a JSON string
      */
     public <T extends PropertyContainer> String rawSearch(String query, Class<T> clazz) {
-        SearchResult r = doQuery(query, clazz);
+        SearchResult r = searchQuery(query, clazz);
         return r.getJsonString();
+    }
+
+    public String nodeMapping() {
+        return mappingQuery(Node.class);
+    }
+
+    public String relationshipMapping() {
+        return mappingQuery(Relationship.class);
+    }
+
+    private <T extends PropertyContainer> String mappingQuery(Class<T> clazz) {
+        String indexName = mapping.getIndexFor(clazz);
+        GetMapping getMapping = new GetMapping.Builder().addIndex(indexName).build();
+        return doQuery(getMapping)
+                .getJsonObject()
+                .get(indexName)
+                .toString();
     }
 
     @Override
@@ -227,5 +259,27 @@ public class Searcher {
         super.finalize();
         if (client == null) { return; }
         client.shutdownClient();
+    }
+
+    /***
+     * @return the current ElasticSearch nodes information
+     */
+    public String getEsInfo() {
+        return doQuery(new GetVersion.Builder().build()).getJsonString();
+    }
+
+    private static class GetVersion extends GenericResultAbstractAction {
+        protected GetVersion(Builder builder) {
+            super(builder);
+            setURI(buildURI());
+        }
+
+        @Override
+        public String getRestMethodName() { return "GET"; }
+
+        public static class Builder extends AbstractAction.Builder<GetVersion, Builder> {
+            @Override
+            public GetVersion build() { return new GetVersion(this); }
+        }
     }
 }
