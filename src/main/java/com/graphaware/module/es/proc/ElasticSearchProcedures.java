@@ -27,7 +27,6 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.logging.Log;
-import org.neo4j.logging.Logger;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.PerformsWrites;
@@ -41,6 +40,8 @@ public class ElasticSearchProcedures {
 
     private static final Log LOG = LoggerFactory.getLogger(ElasticSearchProcedures.class);
 
+    private static ThreadLocal<Searcher> searcherCache = new ThreadLocal<>();
+
     @Context
     public GraphDatabaseService database;
 
@@ -48,12 +49,21 @@ public class ElasticSearchProcedures {
         return getStartedRuntime(database).getModule(ElasticSearchModule.class);
     }
 
+    /**
+     * Needed to reset searcher cache during tests.
+     */
+    static void resetSearcherCache() {
+        searcherCache = new ThreadLocal<>();
+    }
+
     private static Searcher getSearcher(GraphDatabaseService database) {
-        return new Searcher(database);
+        if (searcherCache.get() == null) {
+            searcherCache.set(new Searcher(database));
+        }
+        return searcherCache.get();
     }
 
     @Procedure("ga.es.queryNode")
-    @PerformsWrites
     public Stream<NodeSearchResult> queryNode(@Name("query") String query) {
         try {
             return getSearcher(database).search(query, Node.class).stream().map(match -> {
@@ -67,7 +77,6 @@ public class ElasticSearchProcedures {
     }
 
     @Procedure("ga.es.queryRelationship")
-    @PerformsWrites
     public Stream<RelationshipSearchResult> queryRelationship(@Name("query") String query) {
         return getSearcher(database).search(query, Relationship.class).stream().map(match -> {
             return new RelationshipSearchResult(match.getItem(), match.score);
@@ -75,20 +84,33 @@ public class ElasticSearchProcedures {
     }
 
     @Procedure("ga.es.queryNodeRaw")
-    @PerformsWrites
     public Stream<JsonSearchResult> queryNodeRaw(@Name("query") String query) {
         return Stream.of(new JsonSearchResult(getSearcher(database).rawSearch(query, Node.class)));
     }
 
     @Procedure("ga.es.queryRelationshipRaw")
-    @PerformsWrites
     public Stream<JsonSearchResult> queryRelationshipRaw(@Name("query") String query) {
         return Stream.of(new JsonSearchResult(getSearcher(database).rawSearch(query, Relationship.class)));
+    }
+
+    @Procedure("ga.es.nodeMapping")
+    public Stream<JsonSearchResult> nodeMapping() {
+        return Stream.of(new JsonSearchResult(getSearcher(database).nodeMapping()));
+    }
+
+    @Procedure("ga.es.relationshipMapping")
+    public Stream<JsonSearchResult> relationshipMapping() {
+        return Stream.of(new JsonSearchResult(getSearcher(database).relationshipMapping()));
     }
 
     @Procedure("ga.es.initialized")
     public Stream<StatusResult> initialized() {
         return Stream.of(new StatusResult(getModule(database).isReindexCompleted()));
+    }
+
+    @Procedure("ga.es.info")
+    public Stream<JsonSearchResult> info() {
+        return Stream.of(new JsonSearchResult(getSearcher(database).getEsInfo()));
     }
 }
 

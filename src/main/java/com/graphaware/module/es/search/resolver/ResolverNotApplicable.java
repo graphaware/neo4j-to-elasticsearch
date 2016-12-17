@@ -14,25 +14,10 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-package com.graphaware.module.es.search;
+package com.graphaware.module.es.search.resolver;
 
-import org.neo4j.graphdb.PropertyContainer;
-
-public class SearchMatch<T extends PropertyContainer> {
-    public final String key;
-    public final Double score;
-    private T item;
-
-    public SearchMatch(String key, Double score) {
-        this.key = key;
-        this.score = score;
-    }
-
-    public T getItem() {
-        return item;
-    }
-
-    public void setItem(T item) {
-        this.item = item;
+public class ResolverNotApplicable extends Exception {
+    public ResolverNotApplicable(String message) {
+        super(message);
     }
 }

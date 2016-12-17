@@ -14,25 +14,28 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-package com.graphaware.module.es.search;
+package com.graphaware.module.es.search.resolver;
 
-import org.neo4j.graphdb.PropertyContainer;
+import com.graphaware.module.es.mapping.BaseMapping;
+import org.neo4j.graphdb.GraphDatabaseService;
 
-public class SearchMatch<T extends PropertyContainer> {
-    public final String key;
-    public final Double score;
-    private T item;
+class NativeIdResolver extends KeyToIdResolver {
 
-    public SearchMatch(String key, Double score) {
-        this.key = key;
-        this.score = score;
+    NativeIdResolver(GraphDatabaseService database, String keyProperty) throws ResolverNotApplicable {
+        super(database, keyProperty);
+
+        if (!BaseMapping.NATIVE_ID.equals(keyProperty)) {
+            throw new ResolverNotApplicable("key property is not the native Neo4j identifier");
+        }
     }
 
-    public T getItem() {
-        return item;
+    @Override
+    public long getNodeID(String key) {
+        return Long.parseLong(key);
     }
 
-    public void setItem(T item) {
-        this.item = item;
+    @Override
+    public long getRelationshipID(String key) {
+        return Long.parseLong(key);
     }
 }

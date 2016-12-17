@@ -1,7 +1,7 @@
 GraphAware Neo4j Elasticsearch Integration (Neo4j Module)
 =========================================================
 
-[![Build Status](https://travis-ci.org/graphaware/neo4j-to-elasticsearch.png)](https://travis-ci.org/graphaware/neo4j-to-elasticsearch) | <a href="http://graphaware.com/products/" target="_blank">Downloads</a> | <a href="http://graphaware.com/site/neo4j-to-elasticsearch/latest/apidocs/" target="_blank">Javadoc</a> | Latest Release: 3.0.6.43.6
+[![Build Status](https://travis-ci.org/graphaware/neo4j-to-elasticsearch.png)](https://travis-ci.org/graphaware/neo4j-to-elasticsearch) | <a href="http://graphaware.com/products/" target="_blank">Downloads</a> | <a href="http://graphaware.com/site/neo4j-to-elasticsearch/latest/apidocs/" target="_blank">Javadoc</a> | Latest Release: 3.1.0.44.7
 
 GraphAware Elasticsearch Integration is an enterprise-grade bi-directional integration between Neo4j and Elasticsearch.
 It consists of two independent modules plus a test suite. Both modules can be used independently or together to achieve
@@ -25,7 +25,7 @@ you will need three (3) .jar files (all of which you can <a href="http://graphaw
 dropped into the `plugins` directory of your Neo4j installation:
 
 *  <a href="https://github.com/graphaware/neo4j-framework" target="_blank">GraphAware Neo4j Framework</a>
-*  <a href="https://github.com/graphaware/neo4j-uuid" target="_blank">GraphAware Neo4j UUID</a>
+*  <a href="https://github.com/graphaware/neo4j-uuid" target="_blank">GraphAware Neo4j UUID</a> (only required of you are using UUIDs)
 *  <a href="https://github.com/graphaware/neo4j-to-elasticsearch" target="_blank">GraphAware Neo4j Elasticsearch Integration</a> (this project)
 
 After changing a few lines of config (read on) and restarting Neo4j, the module will do its magic.
@@ -37,7 +37,7 @@ and those developing Neo4j <a href="http://docs.neo4j.org/chunked/stable/server-
 <a href="http://docs.neo4j.org/chunked/stable/server-unmanaged-extensions.html" target="_blank">unmanaged extensions</a>,
 GraphAware Runtime Modules, or Spring MVC Controllers can include use the module as a dependency for their Java project.
 
-#### Releases
+### Releases
 
 Releases are synced to <a href="http://search.maven.org/#search%7Cga%7C1%7Ca%3A%22uuid%22" target="_blank">Maven Central repository</a>. When using Maven for dependency management, include the following dependency in your pom.xml.
 
@@ -47,7 +47,7 @@ Releases are synced to <a href="http://search.maven.org/#search%7Cga%7C1%7Ca%3A%
             <groupId>com.graphaware.integration.es</groupId>
             <!-- this will be com.graphaware.neo4j in the next release -->
             <artifactId>neo4j-to-elasticsearch</artifactId>
-            <version>3.0.3.39.4</version>
+            <version>3.1.0.44.7</version>
         </dependency>
         ...
     </dependencies>
@@ -55,7 +55,7 @@ Releases are synced to <a href="http://search.maven.org/#search%7Cga%7C1%7Ca%3A%
 #### Snapshots
 
 To use the latest development version, just clone this repository, run `mvn clean install` and change the version in the
-dependency above to 3.0.6.43.7-SNAPSHOT.
+dependency above to 3.1.0.44.8-SNAPSHOT.
 
 #### Note on Versioning Scheme
 
@@ -63,7 +63,7 @@ The version number has two parts. The first four numbers indicate compatibility 
  The last number is the version of the Elasticsearch Integration library. For example, version 2.3.2.37.1 is version 1 of the Elasticsearch Integration library
  compatible with GraphAware Neo4j Framework 2.3.2.37 (and thus Neo4j 2.3.2).
 
-#### Note on UUID
+### Note on UUID
 
 It is a very bad practice to expose internal Neo4j node IDs to external systems. The reason for that is that these IDs
 are not guaranteed to be stable and are re-used when nodes are deleted. For this reason, unless you have your own unique
@@ -75,9 +75,9 @@ an immutable uuid property, which will be indexed in Neo4j and used in Elasticse
 (a.k.a. documents). When Elasticsearch returns a result, it will be the UUID that you will use to retrieve the Node
 from Neo4j.
 
-#### Setup and Configuration
+## Setup and Configuration
 
-##### Server Mode
+### Server Mode
 
 Edit `neo4j.conf` to register the required modules:
 
@@ -91,7 +91,8 @@ com.graphaware.runtime.enabled=true
 #UIDM becomes the module ID:
 com.graphaware.module.UIDM.1=com.graphaware.module.uuid.UuidBootstrapper
 
-#optional, default is uuid:
+#optional, default is "uuid".
+#use "ID()" to use native Neo4j IDs as Elasticsearch IDs
 com.graphaware.module.UIDM.uuidProperty=uuid
 
 #optional, default is all nodes:
@@ -100,7 +101,7 @@ com.graphaware.module.UIDM.node=hasLabel('Label1') || hasLabel('Label2')
 #optional, default is uuidIndex
 com.graphaware.module.UIDM.uuidIndex=uuidIndex
 
-# prevent the whole db to be assigned a new uuid if the uuid module is settle up together with neo4j2es
+#prevent the whole db to be assigned a new uuid if the uuid module is settle up together with neo4j2es
 com.graphaware.module.UIDM.initializeUntil=0
 
 #ES becomes the module ID:
@@ -167,7 +168,7 @@ If you're not sure what all of this means or don't know how to find the right nu
 best off leaving it alone or getting in touch for some (paid) support.
 
 
-##### ElasticSearch Shield Support
+#### ElasticSearch Shield Support
 
 If Shield plugin is installed and enabled on Elasticsearch node, it is possible to add authentication parameters in the configuration.
 Here an example:
@@ -182,7 +183,7 @@ com.graphaware.module.ES.authPassword=123456
 
 Both of them MUST be specified to enabling Authentication. The user must be able to perform writes on the elasticsearch instance.
 
-##### Embedded Mode / Java Development
+### Embedded Mode / Java Development
 
 To use the ElasticSearch Integration Module programmatically, register the module like this
 
@@ -205,41 +206,88 @@ Alternatively:
  //make sure neo4j.properties contain the lines mentioned in previous section
 ```
 
-#### Usage
+## Usage
 
 Apart from the configuration described above, the GraphAware ElasticSearch Integration Module requires nothing else to function.
 It will replicate transactions asynchronously to ElasticSearch.
 
-#### Cypher Procedures
+### Cypher Procedures
 
-This module provides also a procedure that allows to perform queries on indexed documents
-on ElasticSearch and getting back nodes for further use in the cypher query.
+This module provides a set of Cypher procedures that allows communicate with Elasticsearch using the Cypher query language.
+These are the available procedures:
 
-Here an example of the usage:
+#### Searching for nodes or relationships
+
+This procedures allows to perform search queries on indexed nodes or relationships and return them for further use in the cypher query.
+Example of usage:
 
 ```
-CALL ga.es.queryNode('{\"query\":{\"match\":{\"name\":\"alessandro\"}}}') YIELD node, score return node, score"
+CALL ga.es.queryNode('{\"query\":{\"match\":{\"name\":\"alessandro\"}}}') YIELD node, score RETURN node, score"
 ```
 
 Together with the nodes also the related score is returned.
 
-Any query can be submitted through the procedure, it will be performed on the index configured
-for replication on ElasticSearch.
+Any search query can be submitted through the procedure, it will be performed on the index configured
+for replication on Elasticsearch.
+
+Similar procedures are `queryNodeRaw` and `queryRelationshipRaw` procedures. These procedures are similar to the `queryNode` and `queryRelationship` (they accept the same parameters) but they return a JSON-encoded value of the node or relationship as returned by Ealsticsearch.
+Example:
+```
+CALL ga.es.queryRelationshipRaw('{\"query\":{\"match\":{\"city\":\"paris\"}}}') YIELD json, score RETURN json, score"
+```
 
 #### Monitoring the status of the reindexing process
 
 Depending on your configuration, the module can be in `initialization` mode when starting, processing a complete reindexing
 of the Neo4j graph database content (in accordance with your configuration settings)
 
-You can monitor the status of the `init` mode :
-
+You can monitor the status of the `init` mode:
 ```
 CALL ga.es.initialized() YIELD status RETURN status
 ```
 
 Returns `true` or `false`
 
-#### Version of ElasticSearch
+#### Getting the current node or relationship mapping
+
+You can retrieve the current node or relationship mapping from Elasticsearch using the following procedure:
+
+```
+CALL ga.es.nodeMapping() YIELD json as mapping RETURN mapping
+```
+or
+```
+CALL ga.es.relationshipMapping() YIELD json as mapping RETURN mapping
+```
+
+This will return a JSON string containing the mapping returned by Elasticsearch's [Get Mapping API](https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-get-mapping.html).
+The returned JSON string needs to be decoded using JSON parsing library.
+
+#### Getting Elasticsearch information
+
+```
+CALL ga.es.info() YIELD json as info return info
+```
+
+This will return a JSON string containing Elasticsearch server information as returned bas the Basic Status API.
+The returned JSON string needs to be decoded using JSON parsing library.
+An example of parsed result:
+```
+{
+  "name" : "Sharon Friedlander",
+  "cluster_name" : "elasticsearch",
+  "version" : {
+    "number" : "2.4.0",
+    "build_hash" : "ce9f0c7394dee074091dd1bc4e9469251181fc55",
+    "build_timestamp" : "2016-08-29T09:14:17Z",
+    "build_snapshot" : false,
+    "lucene_version" : "5.5.2"
+  },
+  "tagline" : "You Know, for Search"
+}
+```
+
+### Version of ElasticSearch
 
 This module has been tested with ElasticSearch 2.3.0+.
 

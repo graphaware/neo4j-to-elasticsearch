@@ -16,6 +16,7 @@ package com.graphaware.module.es.mapping;
 
 import com.graphaware.common.expression.PropertyContainerExpressions;
 import com.graphaware.common.log.LoggerFactory;
+import com.graphaware.common.representation.DetachedPropertyContainer;
 import com.graphaware.module.es.ElasticSearchConfiguration;
 import com.graphaware.module.es.mapping.expression.NodeExpressions;
 import com.graphaware.module.es.mapping.expression.RelationshipExpressions;
@@ -34,13 +35,13 @@ import java.util.*;
 
 public abstract class BaseMapping implements Mapping {
 
+    public static final String NATIVE_ID = "ID()";
+
     private static final Log LOG = LoggerFactory.getLogger(BaseMapping.class);
 
     private static final String DEFAULT_INDEX = "neo4j-index";
     private static final String DEFAULT_KEY_PROPERTY = "uuid";
     private static final String DEFAULT_FORCE_STRINGS = "false";
-
-    protected ElasticSearchConfiguration configuration;
 
     protected String keyProperty;
     protected String indexPrefix;
@@ -61,8 +62,6 @@ public abstract class BaseMapping implements Mapping {
 
         forceStrings = config.getOrDefault("forceStrings", DEFAULT_FORCE_STRINGS).trim().toLowerCase().equals("true");
         LOG.info("ElasticSearch force-strings set to %s", forceStrings);
-
-        this.configuration = configuration;
     }
 
     /**
@@ -86,8 +85,12 @@ public abstract class BaseMapping implements Mapping {
      * @param propertyContainer Node or relationship to be indexed.
      * @return key of the node.
      */
-    protected final String getKey(PropertyContainerExpressions propertyContainer) {
-        return String.valueOf(propertyContainer.getProperties().get(getKeyProperty()));
+    protected final String getKey(DetachedPropertyContainer propertyContainer) {
+        if (getKeyProperty().equals(NATIVE_ID)) {
+            return String.valueOf(propertyContainer.getGraphId());
+        } else {
+            return String.valueOf(propertyContainer.getProperties().get(getKeyProperty()));
+        }
     }
 
     /**
@@ -170,41 +173,47 @@ public abstract class BaseMapping implements Mapping {
      * @throws Exception
      */
     public void createIndexAndMapping(JestClient client) throws Exception {
-        List<String> indexes = Arrays.asList(
-                getIndexFor(Node.class),
-                getIndexFor(Relationship.class)
+        List<Class> indexes = Arrays.asList(
+                Node.class,
+                Relationship.class
         );
-        indexes.stream().distinct().forEach(index -> {
+        indexes.stream().distinct().forEach(indexType -> {
             try {
-                createIndexAndMapping(client, index);
+                createIndexAndMapping(client, indexType);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         });
     }
 
-    private void createIndexAndMapping(JestClient client, String index) throws Exception {
-        if (client.execute(new IndicesExists.Builder(index).build()).isSucceeded()) {
-            LOG.info("Index " + index + " already exists in ElasticSearch.");
-            return;
+    /**
+     * @param client an ElasticSearch client
+     * @param indexType the name of the index to create
+     * @return true when an index wa created (false if is already existed or failed to create)
+     * @throws Exception
+     */
+    protected <T extends PropertyContainer> boolean createIndexAndMapping(JestClient client, Class<T> indexType) throws Exception {
+        String indexName = getIndexFor(indexType);
+
+        if (client.execute(new IndicesExists.Builder(indexName).build()).isSucceeded()) {
+            LOG.info("Index " + indexName + " already exists in ElasticSearch.");
+            return false;
         }
 
-        LOG.info("Index " + index + " does not exist in ElasticSearch, creating...");
+        LOG.info("Index " + indexName + " does not exist in ElasticSearch, creating...");
 
-        final JestResult execute = client.execute(new CreateIndex.Builder(index).build());
+        final JestResult execute = client.execute(new CreateIndex.Builder(indexName).build());
 
         if (execute.isSucceeded()) {
             LOG.info("Created ElasticSearch index.");
+            return true;
         } else {
             LOG.error("Failed to create ElasticSearch index. Details: " + execute.getErrorMessage());
+            return false;
         }
     }
 
     public abstract <T extends PropertyContainer> String getIndexFor(Class<T> searchedType);
-
-    protected ElasticSearchConfiguration getConfiguration() {
-        return configuration;
-    }
 
     protected List<BulkableAction<? extends JestResult>> emptyActions() {
         return new ArrayList<>();

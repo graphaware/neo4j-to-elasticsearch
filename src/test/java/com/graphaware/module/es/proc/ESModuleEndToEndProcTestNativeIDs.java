@@ -12,28 +12,18 @@
  * You should have received a copy of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.graphaware.module.es.mapping.expression;
+package com.graphaware.module.es.proc;
 
-import com.graphaware.common.representation.GraphDetachedNode;
-import org.neo4j.graphdb.Node;
+/**
+ * Tests ElasticSearch procedures with a configuration that uses:
+ * - mapping=DefaultMapping
+ * - propertyKey=ID() (uses NativeIdResolver)
+ */
+public class ESModuleEndToEndProcTestNativeIDs extends ESProcedureIntegrationTest {
 
-public class NodeExpressions extends GraphDetachedNode implements ConvertingPropertyContainerExpressions {
-
-    private static final String GRAPH_TYPE_NODE = "node";
-
-    public NodeExpressions(Node node) {
-        super(node);
+    @Override
+    protected String configFile() {
+        return "integration/int-test-defaultMapping-nativeIDs.conf";
     }
 
-    public NodeExpressions(Node node, String[] properties) {
-        super(node, properties);
-    }
-
-    public boolean allNodes() {
-        return true;
-    }
-
-    public String getGraphType() {
-        return GRAPH_TYPE_NODE;
-    }
 }

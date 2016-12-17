@@ -14,25 +14,26 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-package com.graphaware.module.es.search;
+package com.graphaware.module.es.search.resolver;
 
-import org.neo4j.graphdb.PropertyContainer;
+import org.neo4j.graphdb.GraphDatabaseService;
 
-public class SearchMatch<T extends PropertyContainer> {
-    public final String key;
-    public final Double score;
-    private T item;
+public final class ResolverFactory {
 
-    public SearchMatch(String key, Double score) {
-        this.key = key;
-        this.score = score;
+    public static KeyToIdResolver createResolver(GraphDatabaseService database, String keyProperty) {
+        try {
+            return new NativeIdResolver(database, keyProperty);
+        } catch (ResolverNotApplicable e) {
+            // ignore and try next resolver
+        }
+
+        try {
+            return new UuidResolver(database, keyProperty);
+        } catch (ResolverNotApplicable e) {
+            // ignore and try next resolver
+        }
+
+        throw new RuntimeException("No fitting Key-to-ID resolver found");
     }
 
-    public T getItem() {
-        return item;
-    }
-
-    public void setItem(T item) {
-        this.item = item;
-    }
 }
