@@ -18,17 +18,17 @@ import com.graphaware.common.log.LoggerFactory;
 import com.graphaware.module.es.mapping.expression.NodeExpressions;
 import com.graphaware.module.es.mapping.expression.RelationshipExpressions;
 import io.searchbox.action.BulkableAction;
+import io.searchbox.client.JestClient;
 import io.searchbox.client.JestResult;
+import io.searchbox.core.Delete;
 import io.searchbox.core.Index;
+import io.searchbox.indices.mapping.PutMapping;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.PropertyContainer;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.logging.Log;
 
-import java.util.List;
-import java.util.Collections;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Map;
+import java.util.*;
 
 /**
  * This mapping indexes all documents in the same ElasticSearch index.
@@ -44,18 +44,71 @@ public class AdvancedMapping extends DefaultMapping {
     public static final String LABELS_FIELD = "_labels";
     public static final String RELATIONSHIP_FIELD = "_relationship";
 
+    private static final Map<String, Object> NODE_MAPPINGS = new HashMap<>();
+    private static final Map<String, Object> RELATIONSHIP_MAPPINGS = new HashMap<>();
+
+    static {
+        Map<String, Object> rawField = new HashMap<>();
+        rawField.put("type", "string");
+        rawField.put("index", "not_analyzed");
+        rawField.put("include_in_all", false);
+
+        Map<String, Object> labelOrTypePropertyFields = new HashMap<>();
+        labelOrTypePropertyFields.put("raw", rawField);
+
+        Map<String, Object> labelOrTypeProperty = new HashMap<>();
+        labelOrTypeProperty.put("type", "string");
+        labelOrTypeProperty.put("fields", labelOrTypePropertyFields);
+
+        Map<String
+                , Object> nodeProperties = new HashMap<>();
+        nodeProperties.put(LABELS_FIELD, labelOrTypeProperty);
+        NODE_MAPPINGS.put("properties", nodeProperties);
+
+        Map<String, Object> relationshipProperties = new HashMap<>();
+        relationshipProperties.put(RELATIONSHIP_FIELD, labelOrTypeProperty);
+        RELATIONSHIP_MAPPINGS.put("properties", relationshipProperties);
+    }
+
+    @Override
+    public List<BulkableAction<? extends JestResult>> deleteNode(NodeExpressions node) {
+        return Collections.singletonList(
+                new Delete.Builder(getKey(node))
+                        .index(getIndexFor(Node.class))
+                        .type(NODE_TYPE)
+                        .build()
+        );
+    }
+
+    @Override
+    public List<BulkableAction<? extends JestResult>> deleteRelationship(RelationshipExpressions r) {
+        return Collections.singletonList(
+                new Delete.Builder(getKey(r))
+                        .index(getIndexFor(Relationship.class))
+                        .type(RELATIONSHIP_TYPE)
+                        .build()
+        );
+    }
+
     @Override
     protected List<BulkableAction<? extends JestResult>> createOrUpdateNode(NodeExpressions node) {
-        Map<String, Object> source = map(node);
-        List<BulkableAction<? extends JestResult>> actions = new ArrayList<>();
-        actions.add(new Index.Builder(source).index(getIndexFor(Node.class)).type(NODE_TYPE).id(getKey(node)).build());
-        return actions;
+        return Collections.singletonList(
+                new Index.Builder(map(node))
+                        .index(getIndexFor(Node.class))
+                        .type(NODE_TYPE)
+                        .id(getKey(node))
+                        .build()
+        );
     }
 
     @Override
     protected List<BulkableAction<? extends JestResult>> createOrUpdateRelationship(RelationshipExpressions r) {
         return Collections.singletonList(
-                new Index.Builder(map(r)).index(getIndexFor(Relationship.class)).type(RELATIONSHIP_TYPE).id(getKey(r)).build()
+                new Index.Builder(map(r))
+                        .index(getIndexFor(Relationship.class))
+                        .type(RELATIONSHIP_TYPE)
+                        .id(getKey(r))
+                        .build()
         );
     }
      
@@ -65,6 +118,46 @@ public class AdvancedMapping extends DefaultMapping {
     
     protected void addExtra(Map<String, Object> data, RelationshipExpressions relationship) {
         data.put(RELATIONSHIP_FIELD, relationship.getType());
+    }
+
+    /**
+     * Create non-analyzed fields for filtering:
+     * - `_labels.raw` field for node labels
+     * - `_relationship.raw` field for relationship types
+     *
+     * @param client an ElasticSearch client
+     * @param indexType the name of the index to create
+     * @param <T> Node.class or Relationship.class
+     * @return true in case of success
+     * @throws Exception
+     */
+    @Override
+    protected <T extends PropertyContainer> boolean createIndexAndMapping(JestClient client, Class<T> indexType) throws Exception {
+        boolean created = super.createIndexAndMapping(client, indexType);
+        if (!created) {
+            return false;
+        }
+
+        Map<String, Object> mappings;
+        String esType;
+
+        if (indexType.equals(Node.class)) {
+            mappings = NODE_MAPPINGS;
+            esType = NODE_TYPE;
+        } else {
+            mappings = RELATIONSHIP_MAPPINGS;
+            esType = RELATIONSHIP_TYPE;
+        }
+
+        JestResult e = client.execute(
+                new PutMapping.Builder(getIndexFor(indexType), esType, mappings).build()
+        );
+
+        if (!e.isSucceeded()) {
+            LOG.warn("Mapping creation error: " + e.getErrorMessage());
+        }
+
+        return true;
     }
 
 }
