@@ -1,4 +1,4 @@
-    /*
+/*
  * Copyright (c) 2013-2016 GraphAware
  *
  * This file is part of the GraphAware Framework.
@@ -15,7 +15,6 @@
 package com.graphaware.module.es;
 
 import com.graphaware.common.log.LoggerFactory;
-import com.graphaware.module.es.mapping.DefaultMapping;
 import com.graphaware.module.es.mapping.Mapping;
 import com.graphaware.module.es.util.ServiceLoader;
 import com.graphaware.runtime.module.BaseRuntimeModuleBootstrapper;
