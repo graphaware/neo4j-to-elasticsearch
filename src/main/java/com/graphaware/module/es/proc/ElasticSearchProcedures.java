@@ -27,10 +27,7 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.logging.Log;
-import org.neo4j.procedure.Context;
-import org.neo4j.procedure.Name;
-import org.neo4j.procedure.PerformsWrites;
-import org.neo4j.procedure.Procedure;
+import org.neo4j.procedure.*;
 
 import java.util.stream.Stream;
 
@@ -63,7 +60,7 @@ public class ElasticSearchProcedures {
         return searcherCache.get();
     }
 
-    @Procedure("ga.es.queryNode")
+    @Procedure(value = "ga.es.queryNode", mode = Mode.WRITE)
     public Stream<NodeSearchResult> queryNode(@Name("query") String query) {
         try {
             return getSearcher(database).search(query, Node.class).stream().map(match -> {
@@ -76,19 +73,19 @@ public class ElasticSearchProcedures {
         }
     }
 
-    @Procedure("ga.es.queryRelationship")
+    @Procedure(value = "ga.es.queryRelationship", mode = Mode.WRITE)
     public Stream<RelationshipSearchResult> queryRelationship(@Name("query") String query) {
         return getSearcher(database).search(query, Relationship.class).stream().map(match -> {
             return new RelationshipSearchResult(match.getItem(), match.score);
         });
     }
 
-    @Procedure("ga.es.queryNodeRaw")
+    @Procedure(value = "ga.es.queryNodeRaw", mode = Mode.WRITE)
     public Stream<JsonSearchResult> queryNodeRaw(@Name("query") String query) {
         return Stream.of(new JsonSearchResult(getSearcher(database).rawSearch(query, Node.class)));
     }
 
-    @Procedure("ga.es.queryRelationshipRaw")
+    @Procedure(value = "ga.es.queryRelationshipRaw", mode = Mode.WRITE)
     public Stream<JsonSearchResult> queryRelationshipRaw(@Name("query") String query) {
         return Stream.of(new JsonSearchResult(getSearcher(database).rawSearch(query, Relationship.class)));
     }
