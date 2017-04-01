@@ -15,9 +15,9 @@
 package com.graphaware.module.es;
 
 import com.graphaware.common.log.LoggerFactory;
-import com.graphaware.common.policy.*;
-import com.graphaware.common.policy.none.IncludeNoNodes;
-import com.graphaware.common.policy.none.IncludeNoRelationships;
+import com.graphaware.common.policy.inclusion.InclusionPolicies;
+import com.graphaware.common.policy.inclusion.none.IncludeNoNodes;
+import com.graphaware.common.policy.inclusion.none.IncludeNoRelationships;
 import com.graphaware.common.representation.DetachedNode;
 import com.graphaware.common.representation.DetachedRelationship;
 import com.graphaware.module.es.mapping.expression.NodeExpressions;

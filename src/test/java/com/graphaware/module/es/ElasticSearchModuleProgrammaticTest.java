@@ -13,8 +13,8 @@
  */
 package com.graphaware.module.es;
 
-import com.graphaware.common.policy.BaseNodeInclusionPolicy;
-import com.graphaware.common.policy.NodePropertyInclusionPolicy;
+import com.graphaware.common.policy.inclusion.BaseNodeInclusionPolicy;
+import com.graphaware.common.policy.inclusion.NodePropertyInclusionPolicy;
 import com.graphaware.integration.es.test.EmbeddedElasticSearchServer;
 import com.graphaware.integration.es.test.JestElasticSearchClient;
 import com.graphaware.module.es.util.ServiceLoader;

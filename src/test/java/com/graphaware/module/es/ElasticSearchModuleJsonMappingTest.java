@@ -1,6 +1,6 @@
 package com.graphaware.module.es;
 
-import com.graphaware.common.policy.all.IncludeAllRelationships;
+import com.graphaware.common.policy.inclusion.all.IncludeAllRelationships;
 import com.graphaware.integration.es.test.EmbeddedElasticSearchServer;
 import com.graphaware.integration.es.test.JestElasticSearchClient;
 import com.graphaware.module.es.mapping.JsonFileMapping;

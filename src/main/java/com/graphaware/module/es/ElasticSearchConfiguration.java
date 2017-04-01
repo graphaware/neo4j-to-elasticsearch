@@ -14,8 +14,8 @@
 
 package com.graphaware.module.es;
 
-import com.graphaware.common.policy.InclusionPolicies;
-import com.graphaware.common.policy.none.IncludeNoRelationships;
+import com.graphaware.common.policy.inclusion.InclusionPolicies;
+import com.graphaware.common.policy.inclusion.none.IncludeNoRelationships;
 import com.graphaware.module.es.mapping.DefaultMapping;
 import com.graphaware.module.es.mapping.Mapping;
 import com.graphaware.runtime.config.BaseTxDrivenModuleConfiguration;
