@@ -32,6 +32,7 @@ public class ElasticSearchModuleBootstrapper extends BaseRuntimeModuleBootstrapp
 
     private static final Log LOG = LoggerFactory.getLogger(ElasticSearchModuleBootstrapper.class);
 
+    private static final String PROTOCOL = "protocol";
     private static final String URI = "uri";
     private static final String PORT = "port";
     private static final String KEY_PROPERTY = "keyProperty";
@@ -56,6 +57,14 @@ public class ElasticSearchModuleBootstrapper extends BaseRuntimeModuleBootstrapp
         } else {
             LOG.error("Elasticsearch URI must be specified!");
             throw new IllegalStateException("Elasticsearch URI must be specified!");
+        }
+
+        if (configExists(config, PROTOCOL)) {
+            configuration = configuration.withProtocol(config.get(PROTOCOL));
+            LOG.info("Elasticsearch protocol set to %s", configuration.getProtocol());
+        } else {
+            LOG.error("Elasticsearch protocol set to default protocol http");
+            configuration.withProtocol(ElasticSearchConfiguration.DEFAULT_PROTOCOL);
         }
 
         if (configExists(config, PORT)) {

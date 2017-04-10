@@ -67,7 +67,7 @@ public class Searcher {
         this.database = database;
         this.mapping = configuration.getMapping();
         this.keyResolver = ResolverFactory.createResolver(database, mapping.getKeyProperty());
-        this.client = createClient(configuration.getUri(), configuration.getPort(), configuration.getAuthUser(), configuration.getAuthPassword());
+        this.client = createClient(configuration.getProtocol(), configuration.getUri(), configuration.getPort(), configuration.getAuthUser(), configuration.getAuthPassword());
     }
 
     private Function<SearchMatch, Relationship> getRelationshipResolver() {
@@ -76,7 +76,7 @@ public class Searcher {
             try {
                 long relId = keyResolver.getRelationshipID(match.key);
                 rel = database.getRelationshipById(relId);
-            } catch(NotFoundException e) {
+            } catch (NotFoundException e) {
                 rel = null;
             }
             if (rel == null) {
@@ -92,7 +92,7 @@ public class Searcher {
             try {
                 long nodeId = keyResolver.getNodeID(match.key);
                 node = database.getNodeById(nodeId);
-            } catch (NotFoundException e){
+            } catch (NotFoundException e) {
                 node = null;
             }
             if (node == null) {
@@ -150,14 +150,14 @@ public class Searcher {
         return matches;
     }
 
-    public static JestClient createClient(String uri, String port, String authUser, String authPassword) {
+    public static JestClient createClient(String protocol, String uri, String port, String authUser, String authPassword) {
         notNull(uri);
         notNull(port);
 
         LOG.info("Creating Jest Client...");
 
         CustomJestClientFactory factory = new CustomJestClientFactory();
-        String esHost = String.format("http://%s:%s", uri, port);
+        String esHost = String.format("%s://%s:%s", protocol, uri, port);
         HttpClientConfig.Builder clientConfigBuilder = new HttpClientConfig.Builder(esHost).multiThreaded(true);
 
         if (authUser != null && authPassword != null) {
@@ -180,9 +180,7 @@ public class Searcher {
     }
 
     /**
-     *
      * @param action The action to send to the index
-
      * @return the query response
      */
     private <R extends JestResult> R doQuery(AbstractAction<R> action) {
@@ -198,7 +196,7 @@ public class Searcher {
     /**
      * @param query the search query to execute
      * @param clazz {@link Node} or {@link Relationship}, to decide which index to send the query to.
-     * @param <T> {@link Node} or {@link Relationship}
+     * @param <T>   {@link Node} or {@link Relationship}
      * @return the search results
      */
     private <T extends PropertyContainer> SearchResult searchQuery(String query, Class<T> clazz) {
@@ -211,7 +209,7 @@ public class Searcher {
      *
      * @param query An ElasticSearch query in JSON format (serialized as a string)
      * @param clazz {@link Node} or {@link Relationship}
-     * @param <T> {@link Node} or {@link Relationship}
+     * @param <T>   {@link Node} or {@link Relationship}
      * @return a list of matches (with node or a relationship)
      */
     public <T extends PropertyContainer> List<SearchMatch<T>> search(String query, Class<T> clazz) {
@@ -226,10 +224,9 @@ public class Searcher {
     }
 
     /**
-     *
      * @param query The search query
      * @param clazz The index key ({@link Node} or {@link Relationship})
-     * @param <T> {@link Node} or {@link Relationship}
+     * @param <T>   {@link Node} or {@link Relationship}
      * @return a JSON string
      */
     public <T extends PropertyContainer> String rawSearch(String query, Class<T> clazz) {
@@ -257,7 +254,9 @@ public class Searcher {
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
-        if (client == null) { return; }
+        if (client == null) {
+            return;
+        }
         client.shutdownClient();
     }
 
@@ -275,11 +274,15 @@ public class Searcher {
         }
 
         @Override
-        public String getRestMethodName() { return "GET"; }
+        public String getRestMethodName() {
+            return "GET";
+        }
 
         public static class Builder extends AbstractAction.Builder<GetVersion, Builder> {
             @Override
-            public GetVersion build() { return new GetVersion(this); }
+            public GetVersion build() {
+                return new GetVersion(this);
+            }
         }
     }
 }
