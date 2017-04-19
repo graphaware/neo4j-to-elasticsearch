@@ -36,6 +36,8 @@ public class JsonFileMapping implements Mapping {
 
     private static final String DEFAULT_KEY_PROPERTY = "uuid";
     private static final String FILE_PATH_KEY = "file";
+    private static final String NEO4j_HOME = "unsupported.dbms.directories.neo4j_home";
+    private static final String NEO4j_CONF_DIR = "conf";
 
     private DocumentMappingRepresentation mappingRepresentation;
 
@@ -47,7 +49,13 @@ public class JsonFileMapping implements Mapping {
             throw new RuntimeException("Configuration is missing the " + FILE_PATH_KEY + "key");
         }
         try {
-            String file = new ClassPathResource(config.get("file")).getFile().getAbsolutePath();
+            ClassPathResource classPathResource = new ClassPathResource(config.get(FILE_PATH_KEY));
+			String file = null; 
+			if(classPathResource.exists()){
+				file = classPathResource.getFile().getAbsolutePath();
+			}else{
+				file = config.get(NEO4j_HOME) + File.separator + NEO4j_CONF_DIR + File.separator + config.get(FILE_PATH_KEY);
+			}
             mappingRepresentation = new ObjectMapper().readValue(new File(file), DocumentMappingRepresentation.class);
         } catch (IOException e) {
             throw new RuntimeException("Unable to read json mapping file", e);
