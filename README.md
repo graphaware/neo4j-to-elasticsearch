@@ -91,8 +91,7 @@ com.graphaware.runtime.enabled=true
 #UIDM becomes the module ID:
 com.graphaware.module.UIDM.1=com.graphaware.module.uuid.UuidBootstrapper
 
-#optional, default is "uuid".
-#use "ID()" to use native Neo4j IDs as Elasticsearch IDs
+#optional, default is "uuid". (only if using the UUID module)
 com.graphaware.module.UIDM.uuidProperty=uuid
 
 #optional, default is all nodes:
@@ -116,7 +115,8 @@ com.graphaware.module.ES.port=9201
 #optional, Elasticsearch index name, default is neo4j-index
 com.graphaware.module.ES.index=neo4j-index
 
-#optional, node property key of a propery that is used as unique identifier of the node. Must be the same as com.graphaware.module.UIDM.uuidProperty, defaults to uuid
+#optional, node property key of a propery that is used as unique identifier of the node. Must be the same as com.graphaware.module.UIDM.uuidProperty (only if using UUID module), defaults to uuid
+#use "ID()" to use native Neo4j IDs as Elasticsearch IDs (not recommended)
 com.graphaware.module.ES.keyProperty=uuid
 
 #optional, whether to retry if a replication fails, defaults to false
