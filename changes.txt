@@ -1,3 +1,9 @@
+3.2.1.50.7:
+    - updated to Neo4j 3.2.1
+
+3.1.4.49.7:
+    - updated to Neo4j 3.1.4
+
 3.1.3.45.7:
     - updated to Neo4j 3.1.3
 
