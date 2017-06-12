@@ -30,6 +30,7 @@ import com.graphaware.tx.executor.batch.IterableInputBatchTransactionExecutor;
 import com.graphaware.tx.executor.input.AllNodes;
 import com.graphaware.tx.executor.input.AllRelationships;
 import com.graphaware.writer.thirdparty.NodeCreated;
+import com.graphaware.writer.thirdparty.RelationshipCreated;
 import com.graphaware.writer.thirdparty.ThirdPartyWriter;
 import com.graphaware.writer.thirdparty.WriteOperation;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -131,7 +132,7 @@ public class ElasticSearchModule extends DefaultThirdPartyIntegrationModule {
         }
     }
 
-    private void reindex(GraphDatabaseService database) {
+    public void reindex(GraphDatabaseService database) {
         final InclusionPolicies policies = getConfiguration().getInclusionPolicies();
 
         if (!(policies.getNodeInclusionPolicy() instanceof IncludeNoNodes)) {
@@ -151,7 +152,7 @@ public class ElasticSearchModule extends DefaultThirdPartyIntegrationModule {
         LOG.info("Finished re-indexing database.");
     }
 
-    private void reindexNodes(GraphDatabaseService database) {
+    public void reindexNodes(GraphDatabaseService database) {
         final Collection<WriteOperation<?>> operations = new HashSet<>();
 
         new IterableInputBatchTransactionExecutor<>(
@@ -189,7 +190,7 @@ public class ElasticSearchModule extends DefaultThirdPartyIntegrationModule {
                 (db, rel, batchNumber, stepNumber) -> {
 
                     if (shouldReindexRelationship(rel)) {
-
+                        operations.add(new RelationshipCreated<>(new RelationshipExpressions(rel)));
                     }
 
                     if (operations.size() >= reindexBatchSize) {
