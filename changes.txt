@@ -1,3 +1,6 @@
+3.2.1.51.7:
+    - updated to latest framework
+
 3.2.1.50.7:
     - updated to Neo4j 3.2.1
 
