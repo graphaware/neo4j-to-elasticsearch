@@ -133,23 +133,33 @@ public class ElasticSearchModule extends DefaultThirdPartyIntegrationModule {
     }
 
     public void reindex(GraphDatabaseService database) {
-        final InclusionPolicies policies = getConfiguration().getInclusionPolicies();
+        Runnable indexation = () -> {
+            final InclusionPolicies policies = getConfiguration().getInclusionPolicies();
 
-        if (!(policies.getNodeInclusionPolicy() instanceof IncludeNoNodes)) {
-            LOG.info("Re-indexing nodes...");
-            reindexNodes(database);
+            if (!(policies.getNodeInclusionPolicy() instanceof IncludeNoNodes)) {
+                LOG.info("Re-indexing nodes...");
+                reindexNodes(database);
+            } else {
+                LOG.info("Skipping nodes indexation.");
+            }
+
+            if (!(policies.getRelationshipInclusionPolicy() instanceof IncludeNoRelationships)) {
+                LOG.info("Re-indexing relationships...");
+                reindexRelationships(database);
+            } else {
+                LOG.info("Skipping relationships indexation.");
+            }
+
+            LOG.info("Finished re-indexing database.");
+        };
+
+        if (config.isAsyncIndexation()) {
+            Thread indexationThread = new Thread(indexation, "Elasticsearch indexation");
+            indexationThread.setUncaughtExceptionHandler((t, e) -> LOG.error("Indexation error", e));
+            indexationThread.start();
         } else {
-            LOG.info("Skipping nodes indexation.");
+            indexation.run();
         }
-
-        if (!(policies.getRelationshipInclusionPolicy() instanceof IncludeNoRelationships)) {
-            LOG.info("Re-indexing relationships...");
-            reindexRelationships(database);
-        } else {
-            LOG.info("Skipping relationships indexation.");
-        }
-
-        LOG.info("Finished re-indexing database.");
     }
 
     public void reindexNodes(GraphDatabaseService database) {
