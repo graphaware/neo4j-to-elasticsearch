@@ -52,11 +52,12 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
     private final String authUser;
     private final String authPassword;
     private final Mapping mapping;
+    private final boolean async;
 
     public ElasticSearchWriter(ElasticSearchConfiguration configuration) {
         super(configuration.getQueueCapacity());
 
-        notNull(configuration);
+        notNull(configuration, "Configuration cannot be null");
 
         this.uri = configuration.getUri();
         this.port = configuration.getPort();
@@ -65,6 +66,7 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
         this.authUser = configuration.getAuthUser();
         this.authPassword = configuration.getAuthPassword();
         this.mapping = configuration.getMapping();
+        this.async = configuration.isAsyncIndexation();
     }
 
     /**
@@ -101,38 +103,48 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
     protected void processOperations(List<Collection<WriteOperation<?>>> operationGroups) {
         createIndexIfNotExist();
 
-        OperationExecutor executor = executorFactory.newExecutor(client);
+        Runnable update = () -> {
+            OperationExecutor executor = executorFactory.newExecutor(client);
 
-        executor.start();
+            executor.start();
 
-        int actionsCount = 0;
-        for (Collection<WriteOperation<?>> operationGroup : operationGroups) {
-            for (WriteOperation<?> operation : operationGroup) {
-                List<BulkableAction<? extends JestResult>> actions = mapping.getActions(operation);
-                executor.execute(actions, operation);
-                actionsCount += actions.size();
-            }
-        }
-
-        if (actionsCount == 0) {
-            return;
-        }
-
-        List<WriteOperation<?>> allFailed = executor.flush();
-
-        if (!allFailed.isEmpty()) {
-            if (retryOnError) {
-                LOG.warn("There were " + allFailed.size() + " failures in replicating to Elasticsearch. Will retry...");
-                retry(Collections.singletonList(allFailed));
-                try {
-                    LOG.info("Backing off for 2 seconds...");
-                    Thread.sleep(2000);
-                } catch (InterruptedException e) {
-                    LOG.warn("Wait interrupted", e);
+            int actionsCount = 0;
+            for (Collection<WriteOperation<?>> operationGroup : operationGroups) {
+                for (WriteOperation<?> operation : operationGroup) {
+                    List<BulkableAction<? extends JestResult>> actions = mapping.getActions(operation);
+                    executor.execute(actions, operation);
+                    actionsCount += actions.size();
                 }
-            } else {
-                LOG.warn("There were " + allFailed.size() + " failures in replicating to Elasticsearch. These updates got lost.");
             }
+
+            if (actionsCount == 0) {
+                return;
+            }
+
+            List<WriteOperation<?>> allFailed = executor.flush();
+
+            if (!allFailed.isEmpty()) {
+                if (retryOnError) {
+                    LOG.warn("There were " + allFailed.size() + " failures in replicating to Elasticsearch. Will retry...");
+                    retry(Collections.singletonList(allFailed));
+                    try {
+                        LOG.info("Backing off for 2 seconds...");
+                        Thread.sleep(2000);
+                    } catch (InterruptedException e) {
+                        LOG.warn("Wait interrupted", e);
+                    }
+                } else {
+                    LOG.warn("There were " + allFailed.size() + " failures in replicating to Elasticsearch. These updates got lost.");
+                }
+            }
+        };
+
+        if (async) {
+            Thread updateThread = new Thread(update, "Elasticsearch index update");
+            updateThread.setUncaughtExceptionHandler((t, e) -> LOG.error("Index update error", e));
+            updateThread.start();
+        } else {
+            update.run();
         }
     }
 
