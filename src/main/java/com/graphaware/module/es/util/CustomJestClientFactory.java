@@ -2,10 +2,14 @@ package com.graphaware.module.es.util;
 
 import io.searchbox.client.JestClientFactory;
 import io.searchbox.client.config.HttpClientConfig;
-import org.apache.http.client.config.RequestConfig;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.protocol.HttpRequestExecutor;
 
+/**
+ * Customizations:
+ * - connectionManagerShared: true
+ * - readTimeout: 20s
+ * - connTimeout: 10s
+ */
 public class CustomJestClientFactory extends JestClientFactory {
 
     @Override
@@ -17,7 +21,8 @@ public class CustomJestClientFactory extends JestClientFactory {
     @Override
     public void setHttpClientConfig(HttpClientConfig httpClientConfig) {
         super.setHttpClientConfig(new HttpClientConfig.Builder(httpClientConfig)
-                .readTimeout(20000)
+                .readTimeout(20000) // 20s
+                .connTimeout(10000) // 10s
                 .build()
         );
     }

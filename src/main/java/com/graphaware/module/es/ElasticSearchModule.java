@@ -85,7 +85,7 @@ public class ElasticSearchModule extends DefaultThirdPartyIntegrationModule {
     public void start(GraphDatabaseService database) {
         super.start(database);
 
-        //Must be after start - else the ES connection is not initialised.
+        // Must be after start - else the ES connection is not initialised.
         if (reindex) {
             reindex(database);
             reindex = false;
@@ -133,18 +133,19 @@ public class ElasticSearchModule extends DefaultThirdPartyIntegrationModule {
     }
 
     public void reindex(GraphDatabaseService database) {
+        final boolean async = config.isAsyncIndexation();
         Runnable indexation = () -> {
             final InclusionPolicies policies = getConfiguration().getInclusionPolicies();
 
             if (!(policies.getNodeInclusionPolicy() instanceof IncludeNoNodes)) {
-                LOG.info("Re-indexing nodes...");
+                LOG.info("Re-indexing nodes" + (async ? " (async)" : "") + "...");
                 reindexNodes(database);
             } else {
                 LOG.info("Skipping nodes indexation.");
             }
 
             if (!(policies.getRelationshipInclusionPolicy() instanceof IncludeNoRelationships)) {
-                LOG.info("Re-indexing relationships...");
+                LOG.info("Re-indexing relationships" + (async ? " (async)" : "") + "...");
                 reindexRelationships(database);
             } else {
                 LOG.info("Skipping relationships indexation.");
@@ -153,7 +154,7 @@ public class ElasticSearchModule extends DefaultThirdPartyIntegrationModule {
             LOG.info("Finished re-indexing database.");
         };
 
-        if (config.isAsyncIndexation()) {
+        if (async) {
             Thread indexationThread = new Thread(indexation, "Elasticsearch indexation");
             indexationThread.setUncaughtExceptionHandler((t, e) -> LOG.error("Indexation error", e));
             indexationThread.start();
@@ -178,7 +179,7 @@ public class ElasticSearchModule extends DefaultThirdPartyIntegrationModule {
                     if (operations.size() >= reindexBatchSize) {
                         writer.processOperations(Arrays.asList(operations));
                         operations.clear();
-                        LOG.info("Done " + reindexBatchSize);
+                        LOG.info("Done " + reindexBatchSize + " nodes");
                     }
                 }
         ).execute();
@@ -206,13 +207,13 @@ public class ElasticSearchModule extends DefaultThirdPartyIntegrationModule {
                     if (operations.size() >= reindexBatchSize) {
                         writer.processOperations(Arrays.asList(operations));
                         operations.clear();
-                        LOG.info("Done " + reindexBatchSize);
+                        LOG.info("Done " + reindexBatchSize + " relationships");
                     }
                 }
         ).execute();
 
         if (operations.size() > 0) {
-            afterCommit(new HashSet<>(operations));
+            writer.processOperations(Arrays.asList(operations));
             operations.clear();
         }
     }
