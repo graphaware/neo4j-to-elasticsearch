@@ -52,11 +52,12 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
     private final String authUser;
     private final String authPassword;
     private final Mapping mapping;
+    private final boolean async;
 
     public ElasticSearchWriter(ElasticSearchConfiguration configuration) {
         super(configuration.getQueueCapacity());
 
-        notNull(configuration);
+        notNull(configuration, "Configuration cannot be null");
 
         this.uri = configuration.getUri();
         this.port = configuration.getPort();
@@ -65,6 +66,7 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
         this.authUser = configuration.getAuthUser();
         this.authPassword = configuration.getAuthPassword();
         this.mapping = configuration.getMapping();
+        this.async = configuration.isAsyncIndexation();
     }
 
     /**

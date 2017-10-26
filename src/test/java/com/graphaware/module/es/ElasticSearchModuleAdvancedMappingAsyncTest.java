@@ -15,7 +15,7 @@ package com.graphaware.module.es;
 
 import com.graphaware.integration.es.test.EmbeddedElasticSearchServer;
 import com.graphaware.integration.es.test.JestElasticSearchClient;
-
+import com.graphaware.module.es.mapping.AdvancedMapping;
 import com.graphaware.module.es.mapping.Mapping;
 import com.graphaware.module.es.util.ServiceLoader;
 import com.graphaware.module.es.util.TestUtil;
@@ -32,9 +32,8 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.test.TestGraphDatabaseFactory;
 
 import java.util.HashMap;
-import java.util.Map;
 
-public class ElasticSearchModuleAdvancedMappingTest extends ElasticSearchModuleIntegrationTest {
+public class ElasticSearchModuleAdvancedMappingAsyncTest extends ElasticSearchModuleIntegrationTest {
 
     @Before
     public void setUp() {
@@ -57,19 +56,21 @@ public class ElasticSearchModuleAdvancedMappingTest extends ElasticSearchModuleI
         GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database);
         runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration(), database));
 
-        Mapping mapping = ServiceLoader.loadMapping("com.graphaware.module.es.mapping.AdvancedMapping");
+        Mapping mapping = ServiceLoader.loadMapping(AdvancedMapping.class.getCanonicalName());
 
         configuration = ElasticSearchConfiguration.defaultConfiguration()
                 .withMapping(mapping, new HashMap<>())
                 .withUri(HOST)
-                .withPort(PORT);
+                .withPort(PORT)
+                .withAsyncIndexation(true);
         runtime.registerModule(new ElasticSearchModule("ES", new ElasticSearchWriter(configuration), configuration));
 
         runtime.start();
         runtime.waitUntilStarted();
 
         writeSomeStuffWithListToNeo4j();
-        TestUtil.waitFor(500);
+        // leaving a little bit more time for indexation to finish since it's done in a thread
+        TestUtil.waitFor(1000);
         verifyEsAdvancedReplication();
     }
     

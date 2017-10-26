@@ -39,6 +39,7 @@ public class ElasticSearchModuleBootstrapper extends BaseRuntimeModuleBootstrapp
     private static final String QUEUE_CAPACITY = "queueSize";
     private static final String REINDEX_BATCH_SIZE = "reindexBatchSize";
     private static final String BULK = "bulk";
+    private static final String ASYNC_INDEXATION = "asyncIndexation";
     private static final String AUTH_USER = "authUser";
     private static final String AUTH_PASSWORD = "authPassword";
     private static final String MAPPING = "mapping";
@@ -89,6 +90,11 @@ public class ElasticSearchModuleBootstrapper extends BaseRuntimeModuleBootstrapp
         if (configExists(config, BULK)) {
             configuration = configuration.withExecuteBulk(Boolean.valueOf(config.get(BULK)));
             LOG.info("Elasticsearch bulk execution set to %s", configuration.isExecuteBulk());
+        }
+
+        if (configExists(config, ASYNC_INDEXATION)) {
+            configuration = configuration.withAsyncIndexation(Boolean.valueOf(config.get(ASYNC_INDEXATION)));
+            LOG.info("Elasticsearch async indexation set to %s", configuration.isAsyncIndexation());
         }
 
         if (configExists(config, AUTH_USER) && configExists(config, AUTH_PASSWORD)) {

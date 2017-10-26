@@ -34,6 +34,7 @@ public class ElasticSearchConfiguration extends BaseTxDrivenModuleConfiguration<
     private static final boolean DEFAULT_EXECUTE_BULK = true;
     private static final InclusionPolicies DEFAULT_INCLUSION_POLICIES = InclusionPoliciesFactory.allBusiness().with(IncludeNoRelationships.getInstance());
     private static final Mapping DEFAULT_MAPPING = DefaultMapping.newInstance();
+    private static final boolean DEFAULT_ASYNC_INDEXATION = false;
     static {
         DEFAULT_MAPPING.configure(new HashMap<>());
     }
@@ -53,6 +54,7 @@ public class ElasticSearchConfiguration extends BaseTxDrivenModuleConfiguration<
     private final String authPassword;
     private final Mapping mapping;
     private final int reindexBatchSize;
+    private final boolean asyncIndexation;
 
 
     /**
@@ -69,8 +71,9 @@ public class ElasticSearchConfiguration extends BaseTxDrivenModuleConfiguration<
      * @param queueCapacity     capacity of the queue holding operations to be written to Elasticsearch. Must be positive.
      * @param executeBulk       whether or not to execute updates against Elasticsearch in bulk. It is recommended to set this to <code>true</code>.*
      * @param mapping           name of the mapping class to use to convert Neo4j node/relationships to ElasticSearch documents.
+     * @param asyncIndexation   whether indexation should be asynchronous (meaning that the plugin will be responsive even though indexation is not finished)
      */
-    private ElasticSearchConfiguration(InclusionPolicies inclusionPolicies, long initializeUntil, String uri, String port, String keyProperty, boolean retryOnError, int queueCapacity, int reindexBatchSize, boolean executeBulk, String authUser, String authPassword, Mapping mapping) {
+    private ElasticSearchConfiguration(InclusionPolicies inclusionPolicies, long initializeUntil, String uri, String port, String keyProperty, boolean retryOnError, int queueCapacity, int reindexBatchSize, boolean executeBulk, String authUser, String authPassword, Mapping mapping, boolean asyncIndexation) {
         super(inclusionPolicies, initializeUntil);
         this.uri = uri;
         this.port = port;
@@ -82,6 +85,7 @@ public class ElasticSearchConfiguration extends BaseTxDrivenModuleConfiguration<
         this.authUser = authUser;
         this.authPassword = authPassword;
         this.mapping = mapping;
+        this.asyncIndexation = asyncIndexation;
     }
 
     /**
@@ -89,49 +93,53 @@ public class ElasticSearchConfiguration extends BaseTxDrivenModuleConfiguration<
      */
     @Override
     public ElasticSearchConfiguration newInstance(InclusionPolicies inclusionPolicies, long initializeUntil) {
-        return new ElasticSearchConfiguration(inclusionPolicies, initializeUntil, getUri(), getPort(), getKeyProperty(), isRetryOnError(), getQueueCapacity(), getReindexBatchSize(), isExecuteBulk(), DEFAULT_AUTH_USER, DEFAULT_AUTH_PASSWORD, getMapping());
+        return new ElasticSearchConfiguration(inclusionPolicies, initializeUntil, getUri(), getPort(), getKeyProperty(), isRetryOnError(), getQueueCapacity(), getReindexBatchSize(), isExecuteBulk(), DEFAULT_AUTH_USER, DEFAULT_AUTH_PASSWORD, getMapping(), isAsyncIndexation());
     }
 
     public static ElasticSearchConfiguration defaultConfiguration() {
-        return new ElasticSearchConfiguration(DEFAULT_INCLUSION_POLICIES, NEVER, null, null, DEFAULT_KEY_PROPERTY, DEFAULT_RETRY_ON_ERROR, DEFAULT_QUEUE_CAPACITY, DEFAULT_REINDEX_BATCH_SIZE, DEFAULT_EXECUTE_BULK, DEFAULT_AUTH_USER, DEFAULT_AUTH_PASSWORD, DEFAULT_MAPPING);
+        return new ElasticSearchConfiguration(DEFAULT_INCLUSION_POLICIES, NEVER, null, null, DEFAULT_KEY_PROPERTY, DEFAULT_RETRY_ON_ERROR, DEFAULT_QUEUE_CAPACITY, DEFAULT_REINDEX_BATCH_SIZE, DEFAULT_EXECUTE_BULK, DEFAULT_AUTH_USER, DEFAULT_AUTH_PASSWORD, DEFAULT_MAPPING, DEFAULT_ASYNC_INDEXATION);
     }
 
     public ElasticSearchConfiguration withUri(String uri) {
-        return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), uri, getPort(), getKeyProperty(), isRetryOnError(), getQueueCapacity(), getReindexBatchSize(), isExecuteBulk(), getAuthUser(), getAuthPassword(), getMapping());
+        return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), uri, getPort(), getKeyProperty(), isRetryOnError(), getQueueCapacity(), getReindexBatchSize(), isExecuteBulk(), getAuthUser(), getAuthPassword(), getMapping(), isAsyncIndexation());
     }
 
     public ElasticSearchConfiguration withPort(String port) {
-        return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), getUri(), port, getKeyProperty(), isRetryOnError(), getQueueCapacity(), getReindexBatchSize(), isExecuteBulk(), getAuthUser(), getAuthPassword(), getMapping());
+        return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), getUri(), port, getKeyProperty(), isRetryOnError(), getQueueCapacity(), getReindexBatchSize(), isExecuteBulk(), getAuthUser(), getAuthPassword(), getMapping(), isAsyncIndexation());
     }
 
     public ElasticSearchConfiguration withKeyProperty(String keyProperty) {
-        return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), getUri(), getPort(), keyProperty, isRetryOnError(), getQueueCapacity(), getReindexBatchSize(), isExecuteBulk(), getAuthUser(), getAuthPassword(), getMapping());
+        return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), getUri(), getPort(), keyProperty, isRetryOnError(), getQueueCapacity(), getReindexBatchSize(), isExecuteBulk(), getAuthUser(), getAuthPassword(), getMapping(), isAsyncIndexation());
     }
 
     public ElasticSearchConfiguration withRetryOnError(boolean retryOnError) {
-        return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), getUri(), getPort(), getKeyProperty(), retryOnError, getQueueCapacity(), getReindexBatchSize(), isExecuteBulk(), getAuthUser(), getAuthPassword(), getMapping());
+        return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), getUri(), getPort(), getKeyProperty(), retryOnError, getQueueCapacity(), getReindexBatchSize(), isExecuteBulk(), getAuthUser(), getAuthPassword(), getMapping(), isAsyncIndexation());
     }
 
     public ElasticSearchConfiguration withQueueCapacity(int queueCapacity) {
-        return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), getUri(), getPort(),  getKeyProperty(), isRetryOnError(), queueCapacity, getReindexBatchSize(), isExecuteBulk(), getAuthUser(), getAuthPassword(), getMapping());
+        return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), getUri(), getPort(),  getKeyProperty(), isRetryOnError(), queueCapacity, getReindexBatchSize(), isExecuteBulk(), getAuthUser(), getAuthPassword(), getMapping(), isAsyncIndexation());
     }
 
     public ElasticSearchConfiguration withReindexBatchSize(int reindexBatchSize) {
-        return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), getUri(), getPort(), getKeyProperty(), isRetryOnError(), getQueueCapacity(), reindexBatchSize, isExecuteBulk(), getAuthUser(), getAuthPassword(), getMapping());
+        return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), getUri(), getPort(), getKeyProperty(), isRetryOnError(), getQueueCapacity(), reindexBatchSize, isExecuteBulk(), getAuthUser(), getAuthPassword(), getMapping(), isAsyncIndexation());
     }
 
     public ElasticSearchConfiguration withExecuteBulk(boolean executeBulk) {
-        return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), getUri(), getPort(), getKeyProperty(), isRetryOnError(), getQueueCapacity(), getReindexBatchSize(), executeBulk, getAuthUser(), getAuthPassword(), getMapping());
+        return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), getUri(), getPort(), getKeyProperty(), isRetryOnError(), getQueueCapacity(), getReindexBatchSize(), executeBulk, getAuthUser(), getAuthPassword(), getMapping(), isAsyncIndexation());
     }
     
     public ElasticSearchConfiguration withAuthCredentials(String authUser, String authPassword) {
-        return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), getUri(), getPort(), getKeyProperty(), isRetryOnError(), getQueueCapacity(), getReindexBatchSize(), isExecuteBulk(), authUser, authPassword, getMapping());
+        return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), getUri(), getPort(), getKeyProperty(), isRetryOnError(), getQueueCapacity(), getReindexBatchSize(), isExecuteBulk(), authUser, authPassword, getMapping(), isAsyncIndexation());
     }
 
     public ElasticSearchConfiguration withMapping(Mapping mapping, Map<String, String> mappingConfig) {
         // prevents mappings from being started without configure() from being called
         mapping.configure(mappingConfig);
-        return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), getUri(), getPort(), getKeyProperty(), isRetryOnError(), getQueueCapacity(), getReindexBatchSize(), isExecuteBulk(), getAuthUser(), getAuthPassword(), mapping);
+        return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), getUri(), getPort(), getKeyProperty(), isRetryOnError(), getQueueCapacity(), getReindexBatchSize(), isExecuteBulk(), getAuthUser(), getAuthPassword(), mapping, isAsyncIndexation());
+    }
+
+    public ElasticSearchConfiguration withAsyncIndexation(boolean asyncIndexation) {
+        return new ElasticSearchConfiguration(getInclusionPolicies(), initializeUntil(), getUri(), getPort(), getKeyProperty(), isRetryOnError(), getQueueCapacity(), getReindexBatchSize(), isExecuteBulk(), getAuthUser(), getAuthPassword(), getMapping(), asyncIndexation);
     }
 
     public String getUri() {
@@ -161,7 +169,9 @@ public class ElasticSearchConfiguration extends BaseTxDrivenModuleConfiguration<
     public boolean isExecuteBulk() {
         return executeBulk;
     }
-    
+
+    public boolean isAsyncIndexation() { return asyncIndexation; }
+
     public String getAuthUser() {
       return authUser;
     }
@@ -210,6 +220,9 @@ public class ElasticSearchConfiguration extends BaseTxDrivenModuleConfiguration<
         if (!port.equals(that.port)) {
             return false;
         }
+        if (asyncIndexation != that.asyncIndexation) {
+            return false;
+        }
         return keyProperty.equals(that.keyProperty);
 
     }
@@ -228,6 +241,7 @@ public class ElasticSearchConfiguration extends BaseTxDrivenModuleConfiguration<
         result = 31 * result + queueCapacity;
         result = 31 * result + reindexBatchSize;
         result = 31 * result + (executeBulk ? 1 : 0);
+        result = 31 * result + (asyncIndexation ? 1 : 0);
         return result;
     }
 }
