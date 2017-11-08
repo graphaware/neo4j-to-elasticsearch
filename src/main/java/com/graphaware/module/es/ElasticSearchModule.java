@@ -85,7 +85,7 @@ public class ElasticSearchModule extends DefaultThirdPartyIntegrationModule {
     public void start(GraphDatabaseService database) {
         super.start(database);
 
-        //Must be after start - else the ES connection is not initialised.
+        // Must be after start - else the ES connection is not initialised.
         if (reindex) {
             reindex(database);
             reindex = false;
@@ -133,23 +133,34 @@ public class ElasticSearchModule extends DefaultThirdPartyIntegrationModule {
     }
 
     public void reindex(GraphDatabaseService database) {
-        final InclusionPolicies policies = getConfiguration().getInclusionPolicies();
+        final boolean async = config.isAsyncIndexation();
+        Runnable indexation = () -> {
+            final InclusionPolicies policies = getConfiguration().getInclusionPolicies();
 
-        if (!(policies.getNodeInclusionPolicy() instanceof IncludeNoNodes)) {
-            LOG.info("Re-indexing nodes...");
-            reindexNodes(database);
+            if (!(policies.getNodeInclusionPolicy() instanceof IncludeNoNodes)) {
+                LOG.info("Re-indexing nodes" + (async ? " (async)" : "") + "...");
+                reindexNodes(database);
+            } else {
+                LOG.info("Skipping nodes indexation.");
+            }
+
+            if (!(policies.getRelationshipInclusionPolicy() instanceof IncludeNoRelationships)) {
+                LOG.info("Re-indexing relationships" + (async ? " (async)" : "") + "...");
+                reindexRelationships(database);
+            } else {
+                LOG.info("Skipping relationships indexation.");
+            }
+
+            LOG.info("Finished re-indexing database.");
+        };
+
+        if (async) {
+            Thread indexationThread = new Thread(indexation, "Elasticsearch indexation");
+            indexationThread.setUncaughtExceptionHandler((t, e) -> LOG.error("Indexation error", e));
+            indexationThread.start();
         } else {
-            LOG.info("Skipping nodes indexation.");
+            indexation.run();
         }
-
-        if (!(policies.getRelationshipInclusionPolicy() instanceof IncludeNoRelationships)) {
-            LOG.info("Re-indexing relationships...");
-            reindexRelationships(database);
-        } else {
-            LOG.info("Skipping relationships indexation.");
-        }
-
-        LOG.info("Finished re-indexing database.");
     }
 
     public void reindexNodes(GraphDatabaseService database) {
@@ -168,7 +179,7 @@ public class ElasticSearchModule extends DefaultThirdPartyIntegrationModule {
                     if (operations.size() >= reindexBatchSize) {
                         writer.processOperations(Arrays.asList(operations));
                         operations.clear();
-                        LOG.info("Done " + reindexBatchSize);
+                        LOG.info("Done " + reindexBatchSize + " nodes");
                     }
                 }
         ).execute();
@@ -196,13 +207,13 @@ public class ElasticSearchModule extends DefaultThirdPartyIntegrationModule {
                     if (operations.size() >= reindexBatchSize) {
                         writer.processOperations(Arrays.asList(operations));
                         operations.clear();
-                        LOG.info("Done " + reindexBatchSize);
+                        LOG.info("Done " + reindexBatchSize + " relationships");
                     }
                 }
         ).execute();
 
         if (operations.size() > 0) {
-            afterCommit(new HashSet<>(operations));
+            writer.processOperations(Arrays.asList(operations));
             operations.clear();
         }
     }
