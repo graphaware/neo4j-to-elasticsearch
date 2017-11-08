@@ -35,24 +35,8 @@ import java.util.HashMap;
 
 public class ElasticSearchModuleAdvancedMappingAsyncTest extends ElasticSearchModuleIntegrationTest {
 
-    @Before
-    public void setUp() {
-        esServer = new EmbeddedElasticSearchServer();
-        esServer.start();
-        esClient = new JestElasticSearchClient(HOST, PORT);
-    }
-
-    @After
-    public void tearDown() {
-        database.shutdown();
-        esServer.stop();
-        esClient.shutdown();
-    }
-
     @Test
     public void testArray() {
-        database = new TestGraphDatabaseFactory().newImpermanentDatabase();
-
         GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database);
         runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration(), database));
 

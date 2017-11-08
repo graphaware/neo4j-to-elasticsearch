@@ -36,16 +36,8 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         esServer = new EmbeddedElasticSearchServer();
         esServer.start();
         esClient = new JestElasticSearchClient(HOST, PORT);
-
     }
 
-    @After
-    public void tearDown() {
-        database.shutdown();
-        esServer.stop();
-        esClient.shutdown();
-    }
-    
     @Test
     public void overallTest() throws IOException {
         testBasicJsonMappingModuleBootstrap();

@@ -26,25 +26,8 @@ import static org.junit.Assert.*;
 
 public class BulkIndexOnInitializeIntegrationTest extends ElasticSearchModuleIntegrationTest {
 
-    @Before
-    public void setUp() {
-        esServer = new EmbeddedElasticSearchServer();
-        esServer.start();
-        esClient = new JestElasticSearchClient(HOST, PORT);
-
-    }
-
-    @After
-    public void tearDown() {
-        database.shutdown();
-        esServer.stop();
-        esClient.shutdown();
-    }
-
     @Test
     public void testBulkInsertsDuringInitializePhaseAreBatchedCorrectly() throws Exception {
-        database = new TestGraphDatabaseFactory().newImpermanentDatabase();
-
         IntStream.range(0, 10).forEach(i -> {
             try (Transaction tx = database.beginTx()) {
                 database.execute("UNWIND range(0, 1000) AS i CREATE (n:Person {id: i, firstName: 'node' + i, lastName: 'node' + i})");

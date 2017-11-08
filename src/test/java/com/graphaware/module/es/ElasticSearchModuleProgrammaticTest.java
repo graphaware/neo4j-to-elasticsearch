@@ -38,23 +38,14 @@ import org.neo4j.graphdb.Transaction;
 
 public class ElasticSearchModuleProgrammaticTest extends ElasticSearchModuleIntegrationTest {
 
-    @Before
+    @Override
     public void setUp() {
-        database = new TestGraphDatabaseFactory().newImpermanentDatabase();
         esServer = new EmbeddedElasticSearchServer();
         esServer.start();
         esClient = new JestElasticSearchClient(HOST, PORT);
-
     }
 
-    @After
-    public void tearDown() {
-        database.shutdown();
-        esServer.stop();
-        esClient.shutdown();
-    }
-    
-    @Test 
+    @Test
     public void overallTest() throws IOException {
         dataShouldNotBeReplicatedWithModuleNotRegistered();
         cleanUpData();
