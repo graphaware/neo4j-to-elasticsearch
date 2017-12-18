@@ -15,7 +15,9 @@ package com.graphaware.module.es;
 
 import com.graphaware.integration.es.test.EmbeddedElasticSearchServer;
 import com.graphaware.integration.es.test.JestElasticSearchClient;
-import static com.graphaware.module.es.ElasticSearchModuleIntegrationTest.HOST;
+import com.graphaware.module.es.mapping.AdvancedMapping;
+import com.graphaware.module.es.mapping.Mapping;
+import com.graphaware.module.es.util.ServiceLoader;
 import com.graphaware.module.es.util.TestUtil;
 import com.graphaware.module.uuid.UuidConfiguration;
 import com.graphaware.module.uuid.UuidModule;
@@ -31,65 +33,39 @@ import org.neo4j.test.TestGraphDatabaseFactory;
 
 import java.util.HashMap;
 
-
-public class ElasticSearchModuleArrayTest extends ElasticSearchModuleIntegrationTest {
+public class ElasticSearchModuleAdvancedMappingAsyncTest extends ElasticSearchModuleIntegrationTest {
 
     @Test
     public void testArray() {
         GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database);
         runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration(), database));
 
-        configuration = ElasticSearchConfiguration.defaultConfiguration().withUri(HOST).withPort(PORT);
+        Mapping mapping = ServiceLoader.loadMapping(AdvancedMapping.class.getCanonicalName());
+
+        configuration = ElasticSearchConfiguration.defaultConfiguration()
+                .withMapping(mapping, new HashMap<>())
+                .withUri(HOST)
+                .withPort(PORT)
+                .withAsyncIndexation(true);
         runtime.registerModule(new ElasticSearchModule("ES", new ElasticSearchWriter(configuration), configuration));
 
         runtime.start();
         runtime.waitUntilStarted();
 
-        writeSomeStuffWithArrayToNeo4j();
-        TestUtil.waitFor(1000);
-        verifyEsReplication();
-
         writeSomeStuffWithListToNeo4j();
+        // leaving a little bit more time for indexation to finish since it's done in a thread
         TestUtil.waitFor(1000);
-        verifyEsReplication();
-    }
-
-    protected void writeSomeStuffWithArrayToNeo4j() {
-        //tx1
-        database.execute("CREATE (p:Person {name:'Michal', age:30})-[:WORKS_FOR {since:2013, role:'MD'}]->(c:Company {name:'GraphAware', est: 2013, roles:[\"CEO\", \"CTO\"]})");
+        verifyEsAdvancedReplication();
     }
     
     protected void writeSomeStuffWithListToNeo4j() {
         //tx2
         try (Transaction tx = database.beginTx()) {
             Node node = database.createNode(Label.label("LabelWithList"));
+            node.addLabel(Label.label("LabelWithList1"));
+            node.addLabel(Label.label("LabelWithList2"));
             int[] listOfInteger = {1, 2, 3};
             node.setProperty("listOfInteger", listOfInteger);
-
-            String[] listOfString = {"1", "2", "3"};
-            node.setProperty("listOfString", listOfString);            
-            
-            long[] listOfLong = {1l, 2l, 3l,};
-            node.setProperty("listOfLong", listOfLong);
-            
-            float[] listOfFloat = {1.0f, 2.1f, 3.0f};
-            node.setProperty("listOfFloat", listOfFloat);
-            
-            double[] listOfDouble = {1.0d, 2.1d, 3.0d};
-            node.setProperty("listOfDouble", listOfDouble);
-            
-            //Not supported
-//            char[] listOfChar = {'a', 'b', 'c'};
-//            node.setProperty("listOfChar", listOfChar);
-            //Not supported
-//            byte[] listOfByte = {'a', 'b', 'c'};
-//            node.setProperty("listOfByte", listOfByte);
-            
-            short[] listOfShort = {1, 2, 3};
-            node.setProperty("listOfShort", listOfShort);
-            
-            boolean[] listOfBoolean = {true, false, true};
-            node.setProperty("listOfBoolean", listOfBoolean);
             tx.success();
         }
         

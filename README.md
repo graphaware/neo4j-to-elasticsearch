@@ -1,7 +1,7 @@
 GraphAware Neo4j Elasticsearch Integration (Neo4j Module)
 =========================================================
 
-[![Build Status](https://travis-ci.org/graphaware/neo4j-to-elasticsearch.png)](https://travis-ci.org/graphaware/neo4j-to-elasticsearch) | <a href="http://graphaware.com/products/" target="_blank">Downloads</a> | <a href="http://graphaware.com/site/neo4j-to-elasticsearch/latest/apidocs/" target="_blank">Javadoc</a> | Latest Release: 3.1.3.45.7
+[![Build Status](https://travis-ci.org/graphaware/neo4j-to-elasticsearch.png)](https://travis-ci.org/graphaware/neo4j-to-elasticsearch) | <a href="http://graphaware.com/products/" target="_blank">Downloads</a> | <a href="http://graphaware.com/site/neo4j-to-elasticsearch/latest/apidocs/" target="_blank">Javadoc</a> | Latest Release: 3.3.1.51.7
 
 GraphAware Elasticsearch Integration is an enterprise-grade bi-directional integration between Neo4j and Elasticsearch.
 It consists of two independent modules plus a test suite. Both modules can be used independently or together to achieve
@@ -47,7 +47,7 @@ Releases are synced to <a href="http://search.maven.org/#search%7Cga%7C1%7Ca%3A%
             <groupId>com.graphaware.integration.es</groupId>
             <!-- this will be com.graphaware.neo4j in the next release -->
             <artifactId>neo4j-to-elasticsearch</artifactId>
-            <version>3.1.3.45.7</version>
+            <version>3.3.1.51.7</version>
         </dependency>
         ...
     </dependencies>
@@ -55,7 +55,7 @@ Releases are synced to <a href="http://search.maven.org/#search%7Cga%7C1%7Ca%3A%
 #### Snapshots
 
 To use the latest development version, just clone this repository, run `mvn clean install` and change the version in the
-dependency above to 3.1.3.45.8-SNAPSHOT.
+dependency above to 3.3.1.51.8-SNAPSHOT.
 
 #### Note on Versioning Scheme
 
@@ -91,8 +91,7 @@ com.graphaware.runtime.enabled=true
 #UIDM becomes the module ID:
 com.graphaware.module.UIDM.1=com.graphaware.module.uuid.UuidBootstrapper
 
-#optional, default is "uuid".
-#use "ID()" to use native Neo4j IDs as Elasticsearch IDs
+#optional, default is "uuid". (only if using the UUID module)
 com.graphaware.module.UIDM.uuidProperty=uuid
 
 #optional, default is all nodes:
@@ -119,7 +118,8 @@ com.graphaware.module.ES.protocol=http
 #optional, Elasticsearch index name, default is neo4j-index
 com.graphaware.module.ES.index=neo4j-index
 
-#optional, node property key of a propery that is used as unique identifier of the node. Must be the same as com.graphaware.module.UIDM.uuidProperty, defaults to uuid
+#optional, node property key of a propery that is used as unique identifier of the node. Must be the same as com.graphaware.module.UIDM.uuidProperty (only if using UUID module), defaults to uuid
+#use "ID()" to use native Neo4j IDs as Elasticsearch IDs (not recommended)
 com.graphaware.module.ES.keyProperty=uuid
 
 #optional, whether to retry if a replication fails, defaults to false

@@ -13,9 +13,6 @@
  */
 package com.graphaware.module.es;
 
-import com.graphaware.integration.es.test.EmbeddedElasticSearchServer;
-import com.graphaware.integration.es.test.JestElasticSearchClient;
-
 import com.graphaware.module.es.mapping.Mapping;
 import com.graphaware.module.es.util.ServiceLoader;
 import com.graphaware.module.es.util.TestUtil;
@@ -23,37 +20,17 @@ import com.graphaware.module.uuid.UuidConfiguration;
 import com.graphaware.module.uuid.UuidModule;
 import com.graphaware.runtime.GraphAwareRuntime;
 import com.graphaware.runtime.GraphAwareRuntimeFactory;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.test.TestGraphDatabaseFactory;
 
 import java.util.HashMap;
-import java.util.Map;
 
 public class ElasticSearchModuleAdvancedMappingTest extends ElasticSearchModuleIntegrationTest {
 
-    @Before
-    public void setUp() {
-        esServer = new EmbeddedElasticSearchServer();
-        esServer.start();
-        esClient = new JestElasticSearchClient(HOST, PORT);
-    }
-
-    @After
-    public void tearDown() {
-        database.shutdown();
-        esServer.stop();
-        esClient.shutdown();
-    }
-
     @Test
     public void testArray() {
-        database = new TestGraphDatabaseFactory().newImpermanentDatabase();
-
         GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database);
         runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration(), database));
 
@@ -71,11 +48,6 @@ public class ElasticSearchModuleAdvancedMappingTest extends ElasticSearchModuleI
         writeSomeStuffWithListToNeo4j();
         TestUtil.waitFor(500);
         verifyEsAdvancedReplication();
-    }
-
-    protected void writeSomeStuffWithArrayToNeo4j() {
-        //tx1
-        database.execute("CREATE (p:Person {name:'Michal', age:30})-[:WORKS_FOR {since:2013, role:'MD'}]->(c:Company {name:'GraphAware', est: 2013, roles:[\"CEO\", \"CTO\"]})");
     }
     
     protected void writeSomeStuffWithListToNeo4j() {

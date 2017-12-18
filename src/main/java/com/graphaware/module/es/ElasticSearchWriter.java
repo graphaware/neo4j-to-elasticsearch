@@ -24,7 +24,9 @@ import com.graphaware.module.es.search.Searcher;
 import com.graphaware.writer.thirdparty.BaseThirdPartyWriter;
 import com.graphaware.writer.thirdparty.ThirdPartyWriter;
 import com.graphaware.writer.thirdparty.WriteOperation;
+import io.searchbox.action.BulkableAction;
 import io.searchbox.client.JestClient;
+import io.searchbox.client.JestResult;
 import org.neo4j.logging.Log;
 
 import java.util.Collection;
@@ -51,11 +53,12 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
     private final String authUser;
     private final String authPassword;
     private final Mapping mapping;
+    private final boolean async;
 
     public ElasticSearchWriter(ElasticSearchConfiguration configuration) {
         super(configuration.getQueueCapacity());
 
-        notNull(configuration);
+        notNull(configuration, "Configuration cannot be null");
 
         this.protocol = configuration.getProtocol();
         this.uri = configuration.getUri();
@@ -65,6 +68,7 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
         this.authUser = configuration.getAuthUser();
         this.authPassword = configuration.getAuthPassword();
         this.mapping = configuration.getMapping();
+        this.async = configuration.isAsyncIndexation();
     }
 
     /**
@@ -105,10 +109,17 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
 
         executor.start();
 
+        int actionsCount = 0;
         for (Collection<WriteOperation<?>> operationGroup : operationGroups) {
             for (WriteOperation<?> operation : operationGroup) {
-                executor.execute(mapping.getActions(operation), operation);
+                List<BulkableAction<? extends JestResult>> actions = mapping.getActions(operation);
+                executor.execute(actions, operation);
+                actionsCount += actions.size();
             }
+        }
+
+        if (actionsCount == 0) {
+            return;
         }
 
         List<WriteOperation<?>> allFailed = executor.flush();

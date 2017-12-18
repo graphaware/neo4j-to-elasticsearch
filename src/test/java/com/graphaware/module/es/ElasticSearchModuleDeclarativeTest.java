@@ -25,7 +25,6 @@ import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
-import org.neo4j.test.RepeatRule;
 import org.neo4j.test.TestGraphDatabaseFactory;
 
 import java.io.IOException;
@@ -43,16 +42,8 @@ public class ElasticSearchModuleDeclarativeTest extends ElasticSearchModuleInteg
         esServer = new EmbeddedElasticSearchServer();
         esServer.start();
         esClient = new JestElasticSearchClient(HOST, PORT);
-
     }
 
-    @After
-    public void tearDown() {
-        database.shutdown();
-        esServer.stop();
-        esClient.shutdown();
-    }
-    
     @Test
     public void overAllTest() throws IOException {
         dataShouldNotBeReplicatedWithModuleNotRegistered();
