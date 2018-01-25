@@ -44,6 +44,7 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
     private static final Log LOG = LoggerFactory.getLogger(ElasticSearchWriter.class);
 
     private JestClient client;
+    private final String protocol;
     private final String uri;
     private final String port;
     private final boolean retryOnError;
@@ -59,6 +60,7 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
 
         notNull(configuration, "Configuration cannot be null");
 
+        this.protocol = configuration.getProtocol();
         this.uri = configuration.getUri();
         this.port = configuration.getPort();
         this.retryOnError = configuration.isRetryOnError();
@@ -139,7 +141,7 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
     }
 
     protected JestClient createClient() {
-        return Searcher.createClient(uri, port, authUser, authPassword);
+        return Searcher.createClient(protocol, uri, port, authUser, authPassword);
     }
 
     protected void shutdownClient() {

@@ -112,6 +112,9 @@ com.graphaware.module.ES.uri=localhost
 #Port of Elasticsearch
 com.graphaware.module.ES.port=9201
 
+#optional, protocol of Elasticsearch connection, defaults to http
+com.graphaware.module.ES.protocol=http
+
 #optional, Elasticsearch index name, default is neo4j-index
 com.graphaware.module.ES.index=neo4j-index
 
