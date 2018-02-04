@@ -17,7 +17,7 @@ package com.graphaware.module.es.mapping.expression;
 import com.graphaware.common.representation.GraphDetachedNode;
 import org.neo4j.graphdb.Node;
 
-public class NodeExpressions extends GraphDetachedNode implements ConvertingPropertyContainerExpressions {
+public class NodeExpressions extends GraphDetachedNode implements ConvertingEntityExpressions {
 
     private static final String GRAPH_TYPE_NODE = "node";
 

@@ -14,14 +14,14 @@
 
 package com.graphaware.module.es.mapping.expression;
 
-import com.graphaware.common.expression.PropertyContainerExpressions;
+import com.graphaware.common.expression.EntityExpressions;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
-public interface ConvertingPropertyContainerExpressions extends PropertyContainerExpressions {
+public interface ConvertingEntityExpressions extends EntityExpressions {
 
     String DEFAULT_TIMEZONE = "UTC";
 

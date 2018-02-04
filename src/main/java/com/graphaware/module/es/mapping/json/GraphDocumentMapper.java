@@ -14,7 +14,7 @@
 package com.graphaware.module.es.mapping.json;
 
 import com.graphaware.common.log.LoggerFactory;
-import com.graphaware.common.representation.DetachedPropertyContainer;
+import com.graphaware.common.representation.DetachedEntity;
 import com.graphaware.module.es.mapping.expression.NodeExpressions;
 import com.graphaware.module.es.mapping.expression.RelationshipExpressions;
 import org.neo4j.logging.Log;
@@ -61,7 +61,7 @@ public class GraphDocumentMapper {
         return properties;
     }
 
-    public boolean supports(DetachedPropertyContainer element) {
+    public boolean supports(DetachedEntity element) {
         if (null == condition) {
             return false;
         }
@@ -135,7 +135,7 @@ public class GraphDocumentMapper {
         return keyValue.toString();
     }
 
-    protected String getType(DetachedPropertyContainer expression) {
+    protected String getType(DetachedEntity expression) {
         String t;
         if (getTypeExpression() != null)
             t = getTypeExpression().getValue(expression).toString();        
@@ -150,7 +150,7 @@ public class GraphDocumentMapper {
         return t;
     }
 
-    protected String getIndex(DetachedPropertyContainer expression, String defaultIndex)
+    protected String getIndex(DetachedEntity expression, String defaultIndex)
     {
         String indexName;
         if (getIndexExpression(defaultIndex) != null)

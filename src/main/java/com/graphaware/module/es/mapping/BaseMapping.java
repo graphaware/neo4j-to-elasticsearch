@@ -14,10 +14,9 @@
 
 package com.graphaware.module.es.mapping;
 
-import com.graphaware.common.expression.PropertyContainerExpressions;
+import com.graphaware.common.expression.EntityExpressions;
 import com.graphaware.common.log.LoggerFactory;
-import com.graphaware.common.representation.DetachedPropertyContainer;
-import com.graphaware.module.es.ElasticSearchConfiguration;
+import com.graphaware.common.representation.DetachedEntity;
 import com.graphaware.module.es.mapping.expression.NodeExpressions;
 import com.graphaware.module.es.mapping.expression.RelationshipExpressions;
 import io.searchbox.action.BulkableAction;
@@ -85,7 +84,7 @@ public abstract class BaseMapping implements Mapping {
      * @param propertyContainer Node or relationship to be indexed.
      * @return key of the node.
      */
-    protected final String getKey(DetachedPropertyContainer propertyContainer) {
+    protected final String getKey(DetachedEntity propertyContainer) {
         if (getKeyProperty().equals(NATIVE_ID)) {
             return String.valueOf(propertyContainer.getGraphId());
         } else {
@@ -100,7 +99,7 @@ public abstract class BaseMapping implements Mapping {
      * @param item The node or relationship to build the ElasticSearch representation for.
      * @return a document to index in ElasticSearch
      */
-    private Map<String, Object> commonMap(PropertyContainerExpressions item) {
+    private Map<String, Object> commonMap(EntityExpressions item) {
         String keyProperty = getKeyProperty();
         Map<String, Object> source = new HashMap<>();
         Map<String, Object> properties = item.getProperties();

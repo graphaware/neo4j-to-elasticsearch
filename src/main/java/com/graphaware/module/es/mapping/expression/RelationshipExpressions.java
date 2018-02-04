@@ -17,7 +17,7 @@ package com.graphaware.module.es.mapping.expression;
 import com.graphaware.common.representation.GraphDetachedRelationship;
 import org.neo4j.graphdb.Relationship;
 
-public class RelationshipExpressions extends GraphDetachedRelationship implements ConvertingPropertyContainerExpressions {
+public class RelationshipExpressions extends GraphDetachedRelationship implements ConvertingEntityExpressions {
 
     private static final String GRAPH_TYPE_RELATIONSHIP = "relationship";
 
