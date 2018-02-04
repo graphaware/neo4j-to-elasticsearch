@@ -16,9 +16,9 @@
 
 package com.graphaware.module.es.search;
 
-import org.neo4j.graphdb.PropertyContainer;
+import org.neo4j.graphdb.Entity;
 
-public class SearchMatch<T extends PropertyContainer> {
+public class SearchMatch<T extends Entity> {
     public final String key;
     public final Double score;
     private T item;

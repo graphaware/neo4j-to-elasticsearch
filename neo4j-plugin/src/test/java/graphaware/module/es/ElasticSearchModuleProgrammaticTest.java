@@ -97,7 +97,7 @@ public class ElasticSearchModuleProgrammaticTest extends ElasticSearchModuleInte
                 })
                 .with(new NodePropertyInclusionPolicy() {
                     @Override
-                    public boolean include(String key, Node propertyContainer) {
+                    public boolean include(String key, Node entity) {
                         return !"age".equals(key);
                     }
                 });

@@ -24,7 +24,7 @@ import com.graphaware.writer.thirdparty.WriteOperation;
 import io.searchbox.action.BulkableAction;
 import io.searchbox.client.JestClient;
 import io.searchbox.client.JestResult;
-import org.neo4j.graphdb.PropertyContainer;
+import org.neo4j.graphdb.Entity;
 import org.neo4j.logging.Log;
 
 import java.util.Collections;
@@ -39,7 +39,7 @@ public interface Mapping {
 
     void createIndexAndMapping(JestClient client) throws Exception;
 
-    <T extends PropertyContainer> String getIndexFor(Class<T> searchedType);
+    <T extends Entity> String getIndexFor(Class<T> searchedType);
 
     String getKeyProperty();
 

@@ -22,7 +22,7 @@ import com.graphaware.module.es.mapping.expression.RelationshipExpressions;
 import io.searchbox.action.BulkableAction;
 import io.searchbox.client.JestClient;
 import io.searchbox.client.JestResult;
-import org.neo4j.graphdb.PropertyContainer;
+import org.neo4j.graphdb.Entity;
 import org.neo4j.logging.Log;
 import org.springframework.core.io.ClassPathResource;
 
@@ -97,7 +97,7 @@ public class JsonFileMapping implements Mapping {
     }
 
     @Override
-    public <T extends PropertyContainer> String getIndexFor(Class<T> searchedType) {
+    public <T extends Entity> String getIndexFor(Class<T> searchedType) {
         return null;
     }
 

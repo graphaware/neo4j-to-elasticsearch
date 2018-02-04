@@ -24,8 +24,8 @@ import io.searchbox.client.JestClient;
 import io.searchbox.client.JestResult;
 import io.searchbox.indices.CreateIndex;
 import io.searchbox.indices.IndicesExists;
+import org.neo4j.graphdb.Entity;
 import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.PropertyContainer;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.logging.Log;
 
@@ -81,14 +81,14 @@ public abstract class BaseMapping implements Mapping {
     /**
      * Get the key under which the given {@link NodeExpressions} or {@link RelationshipExpressions} will be indexed in Elasticsearch.
      *
-     * @param propertyContainer Node or relationship to be indexed.
+     * @param entity Node or relationship to be indexed.
      * @return key of the node.
      */
-    protected final String getKey(DetachedEntity propertyContainer) {
+    protected final String getKey(DetachedEntity entity) {
         if (getKeyProperty().equals(NATIVE_ID)) {
-            return String.valueOf(propertyContainer.getGraphId());
+            return String.valueOf(entity.getGraphId());
         } else {
-            return String.valueOf(propertyContainer.getProperties().get(getKeyProperty()));
+            return String.valueOf(entity.getProperties().get(getKeyProperty()));
         }
     }
 
@@ -191,7 +191,7 @@ public abstract class BaseMapping implements Mapping {
      * @return true when an index wa created (false if is already existed or failed to create)
      * @throws Exception
      */
-    protected <T extends PropertyContainer> boolean createIndexAndMapping(JestClient client, Class<T> indexType) throws Exception {
+    protected <T extends Entity> boolean createIndexAndMapping(JestClient client, Class<T> indexType) throws Exception {
         String indexName = getIndexFor(indexType);
 
         if (client.execute(new IndicesExists.Builder(indexName).build()).isSucceeded()) {
@@ -212,7 +212,7 @@ public abstract class BaseMapping implements Mapping {
         }
     }
 
-    public abstract <T extends PropertyContainer> String getIndexFor(Class<T> searchedType);
+    public abstract <T extends Entity> String getIndexFor(Class<T> searchedType);
 
     protected List<BulkableAction<? extends JestResult>> emptyActions() {
         return new ArrayList<>();

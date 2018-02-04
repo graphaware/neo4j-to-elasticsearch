@@ -102,7 +102,7 @@ public class Searcher {
         };
     }
 
-    private <T extends PropertyContainer> List<SearchMatch<T>> resolveMatchItems(final List<SearchMatch<T>> searchMatches, final Function<SearchMatch, T> resolver) {
+    private <T extends Entity> List<SearchMatch<T>> resolveMatchItems(final List<SearchMatch<T>> searchMatches, final Function<SearchMatch, T> resolver) {
         List<SearchMatch<T>> resolvedResults = new ArrayList<>();
 
         try (Transaction tx = database.beginTx()) {
@@ -118,7 +118,7 @@ public class Searcher {
         return resolvedResults;
     }
 
-    private <T extends PropertyContainer> List<SearchMatch<T>> buildSearchMatches(SearchResult searchResult) {
+    private <T extends Entity> List<SearchMatch<T>> buildSearchMatches(SearchResult searchResult) {
         List<SearchMatch<T>> matches = new ArrayList<>();
         Set<Map.Entry<String, JsonElement>> entrySet = searchResult.getJsonObject().entrySet();
         entrySet.stream()
@@ -199,7 +199,7 @@ public class Searcher {
      * @param <T>   {@link Node} or {@link Relationship}
      * @return the search results
      */
-    private <T extends PropertyContainer> SearchResult searchQuery(String query, Class<T> clazz) {
+    private <T extends Entity> SearchResult searchQuery(String query, Class<T> clazz) {
         Search search = new Search.Builder(query).addIndex(mapping.getIndexFor(clazz)).build();
         return doQuery(search);
     }
@@ -212,7 +212,7 @@ public class Searcher {
      * @param <T>   {@link Node} or {@link Relationship}
      * @return a list of matches (with node or a relationship)
      */
-    public <T extends PropertyContainer> List<SearchMatch<T>> search(String query, Class<T> clazz) {
+    public <T extends Entity> List<SearchMatch<T>> search(String query, Class<T> clazz) {
         SearchResult result = searchQuery(query, clazz);
 
         List<SearchMatch<T>> matches = buildSearchMatches(result);
@@ -229,7 +229,7 @@ public class Searcher {
      * @param <T>   {@link Node} or {@link Relationship}
      * @return a JSON string
      */
-    public <T extends PropertyContainer> String rawSearch(String query, Class<T> clazz) {
+    public <T extends Entity> String rawSearch(String query, Class<T> clazz) {
         SearchResult r = searchQuery(query, clazz);
         return r.getJsonString();
     }
@@ -242,7 +242,7 @@ public class Searcher {
         return mappingQuery(Relationship.class);
     }
 
-    private <T extends PropertyContainer> String mappingQuery(Class<T> clazz) {
+    private <T extends Entity> String mappingQuery(Class<T> clazz) {
         String indexName = mapping.getIndexFor(clazz);
         GetMapping getMapping = new GetMapping.Builder().addIndex(indexName).build();
         return doQuery(getMapping)

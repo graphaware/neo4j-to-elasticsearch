@@ -23,8 +23,8 @@ import io.searchbox.client.JestResult;
 import io.searchbox.core.Delete;
 import io.searchbox.core.Index;
 import io.searchbox.indices.mapping.PutMapping;
+import org.neo4j.graphdb.Entity;
 import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.PropertyContainer;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.logging.Log;
 
@@ -132,7 +132,7 @@ public class AdvancedMapping extends DefaultMapping {
      * @throws Exception
      */
     @Override
-    protected <T extends PropertyContainer> boolean createIndexAndMapping(JestClient client, Class<T> indexType) throws Exception {
+    protected <T extends Entity> boolean createIndexAndMapping(JestClient client, Class<T> indexType) throws Exception {
         boolean created = super.createIndexAndMapping(client, indexType);
         if (!created) {
             return false;

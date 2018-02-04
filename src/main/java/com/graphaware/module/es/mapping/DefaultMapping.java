@@ -21,8 +21,8 @@ import io.searchbox.action.BulkableAction;
 import io.searchbox.client.JestResult;
 import io.searchbox.core.Delete;
 import io.searchbox.core.Index;
+import org.neo4j.graphdb.Entity;
 import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.PropertyContainer;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.logging.Log;
 
@@ -109,7 +109,7 @@ public class DefaultMapping extends BaseMapping implements Mapping {
     }
 
     @Override
-    public <T extends PropertyContainer> String getIndexFor(Class<T> searchedType) {
+    public <T extends Entity> String getIndexFor(Class<T> searchedType) {
         return getIndexPrefix() + (searchedType.equals(Node.class) ? "-node" : "-relationship");
     }
 }
