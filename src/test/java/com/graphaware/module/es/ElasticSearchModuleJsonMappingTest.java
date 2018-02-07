@@ -118,7 +118,7 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         runtime.waitUntilStarted();
 
         writeSomePersons();
-        TestUtil.waitFor(1000);
+        TestUtil.waitFor(2000);
         verifyEsReplicationForNodeWithLabels("Person", mapping.getMappingRepresentation().getDefaults().getDefaultNodesIndex(), "persons", mapping.getMappingRepresentation().getDefaults().getKeyProperty());
         try (Transaction tx = database.beginTx()) {
             database.getAllRelationships().stream().forEach(r -> {
