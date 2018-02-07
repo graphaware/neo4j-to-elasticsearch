@@ -40,10 +40,12 @@ import static org.springframework.util.Assert.notNull;
  * A {@link ThirdPartyWriter} to Elasticsearch (https://www.elastic.co/).
  */
 public class ElasticSearchWriter extends BaseThirdPartyWriter {
+    public static final int MAXIMUM_CONSECUTIVE_ERRORS = 50;
 
     private static final Log LOG = LoggerFactory.getLogger(ElasticSearchWriter.class);
 
     private JestClient client;
+    private int consecutiveErrors = 0;
     private final String protocol;
     private final String uri;
     private final String port;
@@ -124,19 +126,44 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
 
         List<WriteOperation<?>> allFailed = executor.flush();
 
-        if (!allFailed.isEmpty()) {
-            if (retryOnError) {
-                LOG.warn("There were " + allFailed.size() + " failures in replicating to Elasticsearch. Will retry...");
-                retry(Collections.singletonList(allFailed));
-                try {
-                    LOG.info("Backing off for 2 seconds...");
-                    Thread.sleep(2000);
-                } catch (InterruptedException e) {
-                    LOG.warn("Wait interrupted", e);
-                }
-            } else {
-                LOG.warn("There were " + allFailed.size() + " failures in replicating to Elasticsearch. These updates got lost.");
-            }
+        // no errors, reset consecutive error counter
+        if (allFailed.isEmpty()) {
+            consecutiveErrors = 0;
+            return;
+        }
+
+        // error, count consecutive errors
+        consecutiveErrors++;
+
+        // no retry-on-error, log and give up
+        if (!retryOnError) {
+            LOG.warn(allFailed.size() + " operations could not be replicated to Elasticsearch. These updates got lost.");
+            return;
+        }
+
+        // retry-on-error enabled but maximum consecutive errors reached: give up and reset counter
+        if (consecutiveErrors > MAXIMUM_CONSECUTIVE_ERRORS) {
+            LOG.warn("" +
+                    allFailed.size() + " operations could not be replicated to Elasticsearch. " +
+                    "Giving up after " + MAXIMUM_CONSECUTIVE_ERRORS + " consecutive errors. " +
+                    "These updated got lost."
+            );
+            consecutiveErrors = 0;
+            return;
+        }
+
+        // retry-on-error enabled
+        LOG.warn("" +
+                allFailed.size() + " operations could not be replicated to Elasticsearch. " +
+                (consecutiveErrors > 1 ? consecutiveErrors + " consecutive errors. "  : "") +
+                "Will retry..."
+        );
+        retry(Collections.singletonList(allFailed));
+        try {
+            LOG.info("Backing off for 2 seconds...");
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            LOG.warn("Wait interrupted", e);
         }
     }
 
