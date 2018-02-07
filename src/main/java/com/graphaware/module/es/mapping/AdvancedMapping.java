@@ -47,27 +47,48 @@ public class AdvancedMapping extends DefaultMapping {
     private static final Map<String, Object> NODE_MAPPINGS = new HashMap<>();
     private static final Map<String, Object> RELATIONSHIP_MAPPINGS = new HashMap<>();
 
+    private static Map.Entry<String, Object> entry(String key, Object value) {
+        return new HashMap.SimpleEntry<>(key, value);
+    }
+
+    @SafeVarargs
+    private static Map<String, Object> map(Map.Entry<String, Object> ...entries) {
+        Map<String, Object> m = new HashMap<>(entries.length);
+        for (Map.Entry<String, Object> entry : entries) {
+            m.put(entry.getKey(), entry.getValue());
+        }
+        return m;
+    }
+
     static {
-        Map<String, Object> rawField = new HashMap<>();
-        rawField.put("type", "string");
-        rawField.put("index", "not_analyzed");
-        rawField.put("include_in_all", false);
+        List<Map<String, Object>> dynamicTemplates = Collections.singletonList(map(
+                entry("any_field", map(
+                        entry("match_mapping_type", "*"),
+                        entry("mapping", map(
+                                entry("type", "{dynamic_type}"),
+                                entry("ignore_malformed", true)
+                        ))
+                ))
+        ));
 
-        Map<String, Object> labelOrTypePropertyFields = new HashMap<>();
-        labelOrTypePropertyFields.put("raw", rawField);
+        Map<String, Object> labelOrTypeProperty = map(
+            entry("type", "string"),
+            entry("fields", map(
+                    entry("raw", map(
+                        entry("type", "string"),
+                        entry("index", "not_analyzed"),
+                        entry("include_in_all", false)
+                    ))
+            ))
+        );
 
-        Map<String, Object> labelOrTypeProperty = new HashMap<>();
-        labelOrTypeProperty.put("type", "string");
-        labelOrTypeProperty.put("fields", labelOrTypePropertyFields);
+        NODE_MAPPINGS.put("properties", map(entry(LABELS_FIELD, labelOrTypeProperty)));
+        NODE_MAPPINGS.put("dynamic_templates", dynamicTemplates);
+        NODE_MAPPINGS.put("dynamic", true);
 
-        Map<String
-                , Object> nodeProperties = new HashMap<>();
-        nodeProperties.put(LABELS_FIELD, labelOrTypeProperty);
-        NODE_MAPPINGS.put("properties", nodeProperties);
-
-        Map<String, Object> relationshipProperties = new HashMap<>();
-        relationshipProperties.put(RELATIONSHIP_FIELD, labelOrTypeProperty);
-        RELATIONSHIP_MAPPINGS.put("properties", relationshipProperties);
+        RELATIONSHIP_MAPPINGS.put("properties", map(entry(RELATIONSHIP_FIELD, labelOrTypeProperty)));
+        RELATIONSHIP_MAPPINGS.put("dynamic_templates", dynamicTemplates);
+        RELATIONSHIP_MAPPINGS.put("dynamic", true);
     }
 
     @Override
