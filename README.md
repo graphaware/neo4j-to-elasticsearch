@@ -143,6 +143,10 @@ com.graphaware.module.ES.bulk=true
 #optional, read explanation below, defaults to 0
 com.graphaware.module.ES.initializeUntil=0
 
+#optional, whether or not the reindexation process (when db start) should be made in asynchronous mode
+#default is "false" and the db will not be available until completed
+#com.graphaware.module.ES.asyncIndexation=true
+
 ```
 
 For explanation of the UUID configurations, please see the [UUID Module docs](https://github.com/graphaware/neo4j-uuid).
