@@ -15,10 +15,7 @@
 package com.graphaware.module.es;
 
 import com.graphaware.common.log.LoggerFactory;
-import com.graphaware.module.es.executor.BulkOperationExecutorFactory;
-import com.graphaware.module.es.executor.OperationExecutor;
-import com.graphaware.module.es.executor.OperationExecutorFactory;
-import com.graphaware.module.es.executor.RequestPerOperationExecutorFactory;
+import com.graphaware.module.es.executor.*;
 import com.graphaware.module.es.mapping.Mapping;
 import com.graphaware.module.es.search.Searcher;
 import com.graphaware.writer.thirdparty.BaseThirdPartyWriter;
@@ -54,6 +51,7 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
     private final String authPassword;
     private final Mapping mapping;
     private final boolean async;
+    private final int MAX_BULK_SIZE = 500;
 
     public ElasticSearchWriter(ElasticSearchConfiguration configuration) {
         super(configuration.getQueueCapacity());
@@ -106,7 +104,6 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
         createIndexIfNotExist();
 
         OperationExecutor executor = executorFactory.newExecutor(client);
-
         executor.start();
 
         int actionsCount = 0;
@@ -115,6 +112,12 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
                 List<BulkableAction<? extends JestResult>> actions = mapping.getActions(operation);
                 executor.execute(actions, operation);
                 actionsCount += actions.size();
+                if (actionsCount > MAX_BULK_SIZE) {
+                    flushBatch(executor);
+                    actionsCount = 0;
+                    executor = executorFactory.newExecutor(client);
+                    executor.start();
+                }
             }
         }
 
@@ -122,6 +125,10 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
             return;
         }
 
+        flushBatch(executor);
+    }
+
+    protected void flushBatch(OperationExecutor executor) {
         List<WriteOperation<?>> allFailed = executor.flush();
 
         if (!allFailed.isEmpty()) {
@@ -137,6 +144,10 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
             } else {
                 LOG.warn("There were " + allFailed.size() + " failures in replicating to Elasticsearch. These updates got lost.");
             }
+        }
+
+        if (executor instanceof BulkOperationExecutor) {
+            ((BulkOperationExecutor) executor).reset();
         }
     }
 

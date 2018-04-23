@@ -73,6 +73,10 @@ public class BulkOperationExecutor extends BaseOperationExecutor {
         addFailed(operation);
     }
 
+    public void reset() {
+        bulkBuilder = new Bulk.Builder();
+    }
+
     private void executeBulk(Bulk.Builder bulkBuilder) {
         Bulk bulkOperation = bulkBuilder.build();
         try {
