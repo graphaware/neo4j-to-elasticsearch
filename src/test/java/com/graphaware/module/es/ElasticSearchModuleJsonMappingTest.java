@@ -72,6 +72,8 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         cleanUpData();
         testIndexWithAllNodesAndAllRelsExpression();
         cleanUpData();
+        testBasicJsonMappingReplicationWithQuery();
+        cleanUpData();
     }
 
     //@Test
@@ -711,7 +713,6 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         }
     }
 
-    @Test
     public void testBasicJsonMappingReplicationWithQuery() {
         database = new TestGraphDatabaseFactory().newImpermanentDatabase();
 
