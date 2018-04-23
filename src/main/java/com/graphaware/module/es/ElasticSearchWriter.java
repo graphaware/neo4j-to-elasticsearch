@@ -40,7 +40,6 @@ import static org.springframework.util.Assert.notNull;
  * A {@link ThirdPartyWriter} to Elasticsearch (https://www.elastic.co/).
  */
 public class ElasticSearchWriter extends BaseThirdPartyWriter {
-    public static final int MAXIMUM_CONSECUTIVE_ERRORS = 50;
 
     private static final Log LOG = LoggerFactory.getLogger(ElasticSearchWriter.class);
 
@@ -50,6 +49,7 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
     private final String uri;
     private final String port;
     private final boolean retryOnError;
+    private final int maxConsecutiveErrors;
     private final OperationExecutorFactory executorFactory;
     private final AtomicBoolean indexExists = new AtomicBoolean(false); //this must be thread-safe
     private final String authUser;
@@ -66,6 +66,7 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
         this.uri = configuration.getUri();
         this.port = configuration.getPort();
         this.retryOnError = configuration.isRetryOnError();
+        this.maxConsecutiveErrors = configuration.getMaxConsecutiveErrors();
         this.executorFactory = configuration.isExecuteBulk() ? new BulkOperationExecutorFactory() : new RequestPerOperationExecutorFactory();
         this.authUser = configuration.getAuthUser();
         this.authPassword = configuration.getAuthPassword();
@@ -132,20 +133,20 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
             return;
         }
 
-        // error, count consecutive errors
-        consecutiveErrors++;
-
         // no retry-on-error, log and give up
         if (!retryOnError) {
             LOG.warn(allFailed.size() + " operations could not be replicated to Elasticsearch. These updates got lost.");
             return;
         }
 
+        // error, count consecutive errors
+        consecutiveErrors++;
+
         // retry-on-error enabled but maximum consecutive errors reached: give up and reset counter
-        if (consecutiveErrors > MAXIMUM_CONSECUTIVE_ERRORS) {
+        if (consecutiveErrors > maxConsecutiveErrors) {
             LOG.warn("" +
                     allFailed.size() + " operations could not be replicated to Elasticsearch. " +
-                    "Giving up after " + MAXIMUM_CONSECUTIVE_ERRORS + " consecutive errors. " +
+                    "Giving up after " + maxConsecutiveErrors + " consecutive errors. " +
                     "These updated got lost."
             );
             consecutiveErrors = 0;
