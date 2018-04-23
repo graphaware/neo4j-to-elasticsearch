@@ -84,7 +84,8 @@ public class ElasticSearchModule extends DefaultThirdPartyIntegrationModule {
     @Override
     public void start(GraphDatabaseService database) {
         super.start(database);
-
+        // Must be after start - else there will be a concurrent modification for the serialization of the mapping class
+        config.getMapping().setDatabase(database);
         // Must be after start - else the ES connection is not initialised.
         if (reindex) {
             reindex(database);

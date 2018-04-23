@@ -25,6 +25,9 @@ import io.searchbox.core.Index;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import org.codehaus.jackson.annotate.JsonIgnore;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.logging.Log;
 
 public class DocumentMappingRepresentation {
@@ -38,6 +41,9 @@ public class DocumentMappingRepresentation {
 
     @JsonProperty("relationship_mappings")
     private List<GraphDocumentMapper> relationshipMappers;
+
+    @JsonIgnore
+    private GraphDatabaseService database;
 
     public DocumentMappingDefaults getDefaults() {
         return defaults;
@@ -57,7 +63,7 @@ public class DocumentMappingRepresentation {
         for (GraphDocumentMapper mapper : nodeMappers) {
             if (mapper.supports(node)) {
                 try {
-                    DocumentRepresentation document = mapper.getDocumentRepresentation(node, defaults);
+                    DocumentRepresentation document = mapper.getDocumentRepresentation(node, defaults, database);
                     String json = document.getJson();
                     actions.add(new Index.Builder(json).index(document.getIndex()).type(document.getType()).id(document.getId()).build());
                 } catch (Exception e) {
@@ -159,12 +165,16 @@ public class DocumentMappingRepresentation {
         return actions;
     }
 
+    public void setDatabase(GraphDatabaseService graphDatabaseService) {
+        this.database = graphDatabaseService;
+    }
+
     private List<DocumentRepresentation> getNodeMappingRepresentations(NodeExpressions nodeExpressions, DocumentMappingDefaults defaults) {
         List<DocumentRepresentation> docs = new ArrayList<>();
         for (GraphDocumentMapper mapper : getNodeMappers()) {
             if (mapper.supports(nodeExpressions)) {
                 try {
-                    DocumentRepresentation document = mapper.getDocumentRepresentation(nodeExpressions, defaults);
+                    DocumentRepresentation document = mapper.getDocumentRepresentation(nodeExpressions, defaults, database);
                     docs.add(document);
                 } catch (Exception e) {
                     LOG.error("Error while getting document for node: " + nodeExpressions.toString(), e);

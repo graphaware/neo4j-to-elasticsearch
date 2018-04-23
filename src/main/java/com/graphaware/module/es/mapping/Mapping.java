@@ -25,6 +25,7 @@ import io.searchbox.action.BulkableAction;
 import io.searchbox.client.JestClient;
 import io.searchbox.client.JestResult;
 import org.neo4j.graphdb.Entity;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.logging.Log;
 
 import java.util.Collections;
@@ -42,6 +43,8 @@ public interface Mapping {
     <T extends Entity> String getIndexFor(Class<T> searchedType);
 
     String getKeyProperty();
+
+    void setDatabase(GraphDatabaseService database);
 
     default List<BulkableAction<? extends JestResult>> getActions(WriteOperation<?> operation) {
         switch (operation.getType()) {

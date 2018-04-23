@@ -23,6 +23,7 @@ import io.searchbox.action.BulkableAction;
 import io.searchbox.client.JestClient;
 import io.searchbox.client.JestResult;
 import org.neo4j.graphdb.Entity;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.logging.Log;
 import org.springframework.core.io.ClassPathResource;
 
@@ -38,9 +39,8 @@ public class JsonFileMapping implements Mapping {
     private static final String FILE_PATH_KEY = "file";
     private static final String NEO4j_HOME = "unsupported.dbms.directories.neo4j_home";
     private static final String NEO4j_CONF_DIR = "conf";
-
     private DocumentMappingRepresentation mappingRepresentation;
-
+    private GraphDatabaseService database;
     protected String keyProperty;
 
     @Override
@@ -109,5 +109,11 @@ public class JsonFileMapping implements Mapping {
     @Override
     public boolean bypassInclusionPolicies() {
         return true;
+    }
+
+    @Override
+    public void setDatabase(GraphDatabaseService database) {
+        this.database = database;
+        this.mappingRepresentation.setDatabase(database);
     }
 }
