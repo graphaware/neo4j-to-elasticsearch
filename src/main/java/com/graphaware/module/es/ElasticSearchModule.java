@@ -191,6 +191,10 @@ public class ElasticSearchModule extends DefaultThirdPartyIntegrationModule {
         }
     }
 
+    public ElasticSearchWriter getWriter() {
+        return writer;
+    }
+
     private void reindexRelationships(GraphDatabaseService database) {
 
         final Collection<WriteOperation<?>> operations = new HashSet<>();

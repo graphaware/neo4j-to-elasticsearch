@@ -96,6 +96,10 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
         LOG.info("Stopped Elasticsearch Writer.");
     }
 
+    public void reloadMapping() {
+        mapping.reload();
+    }
+
     /**
      * {@inheritDoc}
      */

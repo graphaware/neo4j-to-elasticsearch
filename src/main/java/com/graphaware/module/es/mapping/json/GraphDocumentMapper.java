@@ -271,6 +271,7 @@ public class GraphDocumentMapper {
             tx.success();
         } catch (Exception e) {
             LOG.error("Could not execute query " + queryExpression.getQuery() + ". Message is " + e.getMessage());
+            e.printStackTrace();
         }
 
         return r;

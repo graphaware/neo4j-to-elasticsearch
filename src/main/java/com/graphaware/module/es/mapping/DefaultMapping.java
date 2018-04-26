@@ -112,4 +112,9 @@ public class DefaultMapping extends BaseMapping implements Mapping {
     public <T extends Entity> String getIndexFor(Class<T> searchedType) {
         return getIndexPrefix() + (searchedType.equals(Node.class) ? "-node" : "-relationship");
     }
+
+    @Override
+    public void reload() {
+
+    }
 }

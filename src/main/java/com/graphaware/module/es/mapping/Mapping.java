@@ -91,4 +91,6 @@ public interface Mapping {
      * @return boolean
      */
     boolean bypassInclusionPolicies();
+
+    void reload();
 }

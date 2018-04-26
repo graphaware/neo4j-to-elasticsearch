@@ -42,9 +42,11 @@ public class JsonFileMapping implements Mapping {
     private DocumentMappingRepresentation mappingRepresentation;
     private GraphDatabaseService database;
     protected String keyProperty;
+    private Map<String, String> config;
 
     @Override
     public void configure(Map<String, String> config) {
+        this.config = config;
         if (!config.containsKey(FILE_PATH_KEY)) {
             throw new RuntimeException("Configuration is missing the " + FILE_PATH_KEY + "key");
         }
@@ -114,6 +116,12 @@ public class JsonFileMapping implements Mapping {
     @Override
     public void setDatabase(GraphDatabaseService database) {
         this.database = database;
+        this.mappingRepresentation.setDatabase(database);
+    }
+
+    @Override
+    public void reload() {
+        configure(config);
         this.mappingRepresentation.setDatabase(database);
     }
 }
