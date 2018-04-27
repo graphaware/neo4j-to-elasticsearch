@@ -72,6 +72,8 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         cleanUpData();
         testIndexWithAllNodesAndAllRelsExpression();
         cleanUpData();
+        testBasicJsonMappingReplicationWithQuery();
+        cleanUpData();
     }
 
     //@Test
@@ -707,6 +709,38 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
                 //assertEquals(1234, map.get("timestamp"));
                 assertEquals(1.489, map.get("latitude"));
             }
+            tx.success();
+        }
+    }
+
+    public void testBasicJsonMappingReplicationWithQuery() {
+        database = new TestGraphDatabaseFactory().newImpermanentDatabase();
+
+        GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database);
+        runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration().withUuidProperty("uuid").with(IncludeAllRelationships.getInstance()), database));
+
+        JsonFileMapping mapping = (JsonFileMapping) ServiceLoader.loadMapping("com.graphaware.module.es.mapping.JsonFileMapping");
+        Map<String, String> mappingConfig = new HashMap<>();
+        mappingConfig.put("file", "integration/mapping-query.json");
+
+        configuration = ElasticSearchConfiguration.defaultConfiguration()
+                .withMapping(mapping, mappingConfig)
+                .with(IncludeAllRelationships.getInstance())
+                .withUri(HOST)
+                .withPort(PORT);
+
+        runtime.registerModule(new ElasticSearchModule("ES", new ElasticSearchWriter(configuration), configuration));
+        runtime.start();
+        runtime.waitUntilStarted();
+
+        writeSomePersons();
+        System.out.println("Finished writing...");
+        TestUtil.waitFor(2000);
+        verifyEsReplicationForNodeWithLabels("Person", mapping.getMappingRepresentation().getDefaults().getDefaultNodesIndex(), "persons", mapping.getMappingRepresentation().getDefaults().getKeyProperty());
+        try (Transaction tx = database.beginTx()) {
+            database.getAllRelationships().stream().forEach(r -> {
+                new Neo4jElasticVerifier(database, configuration, esClient).verifyEsReplication(r, mapping.getMappingRepresentation().getDefaults().getDefaultRelationshipsIndex(), "workers", mapping.getKeyProperty());
+            });
             tx.success();
         }
     }

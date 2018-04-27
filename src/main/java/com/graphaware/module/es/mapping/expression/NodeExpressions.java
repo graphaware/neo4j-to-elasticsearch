@@ -15,7 +15,9 @@
 package com.graphaware.module.es.mapping.expression;
 
 import com.graphaware.common.representation.GraphDetachedNode;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Transaction;
 
 public class NodeExpressions extends GraphDetachedNode implements ConvertingEntityExpressions {
 
@@ -35,5 +37,9 @@ public class NodeExpressions extends GraphDetachedNode implements ConvertingEnti
 
     public String getGraphType() {
         return GRAPH_TYPE_NODE;
+    }
+
+    public QueryExpression query(String query) {
+        return new QueryExpression(query);
     }
 }

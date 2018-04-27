@@ -1,0 +1,25 @@
+{
+  "defaults": {
+    "key_property": "uuid",
+    "nodes_index": "default-index-node",
+    "relationships_index": "default-index-relationship",
+    "include_remaining_properties": true,
+    "blacklisted_node_properties": ["password", "uuid"]
+  },
+  "node_mappings": [
+    {
+      "condition": "hasLabel('Person')",
+      "type": "persons",
+      "properties": {
+        "name": "getProperty('firstName') + ' ' + getProperty('lastName')",
+        "myprop": "query('MATCH (n) WHERE id(n) = {id} RETURN size((n)--()) AS value')"
+      }
+    }
+  ],
+  "relationship_mappings": [
+    {
+      "condition": "isType('WORKS_FOR')",
+      "type": "workers"
+    }
+  ]
+}

@@ -15,6 +15,8 @@ package com.graphaware.module.es.mapping.json;
 
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
 import com.graphaware.common.log.LoggerFactory;
 import com.graphaware.module.es.mapping.expression.NodeExpressions;
 import com.graphaware.module.es.mapping.expression.RelationshipExpressions;
@@ -25,11 +27,22 @@ import io.searchbox.core.Index;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import org.codehaus.jackson.annotate.JsonIgnore;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.logging.Log;
 
 public class DocumentMappingRepresentation {
 
     private static final Log LOG = LoggerFactory.getLogger(DocumentMappingRepresentation.class);
+
+    private static final ObjectMapper objectMapper;
+
+    static {
+        ObjectMapper om = new ObjectMapper();
+        om.registerModule(new AfterburnerModule());
+        objectMapper = om;
+    }
     
     private DocumentMappingDefaults defaults;
 
@@ -38,6 +51,9 @@ public class DocumentMappingRepresentation {
 
     @JsonProperty("relationship_mappings")
     private List<GraphDocumentMapper> relationshipMappers;
+
+    @JsonIgnore
+    private GraphDatabaseService database;
 
     public DocumentMappingDefaults getDefaults() {
         return defaults;
@@ -57,8 +73,8 @@ public class DocumentMappingRepresentation {
         for (GraphDocumentMapper mapper : nodeMappers) {
             if (mapper.supports(node)) {
                 try {
-                    DocumentRepresentation document = mapper.getDocumentRepresentation(node, defaults);
-                    String json = document.getJson();
+                    DocumentRepresentation document = mapper.getDocumentRepresentation(node, defaults, database);
+                    String json = objectMapper.writeValueAsString(document);
                     actions.add(new Index.Builder(json).index(document.getIndex()).type(document.getType()).id(document.getId()).build());
                 } catch (Exception e) {
                     LOG.error("Error while creating or updating node", e);
@@ -77,7 +93,7 @@ public class DocumentMappingRepresentation {
             if (mapping.supports(relationship)) {
                 try {
                     DocumentRepresentation document = mapping.getDocumentRepresentation(relationship, defaults);
-                    String json = document.getJson();
+                    String json = objectMapper.writeValueAsString(document);
                     actions.add(new Index.Builder(json).index(document.getIndex()).type(document.getType()).id(document.getId()).build());
                 } catch (Exception e) {
                     LOG.error("Error while creating relationship: " + relationship.toString(), e);
@@ -111,9 +127,9 @@ public class DocumentMappingRepresentation {
         for (DocumentRepresentation action : getNodeMappingRepresentations(after, defaults)) {
             afterIndices.add(action.getIndex() + "_" + action.getType());
             try {
-                String json = action.getJson();
+                String json = objectMapper.writeValueAsString(action);
                 actions.add(new Index.Builder(json).index(action.getIndex()).type(action.getType()).id(action.getId()).build());
-            } catch (DocumentRepresentationException ex) {
+            } catch (Exception ex) {
                 LOG.error("Error while adding action for node: " + before.toString(), ex);
             }
         }
@@ -134,9 +150,9 @@ public class DocumentMappingRepresentation {
         for (DocumentRepresentation action : getRelationshipMappingRepresentations(after, defaults)) {
             afterIndices.add(action.getIndex() + "_" + action.getType());
             try {
-                String json = action.getJson();
+                String json = objectMapper.writeValueAsString(action);
                 actions.add(new Index.Builder(json).index(action.getIndex()).type(action.getType()).id(action.getId()).build());
-            } catch (DocumentRepresentationException ex) {
+            } catch (Exception ex) {
                 LOG.error("Error while adding update action for nodes: " + before.toString() + " -> " + after.toString(), ex);
             }            
         }
@@ -159,12 +175,16 @@ public class DocumentMappingRepresentation {
         return actions;
     }
 
+    public void setDatabase(GraphDatabaseService graphDatabaseService) {
+        this.database = graphDatabaseService;
+    }
+
     private List<DocumentRepresentation> getNodeMappingRepresentations(NodeExpressions nodeExpressions, DocumentMappingDefaults defaults) {
         List<DocumentRepresentation> docs = new ArrayList<>();
         for (GraphDocumentMapper mapper : getNodeMappers()) {
             if (mapper.supports(nodeExpressions)) {
                 try {
-                    DocumentRepresentation document = mapper.getDocumentRepresentation(nodeExpressions, defaults);
+                    DocumentRepresentation document = mapper.getDocumentRepresentation(nodeExpressions, defaults, database);
                     docs.add(document);
                 } catch (Exception e) {
                     LOG.error("Error while getting document for node: " + nodeExpressions.toString(), e);
