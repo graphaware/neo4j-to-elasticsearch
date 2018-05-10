@@ -74,7 +74,7 @@ public class DocumentMappingRepresentation {
             if (mapper.supports(node)) {
                 try {
                     DocumentRepresentation document = mapper.getDocumentRepresentation(node, defaults, database);
-                    String json = objectMapper.writeValueAsString(document);
+                    String json = objectMapper.writeValueAsString(document.getSource());
                     actions.add(new Index.Builder(json).index(document.getIndex()).type(document.getType()).id(document.getId()).build());
                 } catch (Exception e) {
                     LOG.error("Error while creating or updating node", e);
@@ -93,7 +93,7 @@ public class DocumentMappingRepresentation {
             if (mapping.supports(relationship)) {
                 try {
                     DocumentRepresentation document = mapping.getDocumentRepresentation(relationship, defaults);
-                    String json = objectMapper.writeValueAsString(document);
+                    String json = objectMapper.writeValueAsString(document.getSource());
                     actions.add(new Index.Builder(json).index(document.getIndex()).type(document.getType()).id(document.getId()).build());
                 } catch (Exception e) {
                     LOG.error("Error while creating relationship: " + relationship.toString(), e);

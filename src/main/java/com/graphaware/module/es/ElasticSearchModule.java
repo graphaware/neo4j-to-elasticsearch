@@ -20,6 +20,7 @@ import com.graphaware.common.policy.inclusion.none.IncludeNoNodes;
 import com.graphaware.common.policy.inclusion.none.IncludeNoRelationships;
 import com.graphaware.common.representation.DetachedNode;
 import com.graphaware.common.representation.DetachedRelationship;
+import com.graphaware.module.es.mapping.JsonFileMapping;
 import com.graphaware.module.es.mapping.expression.NodeExpressions;
 import com.graphaware.module.es.mapping.expression.RelationshipExpressions;
 import com.graphaware.runtime.config.TxDrivenModuleConfiguration;
@@ -85,7 +86,9 @@ public class ElasticSearchModule extends DefaultThirdPartyIntegrationModule {
     public void start(GraphDatabaseService database) {
         super.start(database);
         // Must be after start - else there will be a concurrent modification for the serialization of the mapping class
-        config.getMapping().setDatabase(database);
+        if (config.getMapping() instanceof JsonFileMapping) {
+            config.getMapping().setDatabase(database);
+        }
         // Must be after start - else the ES connection is not initialised.
         if (reindex) {
             reindex(database);
