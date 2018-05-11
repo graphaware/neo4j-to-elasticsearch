@@ -55,9 +55,12 @@ public class JsonFileMapping implements Mapping {
 			String file = null; 
 			if(classPathResource.exists()){
 				file = classPathResource.getFile().getAbsolutePath();
-			}else{
-				file = config.get(NEO4j_HOME) + File.separator + NEO4j_CONF_DIR + File.separator + config.get(FILE_PATH_KEY);
-			}
+			} else if (config.get(FILE_PATH_KEY).contains(File.separator)){
+                file = config.get(NEO4j_HOME) + File.separator + config.get(FILE_PATH_KEY);
+			} else {
+                file = config.get(NEO4j_HOME) + File.separator + NEO4j_CONF_DIR + File.separator + config.get(FILE_PATH_KEY);
+            }
+            LOG.info("Using mapping file at path " + file);
             mappingRepresentation = new ObjectMapper().readValue(new File(file), DocumentMappingRepresentation.class);
         } catch (IOException e) {
             throw new RuntimeException("Unable to read json mapping file", e);
