@@ -22,7 +22,7 @@
     </parent>
 
     <artifactId>neo4j-to-elasticsearch</artifactId>
-    <version>3.4.0.52.8</version>
+    <version>3.4.0.52.9-SNAPSHOT</version>
 
     <name>GraphAware Elasticsearch Integration for Neo4j</name>
     <description>GraphAware Framework Module for Integrating Neo4j with Elasticsearch</description>
@@ -40,7 +40,7 @@
         <connection>scm:git:git@github.com:graphaware/neo4j-to-elasticsearch.git</connection>
         <developerConnection>scm:git:git@github.com:graphaware/neo4j-to-elasticsearch.git</developerConnection>
         <url>git@github.com:graphaware/neo4j-to-elasticsearch.git</url>
-        <tag>neo4j-to-elasticsearch-3.4.0.52.8</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <developers>
