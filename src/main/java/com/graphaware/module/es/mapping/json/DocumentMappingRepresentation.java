@@ -127,7 +127,7 @@ public class DocumentMappingRepresentation {
         for (DocumentRepresentation action : getNodeMappingRepresentations(after, defaults)) {
             afterIndices.add(action.getIndex() + "_" + action.getType());
             try {
-                String json = objectMapper.writeValueAsString(action);
+                String json = objectMapper.writeValueAsString(action.getSource());
                 actions.add(new Index.Builder(json).index(action.getIndex()).type(action.getType()).id(action.getId()).build());
             } catch (Exception ex) {
                 LOG.error("Error while adding action for node: " + before.toString(), ex);
@@ -150,7 +150,7 @@ public class DocumentMappingRepresentation {
         for (DocumentRepresentation action : getRelationshipMappingRepresentations(after, defaults)) {
             afterIndices.add(action.getIndex() + "_" + action.getType());
             try {
-                String json = objectMapper.writeValueAsString(action);
+                String json = objectMapper.writeValueAsString(action.getSource());
                 actions.add(new Index.Builder(json).index(action.getIndex()).type(action.getType()).id(action.getId()).build());
             } catch (Exception ex) {
                 LOG.error("Error while adding update action for nodes: " + before.toString() + " -> " + after.toString(), ex);
