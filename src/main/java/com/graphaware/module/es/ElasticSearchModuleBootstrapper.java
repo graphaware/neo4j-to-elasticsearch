@@ -44,6 +44,8 @@ public class ElasticSearchModuleBootstrapper extends BaseRuntimeModuleBootstrapp
     private static final String AUTH_USER = "authUser";
     private static final String AUTH_PASSWORD = "authPassword";
     private static final String MAPPING = "mapping";
+    private static final String READ_TIMEOUT = "readTimeout";
+    private static final String CONNECTION_TIMEOUT = "connectionTimeout";
 
     @Override
     protected ElasticSearchConfiguration defaultConfiguration() {
@@ -109,6 +111,16 @@ public class ElasticSearchModuleBootstrapper extends BaseRuntimeModuleBootstrapp
         if (configExists(config, AUTH_USER) && configExists(config, AUTH_PASSWORD)) {
             configuration = configuration.withAuthCredentials(config.get(AUTH_USER), config.get(AUTH_PASSWORD));
             LOG.info("Elasticsearch Auth Credentials bulk execution set to %s", configuration.isExecuteBulk());
+        }
+
+        if (configExists(config, READ_TIMEOUT)) {
+            configuration = configuration.withReadTimeout(Integer.valueOf(config.get(READ_TIMEOUT)));
+            LOG.info("Elasticsearch Read Timeout set to %s", configuration.getReadTimeout());
+        }
+
+        if (configExists(config, CONNECTION_TIMEOUT)) {
+            configuration = configuration.withConnectionTimeout(Integer.valueOf(config.get(CONNECTION_TIMEOUT)));
+            LOG.info("Elasticsearch Connection Timeout set to %s", configuration.getConnectionTimeout());
         }
 
         String mappingClass = configExists(config, MAPPING) ? config.get(MAPPING) : "com.graphaware.module.es.mapping.DefaultMapping";
