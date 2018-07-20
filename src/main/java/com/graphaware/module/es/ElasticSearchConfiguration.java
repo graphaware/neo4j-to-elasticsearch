@@ -61,8 +61,8 @@ public class ElasticSearchConfiguration extends BaseTxDrivenModuleConfiguration<
     private final Mapping mapping;
     private final int reindexBatchSize;
     private final boolean asyncIndexation;
-    private int readTimeout;
-    private int connectionTimeout;
+    private final int readTimeout;
+    private final int connectionTimeout;
 
 
     /**
