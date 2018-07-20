@@ -36,8 +36,8 @@ public class ElasticSearchConfiguration extends BaseTxDrivenModuleConfiguration<
     private static final InclusionPolicies DEFAULT_INCLUSION_POLICIES = InclusionPoliciesFactory.allBusiness().with(IncludeNoRelationships.getInstance());
     private static final Mapping DEFAULT_MAPPING = DefaultMapping.newInstance();
     private static final boolean DEFAULT_ASYNC_INDEXATION = false;
-    public static final int DEFAULT_READ_TIMEOUT = 20000; //20s
-    public static final int DEFAULT_CONNECTION_TIMEOUT = 10000; //10s
+    public static final int DEFAULT_READ_TIMEOUT = 3000; //3s
+    public static final int DEFAULT_CONNECTION_TIMEOUT = 3000; //3s
 
 
     static {
@@ -268,6 +268,12 @@ public class ElasticSearchConfiguration extends BaseTxDrivenModuleConfiguration<
         if (asyncIndexation != that.asyncIndexation) {
             return false;
         }
+        if (readTimeout != that.readTimeout) {
+            return false;
+        }
+        if (connectionTimeout != that.connectionTimeout) {
+            return false;
+        }
         return keyProperty.equals(that.keyProperty);
 
     }
@@ -288,6 +294,8 @@ public class ElasticSearchConfiguration extends BaseTxDrivenModuleConfiguration<
         result = 31 * result + reindexBatchSize;
         result = 31 * result + (executeBulk ? 1 : 0);
         result = 31 * result + (asyncIndexation ? 1 : 0);
+        result = 31 * result + readTimeout;
+        result = 31 * result + connectionTimeout;
         return result;
     }
 }
