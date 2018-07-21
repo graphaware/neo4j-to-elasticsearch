@@ -15,7 +15,11 @@
 package com.graphaware.module.es;
 
 import com.graphaware.common.log.LoggerFactory;
-import com.graphaware.module.es.executor.*;
+import com.graphaware.module.es.executor.BulkOperationExecutor;
+import com.graphaware.module.es.executor.BulkOperationExecutorFactory;
+import com.graphaware.module.es.executor.OperationExecutor;
+import com.graphaware.module.es.executor.OperationExecutorFactory;
+import com.graphaware.module.es.executor.RequestPerOperationExecutorFactory;
 import com.graphaware.module.es.mapping.Mapping;
 import com.graphaware.module.es.search.Searcher;
 import com.graphaware.writer.thirdparty.BaseThirdPartyWriter;
@@ -51,6 +55,8 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
     private final String authPassword;
     private final Mapping mapping;
     private final boolean async;
+    private final int readTimeout;
+    private final int connectionTimeout;
     private final int MAX_BULK_SIZE = 500;
 
     public ElasticSearchWriter(ElasticSearchConfiguration configuration) {
@@ -67,6 +73,8 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
         this.authPassword = configuration.getAuthPassword();
         this.mapping = configuration.getMapping();
         this.async = configuration.isAsyncIndexation();
+        this.readTimeout = configuration.getReadTimeout();
+        this.connectionTimeout = configuration.getConnectionTimeout();
     }
 
     /**
@@ -156,7 +164,7 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
     }
 
     protected JestClient createClient() {
-        return Searcher.createClient(protocol, uri, port, authUser, authPassword);
+        return Searcher.createClient(protocol, uri, port, authUser, authPassword, readTimeout, connectionTimeout);
     }
 
     protected void shutdownClient() {
