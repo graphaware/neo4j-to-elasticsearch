@@ -38,8 +38,4 @@ public class NodeExpressions extends GraphDetachedNode implements ConvertingEnti
     public String getGraphType() {
         return GRAPH_TYPE_NODE;
     }
-
-    public QueryExpression query(String query) {
-        return new QueryExpression(query);
-    }
 }
