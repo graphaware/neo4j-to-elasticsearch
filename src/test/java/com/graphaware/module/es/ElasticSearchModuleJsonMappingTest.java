@@ -76,6 +76,8 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         cleanUpData();
         testBasicJsonMappingReplicationWithQuery();
         cleanUpData();
+        testBasicJsonMappingReplicationWithQueryOnRelationship();
+        cleanUpData();
     }
 
     //@Test
@@ -830,6 +832,46 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
                 new Neo4jElasticVerifier(database, configuration, esClient).verifyEsReplication(r, mapping.getMappingRepresentation().getDefaults().getDefaultRelationshipsIndex(), "workers", mapping.getKeyProperty());
             });
             tx.success();
+        }
+    }
+
+    public void testBasicJsonMappingReplicationWithQueryOnRelationship() {
+        database = new TestGraphDatabaseFactory().newImpermanentDatabase();
+
+        GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database);
+        runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration().withUuidProperty("uuid").with(IncludeAllRelationships.getInstance()), database));
+
+        JsonFileMapping mapping = (JsonFileMapping) ServiceLoader.loadMapping("com.graphaware.module.es.mapping.JsonFileMapping");
+        Map<String, String> mappingConfig = new HashMap<>();
+        mappingConfig.put("file", "integration/mapping-query.json");
+
+        configuration = ElasticSearchConfiguration.defaultConfiguration()
+                .withMapping(mapping, mappingConfig)
+                .with(IncludeAllRelationships.getInstance())
+                .withUri(HOST)
+                .withPort(PORT);
+
+        runtime.registerModule(new ElasticSearchModule("ES", new ElasticSearchWriter(configuration), configuration));
+        runtime.start();
+        runtime.waitUntilStarted();
+
+        writeSomePersons();
+        System.out.println("Finished writing...");
+        TestUtil.waitFor(2000);
+        try (Transaction tx = database.beginTx()) {
+            for (Relationship rel : database.getAllRelationships()) {
+                if (rel.isType(RelationshipType.withName("WORKS_FOR"))) {
+                    String uuid = rel.getProperty("uuid").toString();
+                    String type = "workers-rels";
+                    Get get = new Get.Builder("default-index-relationship", uuid).type(type).build();
+                    JestResult result = esClient.execute(get);
+                    assertTrue(result.isSucceeded());
+                    Map<String, Object> source = new HashMap<>();
+                    Map<String, Object> map = result.getSourceAsObject(source.getClass());
+                    assertEquals("WORKS_FOR", map.get("reltype"));
+                    tx.success();
+                }
+            }
         }
     }
 

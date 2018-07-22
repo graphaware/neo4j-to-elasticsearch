@@ -92,7 +92,7 @@ public class DocumentMappingRepresentation {
         for (GraphDocumentMapper mapping : relationshipMappers) {
             if (mapping.supports(relationship)) {
                 try {
-                    DocumentRepresentation document = mapping.getDocumentRepresentation(relationship, defaults);
+                    DocumentRepresentation document = mapping.getDocumentRepresentation(relationship, defaults, database);
                     String json = objectMapper.writeValueAsString(document.getSource());
                     actions.add(new Index.Builder(json).index(document.getIndex()).type(document.getType()).id(document.getId()).build());
                 } catch (Exception e) {
@@ -110,7 +110,7 @@ public class DocumentMappingRepresentation {
         for (GraphDocumentMapper mapping : relationshipMappers) {
             if (mapping.supports(relationship)) {
                 try {
-                    DocumentRepresentation document = mapping.getDocumentRepresentation(relationship, defaults);
+                    DocumentRepresentation document = mapping.getDocumentRepresentation(relationship, defaults, database);
                     actions.add(new Delete.Builder(document.getId()).index(document.getIndex()).type(document.getType()).build());
                 } catch (Exception e) {
                     LOG.error("Error while deleting relationship: " + relationship.toString(), e);
@@ -200,7 +200,7 @@ public class DocumentMappingRepresentation {
         for (GraphDocumentMapper mapper : getRelationshipMappers()) {
             if (mapper.supports(relationshipExpressions)) {
                 try {
-                    DocumentRepresentation document = mapper.getDocumentRepresentation(relationshipExpressions, defaults);
+                    DocumentRepresentation document = mapper.getDocumentRepresentation(relationshipExpressions, defaults, database);
                     docs.add(document);
                 } catch (Exception e) {
                     LOG.error("Error while getting document for relationship: " + relationshipExpressions.toString(), e);

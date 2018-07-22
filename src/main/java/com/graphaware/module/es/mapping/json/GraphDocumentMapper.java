@@ -176,18 +176,32 @@ public class GraphDocumentMapper {
         return indexName;
     }
 
-    public DocumentRepresentation getDocumentRepresentation(RelationshipExpressions relationship, DocumentMappingDefaults defaults) throws DocumentRepresentationException {
-        return getDocumentRepresentation(relationship, defaults, true);
+    public DocumentRepresentation getDocumentRepresentation(RelationshipExpressions relationship, DocumentMappingDefaults defaults, GraphDatabaseService graphDatabaseService) throws DocumentRepresentationException {
+        return getDocumentRepresentation(relationship, defaults, true, graphDatabaseService);
     }
 
-    public DocumentRepresentation getDocumentRepresentation(RelationshipExpressions relationship, DocumentMappingDefaults defaults, boolean buildSource) throws DocumentRepresentationException {
+    public DocumentRepresentation getDocumentRepresentation(RelationshipExpressions relationship, DocumentMappingDefaults defaults, boolean buildSource, GraphDatabaseService graphDatabaseService) throws DocumentRepresentationException {
         Map<String, Object> source = new HashMap<>();
 
         if (buildSource) {
             if (null != properties) {
                 for (String s : properties.keySet()) {
                     Expression exp = getExpression(s);
-                    source.put(s, exp.getValue(relationship));
+                    Object o;
+                    try {
+                        Object t = exp.getValue(relationship);
+                        if (t instanceof QueryExpression) {
+                            o = getQueryExpressionResult(relationship, graphDatabaseService, (QueryExpression) t);
+                        } else {
+                            o = exp.getValue(relationship);
+                        }
+                    } catch (Exception e) {
+                        LOG.warn(e.getMessage());
+                        o = null;
+                    }
+                    if (null != o || !defaults.excludeEmptyProperties()) {
+                        source.put(s, o);
+                    }
                 }
             }
 
@@ -257,8 +271,9 @@ public class GraphDocumentMapper {
         }
     }
 
-    private Object getQueryExpressionResult(NodeExpressions node, GraphDatabaseService database, QueryExpression queryExpression) {
-        Map<String, Object> parameters = Collections.singletonMap("id", node.getId());
+    private Object getQueryExpressionResult(Object entity, GraphDatabaseService database, QueryExpression queryExpression) {
+        Long id = entity instanceof NodeExpressions ? ((NodeExpressions) entity).getId() : ((RelationshipExpressions) entity).getId();
+        Map<String, Object> parameters = Collections.singletonMap("id", id);
         Object r = null;
         try (Transaction tx = database.beginTx()) {
             Result result = database.execute(queryExpression.getQuery(), parameters);
