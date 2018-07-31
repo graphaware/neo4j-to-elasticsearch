@@ -45,10 +45,12 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
     private static final Log LOG = LoggerFactory.getLogger(ElasticSearchWriter.class);
 
     private JestClient client;
+    private int consecutiveErrors = 0;
     private final String protocol;
     private final String uri;
     private final String port;
     private final boolean retryOnError;
+    private final int maxConsecutiveErrors;
     private final OperationExecutorFactory executorFactory;
     private final AtomicBoolean indexExists = new AtomicBoolean(false); //this must be thread-safe
     private final String authUser;
@@ -68,6 +70,7 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
         this.uri = configuration.getUri();
         this.port = configuration.getPort();
         this.retryOnError = configuration.isRetryOnError();
+        this.maxConsecutiveErrors = configuration.getMaxConsecutiveErrors();
         this.executorFactory = configuration.isExecuteBulk() ? new BulkOperationExecutorFactory() : new RequestPerOperationExecutorFactory();
         this.authUser = configuration.getAuthUser();
         this.authPassword = configuration.getAuthPassword();
@@ -143,19 +146,44 @@ public class ElasticSearchWriter extends BaseThirdPartyWriter {
     protected void flushBatch(OperationExecutor executor) {
         List<WriteOperation<?>> allFailed = executor.flush();
 
-        if (!allFailed.isEmpty()) {
-            if (retryOnError) {
-                LOG.warn("There were " + allFailed.size() + " failures in replicating to Elasticsearch. Will retry...");
-                retry(Collections.singletonList(allFailed));
-                try {
-                    LOG.info("Backing off for 2 seconds...");
-                    Thread.sleep(2000);
-                } catch (InterruptedException e) {
-                    LOG.warn("Wait interrupted", e);
-                }
-            } else {
-                LOG.warn("There were " + allFailed.size() + " failures in replicating to Elasticsearch. These updates got lost.");
-            }
+        // no errors, reset consecutive error counter
+        if (allFailed.isEmpty()) {
+            consecutiveErrors = 0;
+            return;
+        }
+
+        // no retry-on-error, log and give up
+        if (!retryOnError) {
+            LOG.warn(allFailed.size() + " operations could not be replicated to Elasticsearch. These updates got lost.");
+            return;
+        }
+
+        // error, count consecutive errors
+        consecutiveErrors++;
+
+        // retry-on-error enabled but maximum consecutive errors reached: give up and reset counter
+        if (consecutiveErrors > maxConsecutiveErrors) {
+            LOG.warn("" +
+                    allFailed.size() + " operations could not be replicated to Elasticsearch. " +
+                    "Giving up after " + maxConsecutiveErrors + " consecutive errors. " +
+                    "These updated got lost."
+            );
+            consecutiveErrors = 0;
+            return;
+        }
+
+        // retry-on-error enabled
+        LOG.warn("" +
+                allFailed.size() + " operations could not be replicated to Elasticsearch. " +
+                (consecutiveErrors > 1 ? consecutiveErrors + " consecutive errors. "  : "") +
+                "Will retry..."
+        );
+        retry(Collections.singletonList(allFailed));
+        try {
+            LOG.info("Backing off for 2 seconds...");
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            LOG.warn("Wait interrupted", e);
         }
 
         if (executor instanceof BulkOperationExecutor) {
