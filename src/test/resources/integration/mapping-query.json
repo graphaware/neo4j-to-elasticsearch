@@ -19,7 +19,10 @@
   "relationship_mappings": [
     {
       "condition": "isType('WORKS_FOR')",
-      "type": "workers"
+      "type": "workers-rels",
+      "properties": {
+        "reltype": "query('MATCH ()-[r]->() WHERE id(r) = {id} RETURN type(r) AS value')"
+      }
     }
   ]
 }

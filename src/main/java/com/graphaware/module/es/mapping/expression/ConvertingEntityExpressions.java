@@ -83,4 +83,8 @@ public interface ConvertingEntityExpressions extends EntityExpressions {
 
         return null;
     }
+
+    default QueryExpression query(String query) {
+        return new QueryExpression(query);
+    }
 }

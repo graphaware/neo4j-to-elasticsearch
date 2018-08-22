@@ -92,7 +92,7 @@ public class DocumentMappingRepresentation {
         for (GraphDocumentMapper mapping : relationshipMappers) {
             if (mapping.supports(relationship)) {
                 try {
-                    DocumentRepresentation document = mapping.getDocumentRepresentation(relationship, defaults);
+                    DocumentRepresentation document = mapping.getDocumentRepresentation(relationship, defaults, database);
                     String json = objectMapper.writeValueAsString(document.getSource());
                     actions.add(new Index.Builder(json).index(document.getIndex()).type(document.getType()).id(document.getId()).build());
                 } catch (Exception e) {
@@ -110,7 +110,7 @@ public class DocumentMappingRepresentation {
         for (GraphDocumentMapper mapping : relationshipMappers) {
             if (mapping.supports(relationship)) {
                 try {
-                    DocumentRepresentation document = mapping.getDocumentRepresentation(relationship, defaults);
+                    DocumentRepresentation document = mapping.getDocumentRepresentation(relationship, defaults, database);
                     actions.add(new Delete.Builder(document.getId()).index(document.getIndex()).type(document.getType()).build());
                 } catch (Exception e) {
                     LOG.error("Error while deleting relationship: " + relationship.toString(), e);
@@ -127,7 +127,7 @@ public class DocumentMappingRepresentation {
         for (DocumentRepresentation action : getNodeMappingRepresentations(after, defaults)) {
             afterIndices.add(action.getIndex() + "_" + action.getType());
             try {
-                String json = objectMapper.writeValueAsString(action);
+                String json = objectMapper.writeValueAsString(action.getSource());
                 actions.add(new Index.Builder(json).index(action.getIndex()).type(action.getType()).id(action.getId()).build());
             } catch (Exception ex) {
                 LOG.error("Error while adding action for node: " + before.toString(), ex);
@@ -150,7 +150,7 @@ public class DocumentMappingRepresentation {
         for (DocumentRepresentation action : getRelationshipMappingRepresentations(after, defaults)) {
             afterIndices.add(action.getIndex() + "_" + action.getType());
             try {
-                String json = objectMapper.writeValueAsString(action);
+                String json = objectMapper.writeValueAsString(action.getSource());
                 actions.add(new Index.Builder(json).index(action.getIndex()).type(action.getType()).id(action.getId()).build());
             } catch (Exception ex) {
                 LOG.error("Error while adding update action for nodes: " + before.toString() + " -> " + after.toString(), ex);
@@ -200,7 +200,7 @@ public class DocumentMappingRepresentation {
         for (GraphDocumentMapper mapper : getRelationshipMappers()) {
             if (mapper.supports(relationshipExpressions)) {
                 try {
-                    DocumentRepresentation document = mapper.getDocumentRepresentation(relationshipExpressions, defaults);
+                    DocumentRepresentation document = mapper.getDocumentRepresentation(relationshipExpressions, defaults, database);
                     docs.add(document);
                 } catch (Exception e) {
                     LOG.error("Error while getting document for relationship: " + relationshipExpressions.toString(), e);

@@ -37,7 +37,12 @@ import io.searchbox.indices.mapping.GetMapping;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.neo4j.graphdb.*;
+import org.neo4j.graphdb.Entity;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.NotFoundException;
+import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.Transaction;
 import org.neo4j.logging.Log;
 
 import java.io.IOException;
@@ -67,7 +72,7 @@ public class Searcher {
         this.database = database;
         this.mapping = configuration.getMapping();
         this.keyResolver = ResolverFactory.createResolver(database, mapping.getKeyProperty());
-        this.client = createClient(configuration.getProtocol(), configuration.getUri(), configuration.getPort(), configuration.getAuthUser(), configuration.getAuthPassword());
+        this.client = createClient(configuration.getProtocol(), configuration.getUri(), configuration.getPort(), configuration.getAuthUser(), configuration.getAuthPassword(), configuration.getReadTimeout(), configuration.getConnectionTimeout());
     }
 
     private Function<SearchMatch, Relationship> getRelationshipResolver() {
@@ -150,13 +155,13 @@ public class Searcher {
         return matches;
     }
 
-    public static JestClient createClient(String protocol, String uri, String port, String authUser, String authPassword) {
+    public static JestClient createClient(String protocol, String uri, String port, String authUser, String authPassword, int readTimeout, int connectionTimeout) {
         notNull(uri);
         notNull(port);
 
         LOG.info("Creating Jest Client...");
 
-        CustomJestClientFactory factory = new CustomJestClientFactory();
+        CustomJestClientFactory factory = new CustomJestClientFactory(readTimeout, connectionTimeout);
         String esHost = String.format("%s://%s:%s", protocol, uri, port);
         HttpClientConfig.Builder clientConfigBuilder = new HttpClientConfig.Builder(esHost).multiThreaded(true);
 
