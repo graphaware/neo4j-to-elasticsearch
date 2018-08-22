@@ -862,7 +862,7 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
             for (Relationship rel : database.getAllRelationships()) {
                 if (rel.isType(RelationshipType.withName("WORKS_FOR"))) {
                     String uuid = rel.getProperty("uuid").toString();
-                    String type = "workers-rels";
+                    String type = "workers";
                     Get get = new Get.Builder("default-index-relationship", uuid).type(type).build();
                     JestResult result = esClient.execute(get);
                     assertTrue(result.isSucceeded());
