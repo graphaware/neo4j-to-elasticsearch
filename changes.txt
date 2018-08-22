@@ -1,3 +1,12 @@
+3.4.6.52.10
+    - updated to Neo4j 3.4.6
+
+3.4.5.52.10
+    - updated to Neo4j 3.4.5
+
+3.4.3.52.10
+    - updated to Neo4j 3.4.3
+
 3.4.0.52.10
 
     - added ability to specify timeout values for both query and connection to ES ( thx @itgold )
