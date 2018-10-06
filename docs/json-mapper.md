@@ -195,7 +195,7 @@ on the value of a property, you can use the following as example :
 ```json
 {
       "condition": "getLabels().length > 0",
-      "index": "'nodes-' + getProperty('actionType').toLower()'",
+      "index": "'nodes-' + getProperty('actionType').toLower()",
       "type": "action"
 }
 ```
