@@ -78,6 +78,8 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         cleanUpData();
         testBasicJsonMappingReplicationWithQueryOnRelationship();
         cleanUpData();
+        testBasicJsonMappingReplicationWithCustomIdKey();
+        cleanUpData();
     }
 
     //@Test
@@ -111,6 +113,38 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         JsonFileMapping mapping = (JsonFileMapping) ServiceLoader.loadMapping("com.graphaware.module.es.mapping.JsonFileMapping");
         Map<String, String> mappingConfig = new HashMap<>();
         mappingConfig.put("file", "integration/mapping-basic.json");
+
+        configuration = ElasticSearchConfiguration.defaultConfiguration()
+                .withMapping(mapping, mappingConfig)
+                .with(IncludeAllRelationships.getInstance())
+                .withUri(HOST)
+                .withPort(PORT);
+
+        runtime.registerModule(new ElasticSearchModule("ES", new ElasticSearchWriter(configuration), configuration));
+
+        runtime.start();
+        runtime.waitUntilStarted();
+
+        writeSomePersons();
+        TestUtil.waitFor(2000);
+        verifyEsReplicationForNodeWithLabels("Person", mapping.getMappingRepresentation().getDefaults().getDefaultNodesIndex(), "persons", mapping.getMappingRepresentation().getDefaults().getKeyProperty());
+        try (Transaction tx = database.beginTx()) {
+            database.getAllRelationships().stream().forEach(r -> {
+                new Neo4jElasticVerifier(database, configuration, esClient).verifyEsReplication(r, mapping.getMappingRepresentation().getDefaults().getDefaultRelationshipsIndex(), "workers", mapping.getKeyProperty());
+            });
+            tx.success();
+        }
+    }
+
+    public void testBasicJsonMappingReplicationWithCustomIdKey() {
+        database = new TestGraphDatabaseFactory().newImpermanentDatabase();
+
+        GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database);
+        runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration().withUuidProperty("passengerID").with(IncludeAllRelationships.getInstance()), database));
+
+        JsonFileMapping mapping = (JsonFileMapping) ServiceLoader.loadMapping("com.graphaware.module.es.mapping.JsonFileMapping");
+        Map<String, String> mappingConfig = new HashMap<>();
+        mappingConfig.put("file", "integration/mapping-basic-custom-uuid-property.json");
 
         configuration = ElasticSearchConfiguration.defaultConfiguration()
                 .withMapping(mapping, mappingConfig)
