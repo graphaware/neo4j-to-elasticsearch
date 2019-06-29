@@ -1,7 +1,7 @@
 GraphAware Neo4j Elasticsearch Integration (Neo4j Module)
 =========================================================
 
-[![Build Status](https://travis-ci.org/graphaware/neo4j-to-elasticsearch.png)](https://travis-ci.org/graphaware/neo4j-to-elasticsearch) | <a href="http://graphaware.com/products/" target="_blank">Downloads</a> | <a href="http://graphaware.com/site/neo4j-to-elasticsearch/latest/apidocs/" target="_blank">Javadoc</a> | Latest Release: 3.5.5.53.0
+[![Build Status](https://travis-ci.org/graphaware/neo4j-to-elasticsearch.png)](https://travis-ci.org/graphaware/neo4j-to-elasticsearch) | <a href="http://graphaware.com/products/" target="_blank">Downloads</a> | <a href="http://graphaware.com/site/neo4j-to-elasticsearch/latest/apidocs/" target="_blank">Javadoc</a> | Latest Release: 3.5.5.53.11
 
 GraphAware Elasticsearch Integration is an enterprise-grade bi-directional integration between Neo4j and Elasticsearch.
 It consists of two independent modules plus a test suite. Both modules can be used independently or together to achieve
