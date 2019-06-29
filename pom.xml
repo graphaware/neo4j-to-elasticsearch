@@ -120,7 +120,7 @@
         <dependency>
             <groupId>com.graphaware.neo4j</groupId>
             <artifactId>uuid</artifactId>
-            <version>${project.parent.version}.0</version>
+            <version>${project.parent.version}.18</version>
             <scope>provided</scope>
         </dependency>
 
