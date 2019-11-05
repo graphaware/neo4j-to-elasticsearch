@@ -9,6 +9,8 @@ stages:
 bumpVersion:
   extends: .frameworkVersionBump
   stage: deploy
+  when: delayed
+  start_in: 30 minutes
 
 uploadArtifact:
   extends: .uploadToS3
