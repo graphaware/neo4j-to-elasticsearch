@@ -19,7 +19,7 @@ bumpVersion:
     - NEW_MODULE_VERSION="${PARENT_VERSION}.${OLD_MODULE_VERSION}" #this will keep -SNAPSHOT
     - RELEASE_VERSION="${PARENT_VERSION}.$((${OLD_MODULE_VERSION%-*}-1))" # release is for snapshot version -1, it strips everything after dash (eg -SNAPSHOT)
     - >
-      mvn release:clean release:prepare $MAVEN_CLI_OPTS
+      mvn release:clean release:prepare
       -DreleaseVersion=$RELEASE_VERSION
       -DdevelopmentVersion=$NEW_MODULE_VERSION
       -Dtag="Version-${RELEASE_VERSION}"
