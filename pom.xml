@@ -18,7 +18,7 @@
     <parent>
         <groupId>com.graphaware.neo4j</groupId>
         <artifactId>module-parent</artifactId>
-        <version>3.5.7.54</version>
+        <version>3.5.12.55</version>
     </parent>
 
     <artifactId>neo4j-to-elasticsearch</artifactId>
