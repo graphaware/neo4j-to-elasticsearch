@@ -8,9 +8,14 @@ stages:
 
 bumpVersion:
   extends: .frameworkVersionBump
+  variables:
+    MAVEN_CLI_OPTS: "-s .m2/settings.xml"
   stage: deploy
-  when: delayed
-  start_in: 30 minutes
+  only:
+    refs:
+      - CICD
+    variables:
+      - $PARENT_VERSION
 
 uploadArtifact:
   extends: .uploadToS3
@@ -21,6 +26,6 @@ uploadArtifact:
     JAR_NAME: neo4j-to-elasticsearch
   only:
     refs:
-      - master
+      - CICD
     variables:
       - $PARENT_VERSION
