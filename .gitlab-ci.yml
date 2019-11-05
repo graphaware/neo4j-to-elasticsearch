@@ -16,8 +16,7 @@ uploadArtifact:
   dependencies:
     - bumpVersion
   variables:
-    FROM: target/neo4j-to-elasticsearch-$PARENT_VERSION.jar
-    TO: $AWS_PATH/neo4j-to-elasticsearch-$PARENT_VERSION.jar
+    JAR_NAME: neo4j-to-elasticsearch
   only:
     refs:
       - master
