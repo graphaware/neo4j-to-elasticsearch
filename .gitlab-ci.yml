@@ -1,49 +1,6 @@
 include:
   - project: graphaware/devops/gitlab-ci-templates
-    file: gitlab-ci-templates.yml
+    file: neo4j-framework-template.yml
 
-stages:
-  - deploy
-  - postDeploy
-
-bumpVersion:
-  extends: .frameworkVersionBump
-  stage: deploy
-  script:
-    - echo "Updating to version $PARENT_VERSION"
-    - mvn versions:update-parent $MAVEN_CLI_OPTS -DparentVersion=["$PARENT_VERSION"] #parent version variable is that picky - needs to be in an array and the version needs to be in the quotation marks. Possibly parent version could be omitted if we always updated to the latest version available.
-    - mvn versions:commit $MAVEN_CLI_OPTS
-    - git commit -a -m "Gitlab-ci parent version bump"
-    - OLD_MODULE_VERSION=`mvn $MAVEN_CLI_OPTS help:evaluate -Dexpression=project.version -DforceStdout`
-    - OLD_MODULE_VERSION=${OLD_MODULE_VERSION##*.} #get fragment after last .
-    - NEW_MODULE_VERSION="${PARENT_VERSION}.${OLD_MODULE_VERSION}" #this will keep -SNAPSHOT
-    - RELEASE_VERSION="${PARENT_VERSION}.$((${OLD_MODULE_VERSION%-*}-1))" # release is for snapshot version -1, it strips everything after dash (eg -SNAPSHOT)
-    - >
-      mvn release:clean release:prepare
-      -DreleaseVersion=$RELEASE_VERSION
-      -DdevelopmentVersion=$NEW_MODULE_VERSION
-      -Dtag="Version-${RELEASE_VERSION}"
-      -DskipTests=true
-      -Darguments=-DskipTests
-      -s .m2/settings.xml
-    #we must skip tests, as they cause the gitlab runner to hang. It is defined twice to be sure it gets propagated
-    - mvn release:perform $MAVEN_CLI_OPTS -DskipTests=true -Darguments=-DskipTests
-    - echo $RELEASE_VERSION > .versionVar.tmp
-  only:
-    refs:
-      - CICD
-    variables:
-      - $PARENT_VERSION
-
-uploadArtifact:
-  extends: .uploadToS3
-  stage: postDeploy
-  dependencies:
-    - bumpVersion
-  variables:
-    JAR_NAME: neo4j-to-elasticsearch
-  only:
-    refs:
-      - CICD
-    variables:
-      - $PARENT_VERSION
+variables:
+  JAR_NAME: neo4j-to-elasticsearch
