@@ -38,7 +38,7 @@
 
     <scm>
         <connection>scm:git:git@github.com:graphaware/neo4j-to-elasticsearch.git</connection>
-        <developerConnection>scm:git:git@github.com:graphaware/neo4j-to-elasticsearch.git</developerConnection>
+        <developerConnection>scm:git@gitlab.com:graphaware/neo4j-plugins/neo4j-to-elasticsearch.git</developerConnection>
         <url>git@github.com:graphaware/neo4j-to-elasticsearch.git</url>
       <tag>HEAD</tag>
   </scm>
