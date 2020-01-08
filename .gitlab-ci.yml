@@ -4,3 +4,9 @@ include:
 
 variables:
   JAR_NAME: neo4j-to-elasticsearch
+
+publishJavaDoc:
+  extends: .publishJavaDoc
+  variables:
+    FROM: target/apidocs
+    TO: neo4j-to-elasticsearch
