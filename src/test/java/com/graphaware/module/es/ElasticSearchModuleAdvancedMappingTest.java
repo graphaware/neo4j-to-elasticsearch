@@ -58,6 +58,8 @@ public class ElasticSearchModuleAdvancedMappingTest extends ElasticSearchModuleI
             node.addLabel(Label.label("LabelWithList2"));
             int[] listOfInteger = {1, 2, 3};
             node.setProperty("listOfInteger", listOfInteger);
+            node.setProperty("infinite-number", Double.NEGATIVE_INFINITY);
+            node.setProperty("nan-number", Double.NaN);
             tx.success();
         }
         
