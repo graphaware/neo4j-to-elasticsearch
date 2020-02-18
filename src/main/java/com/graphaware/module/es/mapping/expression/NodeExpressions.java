@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 GraphAware
+ * Copyright (c) 2013-2019 GraphAware
  *
  * This file is part of the GraphAware Framework.
  *
@@ -15,7 +15,9 @@
 package com.graphaware.module.es.mapping.expression;
 
 import com.graphaware.common.representation.GraphDetachedNode;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Transaction;
 
 public class NodeExpressions extends GraphDetachedNode implements ConvertingEntityExpressions {
 

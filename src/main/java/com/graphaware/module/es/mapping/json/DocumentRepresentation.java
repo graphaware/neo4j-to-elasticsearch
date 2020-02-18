@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 GraphAware
+ * Copyright (c) 2013-2019 GraphAware
  *
  * This file is part of the GraphAware Framework.
  *
@@ -31,8 +31,6 @@ public class DocumentRepresentation {
     private final String id;
 
     private final Map<String, Object> source;
-    
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public DocumentRepresentation(String index, String type, String id) {
         this.index = index;
@@ -62,15 +60,5 @@ public class DocumentRepresentation {
 
     public Map<String, Object> getSource() {
         return source;
-    }
-    
-    public String getJson() throws DocumentRepresentationException {
-        try {
-            return objectMapper.writeValueAsString(source);
-        } catch (IOException ex) {
-            LOG.error("Error while creating json from action: " + source, ex);
-            // @// TODO: 24/07/16  Should we really throw the exception here, instead of silently logging and failing 
-            throw new DocumentRepresentationException(source, ex);
-        }
     }
 }

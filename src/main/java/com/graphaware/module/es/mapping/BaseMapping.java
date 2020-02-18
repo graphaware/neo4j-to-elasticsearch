@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 GraphAware
+ * Copyright (c) 2013-2019 GraphAware
  *
  * This file is part of the GraphAware Framework.
  *
@@ -25,6 +25,7 @@ import io.searchbox.client.JestResult;
 import io.searchbox.indices.CreateIndex;
 import io.searchbox.indices.IndicesExists;
 import org.neo4j.graphdb.Entity;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.logging.Log;
@@ -45,6 +46,7 @@ public abstract class BaseMapping implements Mapping {
     protected String keyProperty;
     protected String indexPrefix;
     protected boolean forceStrings;
+    protected GraphDatabaseService database;
 
     public BaseMapping() {
     }
@@ -221,5 +223,14 @@ public abstract class BaseMapping implements Mapping {
     @Override
     public boolean bypassInclusionPolicies() {
         return false;
+    }
+
+    @Override
+    public void setDatabase(GraphDatabaseService database) {
+        this.database = database;
+    }
+
+    protected GraphDatabaseService getDatabase() {
+        return database;
     }
 }

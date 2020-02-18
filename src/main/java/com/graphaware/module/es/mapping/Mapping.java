@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 GraphAware
+ * Copyright (c) 2013-2019 GraphAware
  *
  * This file is part of the GraphAware Framework.
  *
@@ -25,6 +25,7 @@ import io.searchbox.action.BulkableAction;
 import io.searchbox.client.JestClient;
 import io.searchbox.client.JestResult;
 import org.neo4j.graphdb.Entity;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.logging.Log;
 
 import java.util.Collections;
@@ -42,6 +43,8 @@ public interface Mapping {
     <T extends Entity> String getIndexFor(Class<T> searchedType);
 
     String getKeyProperty();
+
+    void setDatabase(GraphDatabaseService database);
 
     default List<BulkableAction<? extends JestResult>> getActions(WriteOperation<?> operation) {
         switch (operation.getType()) {
@@ -88,4 +91,6 @@ public interface Mapping {
      * @return boolean
      */
     boolean bypassInclusionPolicies();
+
+    void reload();
 }

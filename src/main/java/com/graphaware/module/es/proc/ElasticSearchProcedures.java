@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 GraphAware
+ * Copyright (c) 2013-2019 GraphAware
  *
  * This file is part of the GraphAware Framework.
  *
@@ -18,10 +18,7 @@ package com.graphaware.module.es.proc;
 
 import com.graphaware.common.log.LoggerFactory;
 import com.graphaware.module.es.ElasticSearchModule;
-import com.graphaware.module.es.proc.result.JsonSearchResult;
-import com.graphaware.module.es.proc.result.NodeSearchResult;
-import com.graphaware.module.es.proc.result.RelationshipSearchResult;
-import com.graphaware.module.es.proc.result.StatusResult;
+import com.graphaware.module.es.proc.result.*;
 import com.graphaware.module.es.search.Searcher;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
@@ -108,6 +105,12 @@ public class ElasticSearchProcedures {
     @Procedure("ga.es.info")
     public Stream<JsonSearchResult> info() {
         return Stream.of(new JsonSearchResult(getSearcher(database).getEsInfo()));
+    }
+
+    @Procedure("ga.es.reloadMapping")
+    public Stream<SingleResult> reloadMapping() {
+        getStartedRuntime(database).getModule(ElasticSearchModule.class).getWriter().reloadMapping();
+        return Stream.of(SingleResult.success());
     }
 }
 

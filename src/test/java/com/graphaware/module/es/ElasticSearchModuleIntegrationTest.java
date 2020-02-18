@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 GraphAware
+ * Copyright (c) 2013-2019 GraphAware
  *
  * This file is part of the GraphAware Framework.
  *
@@ -47,7 +47,6 @@ public abstract class ElasticSearchModuleIntegrationTest {
         esServer = new EmbeddedElasticSearchServer();
         esServer.start();
         esClient = new JestElasticSearchClient(HOST, PORT);
-
     }
 
     @After

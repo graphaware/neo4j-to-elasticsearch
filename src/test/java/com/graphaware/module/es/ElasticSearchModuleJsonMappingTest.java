@@ -1,5 +1,6 @@
 package com.graphaware.module.es;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphaware.common.policy.inclusion.all.IncludeAllRelationships;
 import com.graphaware.integration.es.test.EmbeddedElasticSearchServer;
 import com.graphaware.integration.es.test.JestElasticSearchClient;
@@ -16,7 +17,6 @@ import io.searchbox.client.JestResult;
 import io.searchbox.core.DeleteByQuery;
 import io.searchbox.core.Get;
 import java.io.IOException;
-import org.junit.After;
 import org.junit.Before;
 import org.neo4j.graphdb.*;
 import org.neo4j.test.TestGraphDatabaseFactory;
@@ -43,6 +43,8 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         testBasicJsonMappingModuleBootstrap();
         cleanUpData();
         testBasicJsonMappingReplication();
+        cleanUpData();
+        testSourceIsIn_SourceObject();
         cleanUpData();
         testJsonMappingWithMultipleMappingsAndMoreThanOneLabelAndIndex();
         cleanUpData();
@@ -71,6 +73,12 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         testPropertyValuesTransformation();
         cleanUpData();
         testIndexWithAllNodesAndAllRelsExpression();
+        cleanUpData();
+        testBasicJsonMappingReplicationWithQuery();
+        cleanUpData();
+        testBasicJsonMappingReplicationWithQueryOnRelationship();
+        cleanUpData();
+        testBasicJsonMappingReplicationWithCustomIdKey();
         cleanUpData();
     }
 
@@ -123,6 +131,88 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
         try (Transaction tx = database.beginTx()) {
             database.getAllRelationships().stream().forEach(r -> {
                 new Neo4jElasticVerifier(database, configuration, esClient).verifyEsReplication(r, mapping.getMappingRepresentation().getDefaults().getDefaultRelationshipsIndex(), "workers", mapping.getKeyProperty());
+            });
+            tx.success();
+        }
+    }
+
+    public void testBasicJsonMappingReplicationWithCustomIdKey() {
+        database = new TestGraphDatabaseFactory().newImpermanentDatabase();
+
+        GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database);
+        runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration().withUuidProperty("passengerID").with(IncludeAllRelationships.getInstance()), database));
+
+        JsonFileMapping mapping = (JsonFileMapping) ServiceLoader.loadMapping("com.graphaware.module.es.mapping.JsonFileMapping");
+        Map<String, String> mappingConfig = new HashMap<>();
+        mappingConfig.put("file", "integration/mapping-basic-custom-uuid-property.json");
+
+        configuration = ElasticSearchConfiguration.defaultConfiguration()
+                .withMapping(mapping, mappingConfig)
+                .with(IncludeAllRelationships.getInstance())
+                .withUri(HOST)
+                .withPort(PORT);
+
+        runtime.registerModule(new ElasticSearchModule("ES", new ElasticSearchWriter(configuration), configuration));
+
+        runtime.start();
+        runtime.waitUntilStarted();
+
+        writeSomePersons();
+        TestUtil.waitFor(2000);
+        verifyEsReplicationForNodeWithLabels("Person", mapping.getMappingRepresentation().getDefaults().getDefaultNodesIndex(), "persons", mapping.getMappingRepresentation().getDefaults().getKeyProperty());
+        try (Transaction tx = database.beginTx()) {
+            database.getAllRelationships().stream().forEach(r -> {
+                new Neo4jElasticVerifier(database, configuration, esClient).verifyEsReplication(r, mapping.getMappingRepresentation().getDefaults().getDefaultRelationshipsIndex(), "workers", mapping.getKeyProperty());
+            });
+            tx.success();
+        }
+    }
+
+    // See https://github.com/graphaware/neo4j-to-elasticsearch/issues/114#issuecomment-387977587
+    //@Test
+    public void testSourceIsIn_SourceObject() {
+        database = new TestGraphDatabaseFactory().newImpermanentDatabase();
+
+        GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database);
+        runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration().withUuidProperty("uuid").with(IncludeAllRelationships.getInstance()), database));
+
+        JsonFileMapping mapping = (JsonFileMapping) ServiceLoader.loadMapping("com.graphaware.module.es.mapping.JsonFileMapping");
+        Map<String, String> mappingConfig = new HashMap<>();
+        mappingConfig.put("file", "integration/mapping-basic.json");
+
+        configuration = ElasticSearchConfiguration.defaultConfiguration()
+                .withMapping(mapping, mappingConfig)
+                .with(IncludeAllRelationships.getInstance())
+                .withUri(HOST)
+                .withPort(PORT);
+
+        runtime.registerModule(new ElasticSearchModule("ES", new ElasticSearchWriter(configuration), configuration));
+
+        runtime.start();
+        runtime.waitUntilStarted();
+
+        writeSomePersons();
+        TestUtil.waitFor(2000);
+        ObjectMapper mapper = new ObjectMapper();
+
+        try (Transaction tx = database.beginTx()) {
+            database.getAllNodes().forEach(node -> {
+                String index = ((JsonFileMapping) configuration.getMapping()).getMappingRepresentation().getDefaults().getDefaultNodesIndex();
+                String type = "persons";
+                Get get = new Get.Builder(index, node.getProperty("uuid").toString()).type(type).build();
+                JestResult result = esClient.execute(get);
+                if (result.isSucceeded()) {
+                    try {
+                        Map<String, Object> doc = mapper.readValue(result.getJsonString(), Map.class);
+                        assertTrue(doc.containsKey("_source"));
+                        Map<String, Object> source = (Map<String, Object>) doc.get("_source");
+                        assertTrue(source.containsKey("firstName"));
+                    } catch (Exception e) {
+                        throw new RuntimeException(e.getMessage());
+                    }
+                }
+
+
             });
             tx.success();
         }
@@ -708,6 +798,114 @@ public class ElasticSearchModuleJsonMappingTest extends ElasticSearchModuleInteg
                 assertEquals(1.489, map.get("latitude"));
             }
             tx.success();
+        }
+    }
+
+    // WITH INTERNAL QUERY TYPE
+    @Test
+    public void testReadOnlyTransactionType() {
+        database = new TestGraphDatabaseFactory().newImpermanentDatabase();
+
+        try (Transaction tx = database.beginTx()) {
+            Result result = database.execute("MATCH (n) RETURN n");
+            assertEquals(QueryExecutionType.QueryType.READ_ONLY, result.getQueryExecutionType().queryType());
+            tx.success();
+        }
+    }
+
+    @Test
+    public void testWriteTransactionType() {
+        database = new TestGraphDatabaseFactory().newImpermanentDatabase();
+
+        try (Transaction tx = database.beginTx()) {
+            List<QueryExecutionType.QueryType> writeTypes = Arrays.asList(QueryExecutionType.QueryType.WRITE, QueryExecutionType.QueryType.READ_WRITE);
+            Result result = database.execute("CREATE (n) RETURN n");
+            assertTrue(writeTypes.contains(result.getQueryExecutionType().queryType()));
+            tx.success();
+        }
+    }
+
+    // WITH QUERY RESULT STATISTICS
+    @Test
+    public void testResultStatistics() {
+        database = new TestGraphDatabaseFactory().newImpermanentDatabase();
+
+        try (Transaction tx = database.beginTx()) {
+            Result result = database.execute("CREATE (n) RETURN n");
+            assertTrue(result.getQueryStatistics().containsUpdates());
+            tx.success();
+        }
+    }
+
+    public void testBasicJsonMappingReplicationWithQuery() {
+        database = new TestGraphDatabaseFactory().newImpermanentDatabase();
+
+        GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database);
+        runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration().withUuidProperty("uuid").with(IncludeAllRelationships.getInstance()), database));
+
+        JsonFileMapping mapping = (JsonFileMapping) ServiceLoader.loadMapping("com.graphaware.module.es.mapping.JsonFileMapping");
+        Map<String, String> mappingConfig = new HashMap<>();
+        mappingConfig.put("file", "integration/mapping-query.json");
+
+        configuration = ElasticSearchConfiguration.defaultConfiguration()
+                .withMapping(mapping, mappingConfig)
+                .with(IncludeAllRelationships.getInstance())
+                .withUri(HOST)
+                .withPort(PORT);
+
+        runtime.registerModule(new ElasticSearchModule("ES", new ElasticSearchWriter(configuration), configuration));
+        runtime.start();
+        runtime.waitUntilStarted();
+
+        writeSomePersons();
+        System.out.println("Finished writing...");
+        TestUtil.waitFor(2000);
+        verifyEsReplicationForNodeWithLabels("Person", mapping.getMappingRepresentation().getDefaults().getDefaultNodesIndex(), "persons", mapping.getMappingRepresentation().getDefaults().getKeyProperty());
+        try (Transaction tx = database.beginTx()) {
+            database.getAllRelationships().stream().forEach(r -> {
+                new Neo4jElasticVerifier(database, configuration, esClient).verifyEsReplication(r, mapping.getMappingRepresentation().getDefaults().getDefaultRelationshipsIndex(), "workers", mapping.getKeyProperty());
+            });
+            tx.success();
+        }
+    }
+
+    public void testBasicJsonMappingReplicationWithQueryOnRelationship() {
+        database = new TestGraphDatabaseFactory().newImpermanentDatabase();
+
+        GraphAwareRuntime runtime = GraphAwareRuntimeFactory.createRuntime(database);
+        runtime.registerModule(new UuidModule("UUID", UuidConfiguration.defaultConfiguration().withUuidProperty("uuid").with(IncludeAllRelationships.getInstance()), database));
+
+        JsonFileMapping mapping = (JsonFileMapping) ServiceLoader.loadMapping("com.graphaware.module.es.mapping.JsonFileMapping");
+        Map<String, String> mappingConfig = new HashMap<>();
+        mappingConfig.put("file", "integration/mapping-query.json");
+
+        configuration = ElasticSearchConfiguration.defaultConfiguration()
+                .withMapping(mapping, mappingConfig)
+                .with(IncludeAllRelationships.getInstance())
+                .withUri(HOST)
+                .withPort(PORT);
+
+        runtime.registerModule(new ElasticSearchModule("ES", new ElasticSearchWriter(configuration), configuration));
+        runtime.start();
+        runtime.waitUntilStarted();
+
+        writeSomePersons();
+        System.out.println("Finished writing...");
+        TestUtil.waitFor(2000);
+        try (Transaction tx = database.beginTx()) {
+            for (Relationship rel : database.getAllRelationships()) {
+                if (rel.isType(RelationshipType.withName("WORKS_FOR"))) {
+                    String uuid = rel.getProperty("uuid").toString();
+                    String type = "workers";
+                    Get get = new Get.Builder("default-index-relationship", uuid).type(type).build();
+                    JestResult result = esClient.execute(get);
+                    assertTrue(result.isSucceeded());
+                    Map<String, Object> source = new HashMap<>();
+                    Map<String, Object> map = result.getSourceAsObject(source.getClass());
+                    assertEquals("WORKS_FOR", map.get("reltype"));
+                    tx.success();
+                }
+            }
         }
     }
 

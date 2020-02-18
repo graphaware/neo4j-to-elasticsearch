@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 GraphAware
+ * Copyright (c) 2013-2019 GraphAware
  *
  * This file is part of the GraphAware Framework.
  *
@@ -111,5 +111,10 @@ public class DefaultMapping extends BaseMapping implements Mapping {
     @Override
     public <T extends Entity> String getIndexFor(Class<T> searchedType) {
         return getIndexPrefix() + (searchedType.equals(Node.class) ? "-node" : "-relationship");
+    }
+
+    @Override
+    public void reload() {
+
     }
 }

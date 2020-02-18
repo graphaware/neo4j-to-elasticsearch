@@ -106,3 +106,4 @@ buildNumber.properties
 hs_err_pid*
 
 /extlib/
+metrics/

@@ -8,6 +8,9 @@ import io.searchbox.client.JestClientFactory;
 import io.searchbox.client.config.HttpClientConfig;
 import org.apache.http.impl.client.HttpClientBuilder;
 
+import static com.graphaware.module.es.ElasticSearchConfiguration.DEFAULT_CONNECTION_TIMEOUT;
+import static com.graphaware.module.es.ElasticSearchConfiguration.DEFAULT_READ_TIMEOUT;
+
 import java.io.IOException;
 
 /**
@@ -17,6 +20,17 @@ import java.io.IOException;
  * - connTimeout: 10s
  */
 public class CustomJestClientFactory extends JestClientFactory {
+
+    private int readTimeout;
+    private int connectionTimeout;
+
+    public CustomJestClientFactory() {
+    }
+
+    public CustomJestClientFactory(int readTimeout, int connectionTimeout) {
+        this.readTimeout = readTimeout;
+        this.connectionTimeout = connectionTimeout;
+    }
 
     /**
      * Serialize non-finite doubles (-Infinity, +Infinity, NaN) as strings.
@@ -47,6 +61,8 @@ public class CustomJestClientFactory extends JestClientFactory {
     @Override
     public void setHttpClientConfig(HttpClientConfig httpClientConfig) {
         super.setHttpClientConfig(new HttpClientConfig.Builder(httpClientConfig)
+                .readTimeout(readTimeout > 0 ? readTimeout : DEFAULT_READ_TIMEOUT)
+                .connTimeout(connectionTimeout > 0 ? connectionTimeout : DEFAULT_CONNECTION_TIMEOUT)
                 .gson(new GsonBuilder()
                         .registerTypeAdapter(Double.class, new NonFiniteAsStringAdapter())
                         .create()

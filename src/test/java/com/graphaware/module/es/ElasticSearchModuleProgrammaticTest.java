@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 GraphAware
+ * Copyright (c) 2013-2019 GraphAware
  *
  * This file is part of the GraphAware Framework.
  *
@@ -91,7 +91,7 @@ public class ElasticSearchModuleProgrammaticTest extends ElasticSearchModuleInte
 
         //Actual test:
         writeSomeStuffToNeo4j();
-        waitFor(1000);
+        waitFor(3000);
         verifyEsReplication();
     }
 
@@ -146,7 +146,7 @@ public class ElasticSearchModuleProgrammaticTest extends ElasticSearchModuleInte
 
         //Actual test:
         writeSomeStuffToNeo4j();
-        waitFor(400);
+        waitFor(2400);
         verifyEsReplication();
     }
 

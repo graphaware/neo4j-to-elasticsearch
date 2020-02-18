@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 GraphAware
+ * Copyright (c) 2013-2019 GraphAware
  *
  * This file is part of the GraphAware Framework.
  *
@@ -23,6 +23,7 @@ import io.searchbox.action.BulkableAction;
 import io.searchbox.client.JestClient;
 import io.searchbox.client.JestResult;
 import org.neo4j.graphdb.Entity;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.logging.Log;
 import org.springframework.core.io.ClassPathResource;
 
@@ -38,13 +39,14 @@ public class JsonFileMapping implements Mapping {
     private static final String FILE_PATH_KEY = "file";
     private static final String NEO4j_HOME = "unsupported.dbms.directories.neo4j_home";
     private static final String NEO4j_CONF_DIR = "conf";
-
     private DocumentMappingRepresentation mappingRepresentation;
-
+    private GraphDatabaseService database;
     protected String keyProperty;
+    private Map<String, String> config;
 
     @Override
     public void configure(Map<String, String> config) {
+        this.config = config;
         if (!config.containsKey(FILE_PATH_KEY)) {
             throw new RuntimeException("Configuration is missing the " + FILE_PATH_KEY + "key");
         }
@@ -53,9 +55,12 @@ public class JsonFileMapping implements Mapping {
 			String file = null; 
 			if(classPathResource.exists()){
 				file = classPathResource.getFile().getAbsolutePath();
-			}else{
-				file = config.get(NEO4j_HOME) + File.separator + NEO4j_CONF_DIR + File.separator + config.get(FILE_PATH_KEY);
-			}
+			} else if (config.get(FILE_PATH_KEY).contains(File.separator)){
+                file = config.get(NEO4j_HOME) + File.separator + config.get(FILE_PATH_KEY);
+			} else {
+                file = config.get(NEO4j_HOME) + File.separator + NEO4j_CONF_DIR + File.separator + config.get(FILE_PATH_KEY);
+            }
+            LOG.info("Using mapping file at path " + file);
             mappingRepresentation = new ObjectMapper().readValue(new File(file), DocumentMappingRepresentation.class);
         } catch (IOException e) {
             throw new RuntimeException("Unable to read json mapping file", e);
@@ -109,5 +114,17 @@ public class JsonFileMapping implements Mapping {
     @Override
     public boolean bypassInclusionPolicies() {
         return true;
+    }
+
+    @Override
+    public void setDatabase(GraphDatabaseService database) {
+        this.database = database;
+        this.mappingRepresentation.setDatabase(database);
+    }
+
+    @Override
+    public void reload() {
+        configure(config);
+        this.mappingRepresentation.setDatabase(database);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 GraphAware
+ * Copyright (c) 2013-2019 GraphAware
  *
  * This file is part of the GraphAware Framework.
  *
@@ -82,5 +82,9 @@ public interface ConvertingEntityExpressions extends EntityExpressions {
         }
 
         return null;
+    }
+
+    default QueryExpression query(String query) {
+        return new QueryExpression(query);
     }
 }

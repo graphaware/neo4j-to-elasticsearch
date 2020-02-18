@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 GraphAware
+ * Copyright (c) 2013-2019 GraphAware
  *
  * This file is part of the GraphAware Framework.
  *
@@ -71,6 +71,10 @@ public class BulkOperationExecutor extends BaseOperationExecutor {
         }
         // Add all operations to the failed list.  They will be removed if "flush" succeeds.
         addFailed(operation);
+    }
+
+    public void reset() {
+        bulkBuilder = new Bulk.Builder();
     }
 
     private void executeBulk(Bulk.Builder bulkBuilder) {

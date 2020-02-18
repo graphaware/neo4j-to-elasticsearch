@@ -29,8 +29,8 @@ com.graphaware.module.ES.node=
 com.graphaware.module.ES.relationship=(true)
 com.graphaware.module.ES.bulk=true
 com.graphaware.module.ES.initializeUntil=0
-com.graphaware.module.ES.mapping = com.graphaware.module.es.mapping.JsonFileMapping
-com.graphaware.module.ES.file = mapping.json
+com.graphaware.module.ES.mapping=com.graphaware.module.es.mapping.JsonFileMapping
+com.graphaware.module.ES.file=mapping.json
 ```
 
 The last two lines in the configuration specify the type of mapper to use and the name of the file where
@@ -195,7 +195,7 @@ on the value of a property, you can use the following as example :
 ```json
 {
       "condition": "getLabels().length > 0",
-      "index": "'nodes-' + getProperty('actionType').toLower()'",
+      "index": "'nodes-' + getProperty('actionType').toLower()",
       "type": "action"
 }
 ```
@@ -256,5 +256,44 @@ You can predefine a list of blacklisted node / relationship property keys that s
 With the above configuration, passwords will never be included in the json source of the ES documents neither the
 relationship uuid properties.
 
+### Using Cypher queries for replication logic :
 
+It is possible to trigger a Cypher query execution as logic for returning a value to be set as ES document field,
+for example :
+
+```json
+{
+  "defaults": {
+    "key_property": "uuid",
+    "include_remaining_properties": true,
+    "blacklisted_node_properties": ["password", "uuid"]
+  },
+  "node_mappings": [
+    {
+      "condition": "hasLabel('Document') && hasLabel('ReplicationReady')",
+      "type": "documents",
+      "index": "documents",
+      "properties": {
+        "title": "getProperty('title')",
+        "text": "getProperty('text')",
+        "keywords": "query('MATCH (n) WHERE id(n) = {id} MATCH (n)-[:HAS_ANNOTATED_TEXT]->(at)<-[r:DESCRIBES]-(k) apoc.coll.sortMaps(collect({keyword: k.value, relevance: r.relevance}), \"relevance\")[0..5] AS value')"
+      }
+    }
+  ],
+  "relationship_mappings": []
+}
+```
+
+The above mapping defines that the `keywords` field of the ES document should be filled with the result of the query.
+
+**Note:** The result of the query **MUST** have the `value` identifier and **MUST** return a datatype compatible with Elasticsearch.
+
+### Hot reload of the mapping configuration
+
+During development, it is very useful to be able to test the mapping configuration. You can now reload it after any changes to your `mapping.json` file with the
+following procedure :
+
+```
+CALL ga.es.reloadMapping()
+```
 

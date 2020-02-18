@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 GraphAware
+ * Copyright (c) 2013-2019 GraphAware
  *
  * This file is part of the GraphAware Framework.
  *
@@ -16,11 +16,16 @@ package com.graphaware.module.es.mapping.json;
 import com.graphaware.common.log.LoggerFactory;
 import com.graphaware.common.representation.DetachedEntity;
 import com.graphaware.module.es.mapping.expression.NodeExpressions;
+import com.graphaware.module.es.mapping.expression.QueryExpression;
 import com.graphaware.module.es.mapping.expression.RelationshipExpressions;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Result;
+import org.neo4j.graphdb.Transaction;
 import org.neo4j.logging.Log;
 import org.springframework.expression.Expression;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import org.springframework.expression.ParseException;
@@ -39,7 +44,7 @@ public class GraphDocumentMapper {
     
     private SpelExpressionParser expressionParser;
     
-    //Some cache to avoid continous parsing
+    //Some cache to avoid continuous parsing
     private Map<String, Expression> expressions;
     private Expression typeExpression;
     private Map<String, Expression> indexsExpression;
@@ -81,11 +86,11 @@ public class GraphDocumentMapper {
         return false;
     }
 
-    public DocumentRepresentation getDocumentRepresentation(NodeExpressions node, DocumentMappingDefaults defaults) throws DocumentRepresentationException {
-        return getDocumentRepresentation(node, defaults, true);
+    public DocumentRepresentation getDocumentRepresentation(NodeExpressions node, DocumentMappingDefaults defaults, GraphDatabaseService graphDatabaseService) throws DocumentRepresentationException {
+        return getDocumentRepresentation(node, defaults, true, graphDatabaseService);
     }
 
-    public DocumentRepresentation getDocumentRepresentation(NodeExpressions node, DocumentMappingDefaults defaults, boolean buildSource) throws DocumentRepresentationException {
+    public DocumentRepresentation getDocumentRepresentation(NodeExpressions node, DocumentMappingDefaults defaults, boolean buildSource, GraphDatabaseService graphDatabaseService) throws DocumentRepresentationException {
         Map<String, Object> source = new HashMap<>();
         String i = getIndex(node, defaults.getDefaultNodesIndex());
         String id = getKeyProperty(node, defaults.getKeyProperty());
@@ -96,7 +101,12 @@ public class GraphDocumentMapper {
                     Expression exp = getExpression(s);
                     Object o;
                     try {
-                        o = exp.getValue(node);
+                        Object t = exp.getValue(node);
+                        if (t instanceof QueryExpression) {
+                            o = getQueryExpressionResult(node, graphDatabaseService, (QueryExpression) t);
+                        } else {
+                            o = exp.getValue(node);
+                        }
                     } catch (Exception e) {
                         LOG.warn(e.getMessage());
                         o = null;
@@ -166,18 +176,32 @@ public class GraphDocumentMapper {
         return indexName;
     }
 
-    public DocumentRepresentation getDocumentRepresentation(RelationshipExpressions relationship, DocumentMappingDefaults defaults) throws DocumentRepresentationException {
-        return getDocumentRepresentation(relationship, defaults, true);
+    public DocumentRepresentation getDocumentRepresentation(RelationshipExpressions relationship, DocumentMappingDefaults defaults, GraphDatabaseService graphDatabaseService) throws DocumentRepresentationException {
+        return getDocumentRepresentation(relationship, defaults, true, graphDatabaseService);
     }
 
-    public DocumentRepresentation getDocumentRepresentation(RelationshipExpressions relationship, DocumentMappingDefaults defaults, boolean buildSource) throws DocumentRepresentationException {
+    public DocumentRepresentation getDocumentRepresentation(RelationshipExpressions relationship, DocumentMappingDefaults defaults, boolean buildSource, GraphDatabaseService graphDatabaseService) throws DocumentRepresentationException {
         Map<String, Object> source = new HashMap<>();
 
         if (buildSource) {
             if (null != properties) {
                 for (String s : properties.keySet()) {
                     Expression exp = getExpression(s);
-                    source.put(s, exp.getValue(relationship));
+                    Object o;
+                    try {
+                        Object t = exp.getValue(relationship);
+                        if (t instanceof QueryExpression) {
+                            o = getQueryExpressionResult(relationship, graphDatabaseService, (QueryExpression) t);
+                        } else {
+                            o = exp.getValue(relationship);
+                        }
+                    } catch (Exception e) {
+                        LOG.warn(e.getMessage());
+                        o = null;
+                    }
+                    if (null != o || !defaults.excludeEmptyProperties()) {
+                        source.put(s, o);
+                    }
                 }
             }
 
@@ -245,7 +269,27 @@ public class GraphDocumentMapper {
         } else {
             return null;
         }
-        
-        
     }
+
+    private Object getQueryExpressionResult(Object entity, GraphDatabaseService database, QueryExpression queryExpression) {
+        Long id = entity instanceof NodeExpressions ? ((NodeExpressions) entity).getId() : ((RelationshipExpressions) entity).getId();
+        Map<String, Object> parameters = Collections.singletonMap("id", id);
+        Object r = null;
+        try (Transaction tx = database.beginTx()) {
+            Result result = database.execute(queryExpression.getQuery(), parameters);
+            if (result.hasNext()) {
+                Map<String, Object> record = result.next();
+                if (record.containsKey("value")) {
+                    r = record.get("value");
+                }
+            }
+            tx.success();
+        } catch (Exception e) {
+            LOG.error("Could not execute query " + queryExpression.getQuery() + ". Message is " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return r;
+    }
+
 }

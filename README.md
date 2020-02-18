@@ -1,7 +1,7 @@
 GraphAware Neo4j Elasticsearch Integration (Neo4j Module)
 =========================================================
 
-[![Build Status](https://travis-ci.org/graphaware/neo4j-to-elasticsearch.png)](https://travis-ci.org/graphaware/neo4j-to-elasticsearch) | <a href="http://graphaware.com/products/" target="_blank">Downloads</a> | <a href="http://graphaware.com/site/neo4j-to-elasticsearch/latest/apidocs/" target="_blank">Javadoc</a> | Latest Release: 3.3.3.52.7
+[![Build Status](https://travis-ci.org/graphaware/neo4j-to-elasticsearch.png)](https://travis-ci.org/graphaware/neo4j-to-elasticsearch) | <a href="http://graphaware.com/products/" target="_blank">Downloads</a> | <a href="http://graphaware.com/site/neo4j-to-elasticsearch/latest/apidocs/" target="_blank">Javadoc</a>
 
 GraphAware Elasticsearch Integration is an enterprise-grade bi-directional integration between Neo4j and Elasticsearch.
 It consists of two independent modules plus a test suite. Both modules can be used independently or together to achieve
@@ -39,7 +39,7 @@ GraphAware Runtime Modules, or Spring MVC Controllers can include use the module
 
 ### Releases
 
-Releases are synced to <a href="http://search.maven.org/#search%7Cga%7C1%7Ca%3A%22uuid%22" target="_blank">Maven Central repository</a>. When using Maven for dependency management, include the following dependency in your pom.xml.
+Releases are synced to <a href="http://search.maven.org/#search%7Cga%7C1%7Ca%3A%22uuid%22" target="_blank">Maven Central repository</a>. When using Maven for dependency management, include the following dependency in your pom.xml and change the version to the correct one.
 
     <dependencies>
         ...
@@ -47,7 +47,7 @@ Releases are synced to <a href="http://search.maven.org/#search%7Cga%7C1%7Ca%3A%
             <groupId>com.graphaware.integration.es</groupId>
             <!-- this will be com.graphaware.neo4j in the next release -->
             <artifactId>neo4j-to-elasticsearch</artifactId>
-            <version>3.3.3.52.7</version>
+            <version>A.B.C.D.E</version>
         </dependency>
         ...
     </dependencies>
@@ -55,7 +55,7 @@ Releases are synced to <a href="http://search.maven.org/#search%7Cga%7C1%7Ca%3A%
 #### Snapshots
 
 To use the latest development version, just clone this repository, run `mvn clean install` and change the version in the
-dependency above to 3.3.3.52.8-SNAPSHOT.
+dependency above to A.B.C.D.E-SNAPSHOT.
 
 #### Note on Versioning Scheme
 
@@ -301,7 +301,7 @@ This module has been tested with ElasticSearch 2.3.0+.
 License
 -------
 
-Copyright (c) 2015-2017 GraphAware
+Copyright (c) 2013-2019 GraphAware
 
 GraphAware is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License
 as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
