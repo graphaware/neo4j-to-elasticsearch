@@ -48,7 +48,6 @@ public class CustomJestClientFactory extends JestClientFactory {
     public void setHttpClientConfig(HttpClientConfig httpClientConfig) {
         super.setHttpClientConfig(new HttpClientConfig.Builder(httpClientConfig)
                 .gson(new GsonBuilder()
-                        .serializeSpecialFloatingPointValues()
                         .registerTypeAdapter(Double.class, new NonFiniteAsStringAdapter())
                         .create()
                 )
