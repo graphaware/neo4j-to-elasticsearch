@@ -32,26 +32,6 @@ public class CustomJestClientFactory extends JestClientFactory {
         this.connectionTimeout = connectionTimeout;
     }
 
-    /**
-     * Serialize non-finite doubles (-Infinity, +Infinity, NaN) as strings.
-     */
-    private class NonFiniteAsStringAdapter extends TypeAdapter<Double> {
-        @Override
-        public void write(JsonWriter out, Double value) throws IOException {
-            if (Double.isFinite(value)) {
-                out.value(value);
-            } else {
-                // serialize as "+Infinity", "-Infinity" and "NaN" (string)
-                out.value(value + "");
-            }
-        }
-
-        @Override
-        public Double read(JsonReader in) throws IOException {
-            return in.nextDouble();
-        }
-    }
-
     @Override
     protected HttpClientBuilder configureHttpClient(HttpClientBuilder builder) {
         return builder
@@ -71,5 +51,25 @@ public class CustomJestClientFactory extends JestClientFactory {
                 .connTimeout(10000) // 10s
                 .build()
         );
+    }
+}
+
+/**
+ * Serialize non-finite doubles (-Infinity, +Infinity, NaN) as strings.
+ */
+class NonFiniteAsStringAdapter extends TypeAdapter<Double> {
+    @Override
+    public void write(JsonWriter out, Double value) throws IOException {
+        if (Double.isFinite(value)) {
+            out.value(value);
+        } else {
+            // serialize as "+Infinity", "-Infinity" and "NaN" (string)
+            out.value(value + "");
+        }
+    }
+
+    @Override
+    public Double read(JsonReader in) throws IOException {
+        return in.nextDouble();
     }
 }
