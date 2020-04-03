@@ -14,6 +14,15 @@ production-ready and officially supported by GraphAware for  <a href="http://gra
 The <a href="https://github.com/graphaware/graph-aided-search" target="_blank">second module (a.k.a. Graph-Aided Search)</a> is a plugin to Elasticsearch that can consult the Neo4j database during an Elasticsearch query to enrich
 the result (boost the score) by results that are more efficiently calculated in a graph database, e.g. recommendations.
 
+## Community vs Enterprise
+
+This open-source (GPL) version of the module is compatible with GraphAware Framework Community (GPL), which in turn 
+is compatible with Neo4j Community Edition (GPL) only. It *will not work* with Neo4j Enterprise Edition, which is a 
+proprietary and commercial software product of Neo4j, Inc..
+
+GraphAware offers an Enterprise version of the GraphAware Framework to licensed users of Neo4j Enterprise Edition.
+Please [get in touch](mailto:info@graphaware.com) to receive access.
+
 # Neo4j -> Elasticsearch
 
 ## Getting the Software
